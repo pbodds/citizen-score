@@ -8,7 +8,11 @@
 // what its manifest permits. Calls to the meter name the plugin (`plugin`),
 // since they all come from the main window.
 (() => {
-  if (!window.__TAURI__ || document.documentElement.classList.contains("detailsWindow")) return;
+  // Only the meter's own window docks panels. History, Details and Settings
+  // windows run this same page; there the plugins refuse to start ("not a
+  // plugin window") and the dock would cover their content.
+  const view = window.A2_VIEW || window.__A2_VIEW__ || new URLSearchParams(location.search).get("view") || "main";
+  if (!window.__TAURI__ || view !== "main") return;
   const { invoke, convertFileSrc } = window.__TAURI__.core;
   const { listen } = window.__TAURI__.event;
   const meter = document.querySelector(".meter");
