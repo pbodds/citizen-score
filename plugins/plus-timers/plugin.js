@@ -894,7 +894,7 @@ function renderField(now) {
       countdown = words.in(span(next - now));
       at = fmt.format(new Date(next));
     }
-    // A2Tools Plus: a kill this meter saw, its respawn predicted from the
+    // Citizen Score: a kill this meter saw, its respawn predicted from the
     // ones learned (≈), or not learned yet.
     if (t?.predicted && next) at = `≈ ${at}`;
     else if (group === "unknown" && t?.state === "dead" && t.diedAt) {
@@ -1454,7 +1454,7 @@ a2.on("compact", (on) => document.body.classList.toggle("compact", !!on));
 (async () => {
   prefs = { ...prefs, ...((await a2.storage.get("prefs").catch(() => null)) || {}) };
   prefs.closedLeads = prefs.closedLeads || {};
-  // A2Tools Plus: Nemon (NA East, Asmodian) until a login says otherwise.
+  // Citizen Score: Nemon (NA East, Asmodian) until a login says otherwise.
   if (!(Number(prefs.lastServer) >= 1000)) prefs.lastServer = 2109;
   // The old single "timers" tab is the events one now.
   if (!els.views[prefs.tab]) prefs.tab = "events";

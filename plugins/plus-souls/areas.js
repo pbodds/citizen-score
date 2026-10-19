@@ -1,4 +1,4 @@
-// Pet Souls+ (A2Tools Plus): the Areas view, where to farm next.
+// Pet Souls+ (Citizen Score): the Areas view, where to farm next.
 //
 // Each zone where pet souls drop, ranked by how many of your pets still short
 // of level 3 drop there and how many souls they still need, with the expected
@@ -129,8 +129,9 @@ function renderAreas() {
 }
 
 function showView(view) {
-  prefs.view = view === "areas" ? "areas" : "pets";
+  prefs.view = ["areas", "map"].includes(view) ? view : "pets";
   document.body.classList.toggle("viewAreas", prefs.view === "areas");
+  document.body.classList.toggle("viewMap", prefs.view === "map");
   for (const t of areaEls.tabs) t.setAttribute("aria-selected", String(t.dataset.view === prefs.view));
 }
 
@@ -183,7 +184,7 @@ a2.on("decoded:soul-gained", ({ pet }) => {
   renderAreas();
 })();
 
-// A2Tools Plus: the filters (genus, level, regions, level 3, text size) fold
+// Citizen Score: the filters (genus, level, regions, level 3, text size) fold
 // away behind one button, so the map opens to its search and list.
 {
   const btn = document.querySelector(".filtersBtn");

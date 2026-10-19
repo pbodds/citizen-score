@@ -254,7 +254,7 @@ body.compact .foot {
   color: #0a0e16; background: #6ee07a; vertical-align: 1px;
 }
 
-/* A2Tools Plus: Pets / Areas views. */
+/* Citizen Score: Pets / Areas views. */
 .viewTabs { display: flex; gap: 4px; margin-bottom: 8px; }
 .viewTab {
   flex: 1; padding: 3px 0; font: inherit; font-size: 12px; cursor: pointer;
@@ -282,7 +282,7 @@ body.viewAreas .foot { display: none; }
 .area .where { margin: 4px 0 2px 8px; }
 .areaNone { padding: 8px 6px; color: rgba(255, 255, 255, 0.55); }
 
-/* A2Tools Plus: search on top, filters folded away. */
+/* Citizen Score: search on top, filters folded away. */
 .searchRow { display: flex; gap: 6px; margin-bottom: 8px; }
 .searchRow .search { flex: 1; margin: 0; }
 .filtersBtn {
@@ -297,3 +297,57 @@ body:not(.showFilters) .controls > .option,
 body:not(.showFilters):not(.viewAreas) .controls > .regions { display: none; }
 body.viewAreas .searchRow { display: none; }
 .foot { display: none; }
+
+/* Citizen Score: the Map view. */
+body:not(.viewMap) .mapView { display: none; }
+body.viewMap .controls > :not(.status):not(.summary),
+body.viewMap .searchRow,
+body.viewMap .head,
+body.viewMap .pets,
+body.viewMap .empty,
+body.viewMap .areas,
+body.viewMap .foot { display: none; }
+.mapView { display: flex; flex-direction: column; gap: 6px; }
+.mapBar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mapBar .chips { margin: 0; }
+.mapPick button[aria-pressed="true"] { color: #0a0e16; background: #8fc2ff; border-color: #8fc2ff; }
+.mapBar2 { font-size: 11px; color: rgba(255, 255, 255, 0.65); }
+.mapFocus {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 4px 1px 8px;
+  border-radius: 999px; background: rgba(255, 170, 60, 0.16); color: #ffd9a8;
+}
+.mapFocus[hidden] { display: none; }
+.mapFocus strong { color: #fff; font-weight: 600; }
+.mapFocusClear { border: 0; background: none; color: inherit; font: inherit; font-size: 13px; cursor: pointer; padding: 0 3px; }
+.mapKib { margin: 0; display: inline-flex; align-items: center; gap: 4px; }
+.kibIcon {
+  width: 7px; height: 10px; background: #4fd6f0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.mapLegend { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
+.mapLegend i {
+  width: 64px; height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255, 150, 50, 0.35), rgb(255, 120, 40), rgb(255, 196, 110), rgb(255, 245, 220));
+}
+.mapStage {
+  position: relative; height: max(220px, calc(100vh - 150px)); overflow: hidden; border-radius: 8px;
+  background: #06080c; border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab; touch-action: none;
+}
+.mapStage.dragging { cursor: grabbing; }
+.mapCanvas { display: block; width: 100%; height: 100%; }
+.mapTip {
+  position: absolute; z-index: 2; max-width: 260px; padding: 6px 8px; pointer-events: none;
+  font-size: 11px; line-height: 1.35; color: rgba(255, 255, 255, 0.85);
+  background: rgba(10, 14, 22, 0.94); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+.mapTip[hidden] { display: none; }
+.mapTip strong { color: #fff; }
+.mapNote { margin: 0; font-size: 11px; color: rgba(255, 255, 255, 0.55); }
+.showOnMap {
+  margin-top: 6px; padding: 2px 9px; font: inherit; font-size: 11px; cursor: pointer;
+  color: #ffd9a8; background: rgba(255, 170, 60, 0.12);
+  border: 1px solid rgba(255, 170, 60, 0.35); border-radius: 6px;
+}
+.showOnMap:hover { background: rgba(255, 170, 60, 0.22); }

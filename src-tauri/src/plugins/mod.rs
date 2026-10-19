@@ -256,8 +256,8 @@ fn boss_map_event(map: &crate::capture::boss_map::BossMap) -> Value {
     serde_json::json!({ "map": map.map_id, "bosses": bosses })
 }
 
-/// A2Tools Plus: where the bundled plugins live: next to the executable in
-/// an install (/opt/a2plus/plugins), or the checkout's `plugins/` when run
+/// Citizen Score: where the bundled plugins live: next to the executable in
+/// an install (/opt/citizen-score/plugins), or the checkout's `plugins/` when run
 /// from source.
 fn bundled_plugin_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     let resource = app.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -281,7 +281,7 @@ fn bundled_plugin_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     dirs
 }
 
-/// A2Tools Plus: a field boss kill, as a2.on("bossKill") hands it on.
+/// Citizen Score: a field boss kill, as a2.on("bossKill") hands it on.
 fn kill_event(kill: &crate::combat::data_storage::BossEvent) -> Value {
     let crate::combat::data_storage::BossEventKind::Killed { at_ms } = kill.kind;
     serde_json::json!({
@@ -291,7 +291,7 @@ fn kill_event(kill: &crate::combat::data_storage::BossEvent) -> Value {
     })
 }
 
-/// A2Tools Plus: the map the player is on, as a2.on("zone") hands it on.
+/// Citizen Score: the map the player is on, as a2.on("zone") hands it on.
 fn zone_event(map: Option<i32>) -> Value {
     serde_json::json!({
         "map": map,
@@ -299,7 +299,7 @@ fn zone_event(map: Option<i32>) -> Value {
     })
 }
 
-/// A2Tools Plus: what the meter knows of the world now, for a plugin with
+/// Citizen Score: what the meter knows of the world now, for a plugin with
 /// `events:zone` that opens after it happened: the map, and the field boss
 /// kills seen this run (the last 64).
 #[tauri::command]
@@ -313,7 +313,7 @@ pub fn plugin_local_world(app: tauri::AppHandle, window: tauri::WebviewWindow, p
     Ok(out)
 }
 
-/// A2Tools Plus: an alert as a desktop notification (`notify-send`), which
+/// Citizen Score: an alert as a desktop notification (`notify-send`), which
 /// shows over the game where the plugin's own window may not. At most one a
 /// second per plugin, the text cut to 300 characters.
 #[tauri::command]
@@ -330,7 +330,7 @@ pub fn plugin_desktop_notify(app: tauri::AppHandle, window: tauri::WebviewWindow
     }
     let cut = |s: &str| s.chars().take(300).collect::<String>();
     std::process::Command::new("notify-send")
-        .args(["-a", "A2Tools Plus", "-i", "a2tools-dps-meter", "--", &cut(&title), &cut(&body)])
+        .args(["-a", "Citizen Score", "-i", "citizen-score", "--", &cut(&title), &cut(&body)])
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -450,7 +450,7 @@ impl PluginHost {
                 Err(e) => tracing::warn!("Plugins: installed {} does not load: {e}", dir.display()),
             }
         }
-        // A2Tools Plus: the plugins built into this fork, trusted like a
+        // Citizen Score: the plugins built into this fork, trusted like a
         // reviewed install. A developer folder or an installed copy of the
         // same id goes first.
         for dir in bundled_plugin_dirs(app) {
@@ -509,7 +509,7 @@ impl PluginHost {
                             }
                         }
                     }
-                    // A2Tools Plus: field boss kills seen by this meter, and
+                    // Citizen Score: field boss kills seen by this meter, and
                     // the map the player is on, to plugins with events:zone.
                     if let Some(state) = app.try_state::<AppState>() {
                         let (next, kills) = state.data_storage.local_kills_since(kill_seq);
@@ -693,7 +693,7 @@ fn info(l: &Loaded) -> PluginInfo {
 }
 
 /// The plugin a `plugin-<id>` window belongs to.
-/// The plugin a call comes from: its own window's, or (A2Tools Plus) one
+/// The plugin a call comes from: its own window's, or (Citizen Score) one
 /// docked in the meter's main window, which names it with `plugin`. Only the
 /// main page can name one: a plugin's frame can't call the meter at all.
 pub(crate) fn window_plugin(window: &tauri::WebviewWindow, plugin: Option<&str>) -> Result<String, String> {
@@ -916,7 +916,7 @@ fn prompt_texts(data_dir: Option<&Path>, lang: &str) -> PromptTexts {
     let prompt = |key: &str, fallback: &str| text(&["pluginUpdatePrompt"], key, fallback);
     let perm = |key: &str, fallback: &str| text(&["settings", "plugins"], key, fallback);
     PromptTexts {
-        title: prompt("title", "A2Tools - Plugin Update"),
+        title: prompt("title", "Citizen Score - Plugin Update"),
         one: prompt("one", "A plugin update is available:"),
         many: prompt("many", "Plugin updates are available:"),
         also_asks: prompt("alsoAsks", "The new version also asks to:"),
@@ -1300,12 +1300,12 @@ pub fn note_resized(app: &tauri::AppHandle, window: &tauri::Window, size: tauri:
 
 /// Build (or show) a plugin's window; `visible: false` builds it hidden, for a
 /// plugin restored at start that was watching in the background.
-/// A2Tools Plus: the plugins shown inside the meter's main window (dock.js)
+/// Citizen Score: the plugins shown inside the meter's main window (dock.js)
 /// rather than in windows of their own.
 pub const DOCKED: [&str; 2] = ["plus-souls", "plus-timers"];
 
 fn open_window(app: &tauri::AppHandle, id: &str, visible: bool) -> Result<(), String> {
-    // A2Tools Plus: a docked plugin runs in the main window; opening it
+    // Citizen Score: a docked plugin runs in the main window; opening it
     // opens its panel there.
     if DOCKED.contains(&id) {
         if visible {
@@ -1401,7 +1401,7 @@ pub fn restore_windows(app: &tauri::AppHandle) {
     let off = disabled(app);
     let closed = host.closed.lock().unwrap_or_else(|e| e.into_inner()).clone();
     for p in host.list() {
-        // A2Tools Plus: docked plugins start with the main window, not here.
+        // Citizen Score: docked plugins start with the main window, not here.
         if DOCKED.contains(&p.id.as_str()) {
             continue;
         }
@@ -1531,7 +1531,7 @@ pub fn plugin_debug_frame(app: tauri::AppHandle, hex: String) -> Result<(), Stri
 /// meter's language when the user changes it.
 pub fn broadcast(app: &tauri::AppHandle, event: &str, data: Value) {
     for (label, window) in app.webview_windows() {
-        // A2Tools Plus: and the main window, which hosts the docked plugins.
+        // Citizen Score: and the main window, which hosts the docked plugins.
         if label.starts_with("plugin-") || label == "main" {
             let _ = window.emit("plugin-event", serde_json::json!({ "event": event, "data": data }));
         }

@@ -1,0 +1,353 @@
+"""Build the Pet Map's heatmap data: spawn points, Kibelisks and map images.
+
+    python3 -I tools/citizen-map/build_map.py            # fetch what's missing, write the data
+    python3 -I tools/citizen-map/build_map.py --offline  # only from the cache
+
+The plugin's sources.js (from the game's tables) says which monsters drop each
+soul, but not where they stand. metabot.gg's public soul pages draw those
+spawns on the world map, and embed them as map pixels ("pins": every spawn of
+every monster dropping the soul, per map). Its public Kibelisk lists and zone
+pages place each Kibelisk, and its map tiles are the game's world maps.
+robots.txt allows these pages and images (only /api/ is off limits, and this
+never touches it). Requests go one at a time, under a second apart, and are
+cached in ~/.cache/citizen-score/metabot, so a rebuild fetches only what's new.
+
+Map pixels: every world map is an 8192 x 8192 image, cut into 256 px tiles,
+2^z across at zoom z. A page's view is a window onto those tiles; its dots are
+percentages of the view, so a dot's map pixel is (view origin + pct x view
+span), both read off the tiles' own placement.
+
+Writes into plugins/plus-souls/:
+  maps/<map>.webp   each world map at zoom 3 (2048 px), stitched
+  mapdata.js        MAP_DATA: maps, spawns per pet, Kibelisks per map
+Then prints how well the Kibelisks agree with sources.js' "nearest Kibelisk,
+N m" (the same spawn medoid, measured on the map).
+"""
+import argparse
+import hashlib
+import json
+import math
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.request
+from urllib.parse import quote
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PLUGIN = os.path.join(ROOT, "plugins", "plus-souls")
+CACHE = os.path.join(os.path.expanduser("~"), ".cache", "citizen-score", "metabot")
+BASE = "https://metabot.gg"
+UA = "Mozilla/5.0 (X11; Linux x86_64) citizen-score-map-builder (personal, cached)"
+WORLD = 8192
+STITCH_ZOOM = 3
+
+offline = False
+last_fetch = 0.0
+
+
+def fetch(path, binary=False):
+    """GET BASE+path through the cache. None for a 404 (a page metabot hasn't made)."""
+    global last_fetch
+    key = hashlib.sha1(path.encode()).hexdigest()
+    file = os.path.join(CACHE, key + (".bin" if binary else ".html"))
+    miss = file + ".404"
+    if os.path.exists(file):
+        with open(file, "rb") as f:
+            data = f.read()
+        return data if binary else data.decode("utf-8", "replace")
+    if os.path.exists(miss) or offline:
+        return None
+    wait = 0.8 - (time.time() - last_fetch)
+    if wait > 0:
+        time.sleep(wait)
+    last_fetch = time.time()
+    req = urllib.request.Request(BASE + quote(path, safe="/:?=&%"), headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = r.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            open(miss, "w").close()
+            return None
+        raise
+    os.makedirs(CACHE, exist_ok=True)
+    with open(file, "wb") as f:
+        f.write(data)
+    return data if binary else data.decode("utf-8", "replace")
+
+
+def flight(html):
+    """The page's React Server Components payload, unescaped into one string."""
+    parts = re.findall(r'self\.__next_f\.push\(\[1,"(.*?)"\]\)', html, re.S)
+    return json.loads('"' + "".join(parts) + '"') if parts else ""
+
+
+def raw_json(text, at):
+    """The JSON value starting at text[at]."""
+    return json.JSONDecoder().raw_decode(text, at)[0]
+
+
+TILE_RE = re.compile(
+    r'"className":"B32I9a_spawnTile","style":\{"left":"([-\d.]+)%","top":"([-\d.]+)%",'
+    r'"width":"calc\(([\d.]+)% \+ 1px\)","height":"calc\(([\d.]+)% \+ 1px\)",'
+    r'"backgroundImage":"url\(/web/aion2/worldmap/([a-z0-9_]+)/(\d+)/(\d+)/(\d+)\.webp\)"')
+DOT_RE = re.compile(r'"className":"B32I9a_spawnDot","data-kind":"([a-z]+)","style":\{"left":"([-\d.]+)%","top":"([-\d.]+)%"')
+
+
+def view_of(p):
+    """(map folder, fn(pct x, pct y) -> map pixel) for the first spawn map on a page."""
+    m = TILE_RE.search(p)
+    if not m:
+        return None
+    left, top, w, h, folder, z, x, y = m.groups()
+    left, top, w, h = (float(v) / 100 for v in (left, top, w, h))
+    z, x, y = int(z), int(x), int(y)
+    tile = WORLD / (2 ** z)
+    # The view's origin, in map pixels, and how many map pixels 100% spans.
+    ox = (x - left / w) * tile
+    oy = (y - top / h) * tile
+    sx, sy = tile / w, tile / h
+    return folder, lambda px, py: (ox + px / 100 * sx, oy + py / 100 * sy)
+
+
+def slug(text):
+    s = re.sub(r"['’]", "", str(text).lower())
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
+def load_sources():
+    with open(os.path.join(PLUGIN, "sources.js"), encoding="utf-8") as f:
+        s = f.read()
+    ps = json.loads(re.search(r"const PET_SOURCES = (\{.*?\n\});", s, re.S).group(1))
+    st = json.loads(re.search(r"const SOURCE_TEXT = (\{.*?\n\});", s, re.S).group(1))
+    return ps, st
+
+
+def map_id(key):
+    m = re.match(r"String_STR_Map_(.+)_body$", key or "")
+    return m.group(1) if m else None
+
+
+def medoid(pts):
+    sample = pts if len(pts) <= 400 else pts[:: max(1, len(pts) // 400)]
+    return min(sample, key=lambda p: sum(math.hypot(p[0] - o[0], p[1] - o[1]) for o in sample))
+
+
+def main():
+    global offline
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--offline", action="store_true", help="use only cached pages")
+    ap.add_argument("--no-tiles", action="store_true", help="skip stitching the map images")
+    args = ap.parse_args()
+    offline = args.offline
+    ps, st = load_sources()
+    en = lambda k: (st.get(k) or {}).get("en", k)
+
+    # ---- spawns, from each soul's page ----
+    spawns = {}  # pet -> [[map, npc key, [[x, y], ...]], ...]
+    map_pages = {}  # map id -> "/en/aion-2/map/verteron"
+    folders = {}  # map id -> tile folder
+    pets = [pid for pid, v in ps.items() if v.get("drops")]
+    for n, pid in enumerate(pets, 1):
+        src = ps[pid]
+        page = fetch(f"/en/aion-2/items/{slug(en(src['title']))}")
+        print(f"\r souls {n}/{len(pets)}", end="", file=sys.stderr)
+        if not page:
+            continue
+        p = flight(page)
+        at = p.find('"pins":[')
+        if at < 0:
+            continue
+        pins = raw_json(p, at + len('"pins":'))
+        at = p.find('"open":{', at)
+        if at > 0:
+            map_pages.update(raw_json(p, at + len('"open":')))
+        names = {}
+        for d in src["drops"]:
+            names.setdefault((map_id(d["map"]), en(d["npc"]).lower()), d["npc"])
+        # The marks' titles name each pin's monster, in mark order.
+        titles = dict(re.findall(r'"data-kind":"step","style":\{[^}]*\},"title":"([^"]*)","children":"(\d+)"', p))
+        titles = {v: k for k, v in titles.items()}
+        out = []
+        for pin in pins:
+            mid = pin.get("map")
+            who = titles.get(str(pin.get("mark")), "")
+            npc = names.get((mid, who.lower()))
+            if npc is None:  # not matched by name: the drop on that map with that many spawns
+                npc = next((d["npc"] for d in src["drops"] if map_id(d["map"]) == mid and d.get("spawns") == len(pin.get("dots") or [])), None)
+            dots = [[round(x), round(y)] for x, y in pin.get("dots") or []]
+            if dots:
+                out.append([mid, npc, dots])
+        if out:
+            spawns[pid] = out
+    print(file=sys.stderr)
+
+    # A map's tile folder is its id, lower-cased, wherever a page showed it.
+    for mid in {s[0] for v in spawns.values() for s in v}:
+        folders[mid] = mid.lower()
+
+    # ---- Kibelisks ----
+    # Zone pages draw every place of interest as an unnamed dot. Each
+    # Kibelisk sources.js names is placed on the dot that best fits its
+    # distances there ("nearest Kibelisk, N m" from each drop's spawn medoid,
+    # at the map's own scale). Candidates are the dots of the zone pages
+    # of every drop's area and of each map's Kibelisk list. A Kibelisk no drop
+    # names is placed by its list row when the page's dots and table agree,
+    # or at the centre of its own area's page.
+    teleports = {}  # (map id, en name) -> (key, number)
+    refs = {}  # (map id, key) -> [(medoid, m)]
+    for pid, rows in spawns.items():
+        for mid, npc, dots in rows:
+            for d in ps[pid]["drops"]:
+                if d["npc"] != npc or map_id(d["map"]) != mid:
+                    continue
+                c = medoid(dots)
+                for k in [d.get("kibelisk")] + list((d.get("bySide") or {}).values()):
+                    if k and k.get("m"):
+                        refs.setdefault((mid, k["name"]), []).append((c, k["m"]))
+    for v in ps.values():
+        for d in v.get("drops", []):
+            for k in [d.get("kibelisk")] + list((d.get("bySide") or {}).values()):
+                if k:
+                    teleports[(map_id(d["map"]), en(k["name"]).lower())] = (k["name"], k.get("teleport"))
+
+    def zone_dots(path, mid):
+        """(pois as map pixels, places table, the page's view) for a zone page on map mid."""
+        zp = fetch(path)
+        if not zp:
+            return [], [], None
+        q = flight(zp)
+        view = view_of(q)
+        if not view or view[0] != folders.get(mid):
+            return [], [], None
+        pois = [(float(x), float(y)) for kind, x, y in DOT_RE.findall(q) if kind == "poi"]
+        at = q.find("Places of interest")
+        places = re.findall(r'"th","0",\{[^}]*"children":"([^"]+)"\}\],\["\$","td","1",\{[^}]*"children":"([^"]*)"\}\],\["\$","td","2",\{[^}]*"children":"([^"]*)"', q[at:at + 60000]) if at > 0 else []
+        return [view[1](*d) for d in pois], places, (pois, view)
+
+    candidates = {}  # map id -> {(x, y)}
+    listed = {}  # map id -> [(name, zone path)]
+    for mid, page_path in sorted(map_pages.items()):
+        if mid not in folders:
+            continue
+        page = fetch(page_path + "/kibelisks")
+        rows = re.findall(r'\["\$","th","0",\{[^}]*"children":"([^"]+)"\}\],\["\$","td","1",\{[^}]*?"href":"(/en/aion-2/zones/[^"]+)"', flight(page)) if page else []
+        listed[mid] = rows
+        zones = {z for _, z in rows}
+        for pid, v in ps.items():
+            for d in v.get("drops", []):
+                if map_id(d["map"]) == mid:
+                    zones.update(f"/en/aion-2/zones/{slug(en(z))}" for z in d.get("zones") or [])
+        for (m2, key) in refs:
+            if m2 == mid:
+                zones.add(f"/en/aion-2/zones/{slug(en(key))}")
+        for i, z in enumerate(sorted(zones)):
+            print(f"\r {mid} zone pages {i + 1}/{len(zones)}", end="", file=sys.stderr)
+            pts, _, _ = zone_dots(z, mid)
+            candidates.setdefault(mid, set()).update((round(x), round(y)) for x, y in pts)
+        print(file=sys.stderr)
+
+    def fit(rs, pts, scale):
+        best = None
+        for x, y in pts:
+            err = sum(abs(math.hypot(x - c[0], y - c[1]) * scale - m) / max(m, 30) for c, m in rs) / len(rs)
+            if best is None or err < best[0]:
+                best = (err, x, y)
+        return best
+
+    # Metres per map pixel differ by map (the Abyss is drawn smaller): the
+    # scale that fits the most Kibelisks closely, from 0.5 to 8.
+    kibs = {}  # map id -> [{n, t, x, y}]
+    fits = []
+    for mid in sorted({m for m, _ in refs}):
+        mine = [(key, rs) for (m, key), rs in refs.items() if m == mid]
+        pts = list(candidates.get(mid, ()))
+        if not pts:
+            continue
+        # Judged on the Kibelisks two or more drops name: one distance alone
+        # fits some dot at almost any scale.
+        multi = [(k, rs) for k, rs in mine if len(rs) >= 2] or mine
+        scales = [0.5 * 1.03 ** i for i in range(95)]
+        scale = max(scales, key=lambda sc: (sum(1 for _, rs in multi if (fit(rs, pts, sc) or (1,))[0] < 0.05), -abs(math.log(sc))))
+        print(f" {mid}: {scale:.3f} m per map pixel", file=sys.stderr)
+        for key, rs in mine:
+            best = fit(rs, pts, scale)
+            if best and best[0] < 0.25:
+                number = teleports.get((mid, en(key).lower()), (None, None))[1]
+                kibs.setdefault(mid, []).append({"n": key, "t": number, "x": best[1], "y": best[2]})
+                fits.append(best[0])
+    placed = {(mid, en(k["n"]).lower()) for mid, ks in kibs.items() for k in ks}
+    for mid, rows in listed.items():
+        for name, zone in rows:
+            if (mid, name.lower()) in placed:
+                continue
+            pts, places, raw = zone_dots(zone, mid)
+            if not raw:
+                continue
+            spots = []
+            for pname, ptype, count in places:
+                spots += [(pname, ptype)] * (int(count) if count.isdigit() else 1)
+            pick = None
+            if len(spots) == len(pts):
+                idx = next((j for j, s in enumerate(spots) if s == (name, "Kibelisk")), None)
+                if idx is not None:
+                    pick = pts[idx]
+            if pick is None and slug(name) == zone.rsplit("/", 1)[-1] and pts:
+                pois, view = raw
+                j = min(range(len(pois)), key=lambda i: math.hypot(pois[i][0] - 50, pois[i][1] - 50))
+                pick = pts[j]
+            if pick is None:
+                continue
+            key, number = teleports.get((mid, name.lower()), (None, None))
+            kibs.setdefault(mid, []).append({"n": key or name, "t": number, "x": round(pick[0]), "y": round(pick[1])})
+            placed.add((mid, name.lower()))
+    if fits:
+        fits.sort()
+        print(f"Kibelisks placed by distance: {len(fits)}/{len(refs)}, median error {fits[len(fits) // 2]:.1%}", file=sys.stderr)
+
+    # ---- the map images ----
+    maps = {}
+    os.makedirs(os.path.join(PLUGIN, "maps"), exist_ok=True)
+    for mid, folder in sorted(folders.items()):
+        if mid not in kibs and not any(s[0] == mid for v in spawns.values() for s in v):
+            continue
+        out = os.path.join(PLUGIN, "maps", f"{folder}.webp")
+        if not args.no_tiles:
+            n = 2 ** STITCH_ZOOM
+            with tempfile.TemporaryDirectory() as tmp:
+                files = []
+                for y in range(n):
+                    for x in range(n):
+                        data = fetch(f"/web/aion2/worldmap/{folder}/{STITCH_ZOOM}/{x}/{y}.webp", binary=True)
+                        print(f"\r {mid} tiles {y * n + x + 1}/{n * n}", end="", file=sys.stderr)
+                        f = os.path.join(tmp, f"{y:02d}_{x:02d}.webp")
+                        if data:
+                            with open(f, "wb") as fh:
+                                fh.write(data)
+                        else:  # outside the map: black
+                            subprocess.run(["magick", "-size", "256x256", "xc:black", f], check=True)
+                        files.append(f)
+                print(file=sys.stderr)
+                subprocess.run(["magick", "montage", *files, "-tile", f"{n}x{n}", "-geometry", "256x256+0+0",
+                                "-background", "black", "-quality", "82", out], check=True)
+        if os.path.exists(out):
+            maps[mid] = {"image": f"maps/{folder}.webp", "key": f"String_STR_Map_{mid}_body"}
+
+    data = {"world": WORLD, "maps": maps, "spawns": spawns, "kibelisks": {m: k for m, k in kibs.items() if m in maps}}
+    with open(os.path.join(PLUGIN, "mapdata.js"), "w", encoding="utf-8") as f:
+        f.write("// The Pet Map's heatmap: each pet's spawn points and each map's Kibelisks,\n"
+                "// in map pixels (8192 across). Generated by tools/citizen-map/build_map.py:\n"
+                "// don't edit by hand.\n")
+        f.write("const MAP_DATA = ")
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        f.write(";\n")
+    n_spawn = sum(len(s[2]) for v in spawns.values() for s in v)
+    print(f"{len(spawns)} pets, {n_spawn} spawn points, "
+          f"{sum(len(v) for v in data['kibelisks'].values())} Kibelisks, maps: {', '.join(maps)}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

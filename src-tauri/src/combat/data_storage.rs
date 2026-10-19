@@ -600,7 +600,7 @@ struct Inner {
     /// Field boss kills and HP milestones in the open world, not yet sent
     /// (`boss_report.rs`).
     boss_events: VecDeque<BossEvent>,
-    /// A2Tools Plus: the same kills, numbered, for the local timers
+    /// Citizen Score: the same kills, numbered, for the local timers
     /// (`local_kills_since`); every build, online or not.
     local_kills: VecDeque<(u64, BossEvent)>,
     local_kill_seq: u64,
@@ -1550,7 +1550,7 @@ impl DataStorage {
         out
     }
 
-    /// A2Tools Plus: the field boss kills numbered after `seq`, and the
+    /// Citizen Score: the field boss kills numbered after `seq`, and the
     /// number to ask with next time. Unlike `take_boss_events` nothing is
     /// drained, so any number of readers can follow along.
     pub fn local_kills_since(&self, seq: u64) -> (u64, Vec<BossEvent>) {
@@ -1559,7 +1559,7 @@ impl DataStorage {
         (inner.local_kill_seq, kills)
     }
 
-    /// A2Tools Plus: the map the player is on, once a zone load named it.
+    /// Citizen Score: the map the player is on, once a zone load named it.
     pub fn current_map_id(&self) -> Option<i32> {
         self.inner.read().current_map_id
     }
@@ -1571,7 +1571,7 @@ impl DataStorage {
 
     pub fn mark_entity_dead(&self, entity_id: i32) {
         let mut inner = self.inner.write();
-        // A2Tools Plus: every field boss kill in the open world, for the
+        // Citizen Score: every field boss kill in the open world, for the
         // local timers, whether or not the build shares them.
         if inner.current_dungeon_id <= 0 && !inner.dead_entity_ids.contains(&entity_id) {
             if let Some(&code) = inner.mob_storage.get(&entity_id) {
@@ -3291,7 +3291,7 @@ mod tests {
         s.get_combat_snapshot().get(&target).and_then(|t| t.actors.get(&actor)).map_or(0, |a| a.total_damage)
     }
 
-    /// A2Tools Plus: kills stay readable by any number of followers, each
+    /// Citizen Score: kills stay readable by any number of followers, each
     /// with its own count, and a dead boss dying again is one kill.
     #[test]
     fn local_kills_are_numbered_and_never_drained() {

@@ -1,0 +1,357 @@
+/* Citizen Score: a lighter meter, the docked Pet Map / World Timers panels,
+   and the Settings window's look. */
+
+/* The header keeps three icons: Pet map, World timers, Settings. The rest
+   (screenshot, lock, suspend, history, reset) stay reachable by their keybinds. */
+.meter .header .bossIcon,
+.meter .header .headerBtns .lockBtn,
+.meter .header .headerBtns .suspendBtn,
+.meter .header .headerBtns .historyBtn,
+.meter .header .headerBtns .resetBtn {
+  display: none !important;
+}
+.meter .header { padding: 4px 8px 3px; gap: 6px; }
+.meter .header .headerBtns { gap: 9px; }
+.meter .header .headerBtns .headerBtn.isActive { color: #8fc2ff; }
+.meter .header .bossNames .bossName { font-size: calc(var(--boss-name-size) - 2px); }
+.meter .meterFooter { height: 20px; padding: 0 18px 0 8px; }
+.meter .list.hasRows { padding: 4px 6px; }
+
+/* The panel opens under the meter; the window grows to it. */
+.dockPanel {
+  height: var(--cs-dock-height, 470px);
+  border-top: 1px solid var(--hud-hairline, rgba(255, 255, 255, 0.08));
+  background: rgba(10, 14, 22, calc(var(--window-opacity, 0.85) * 0.6));
+  border-radius: 0 0 var(--rounded, 6px) var(--rounded, 6px);
+  overflow: hidden;
+}
+.dockPanel[hidden], .dockStage[hidden] { display: none; }
+.dockStage { position: relative; height: 100%; }
+.dockStage iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color-scheme: dark;
+}
+.meter.hasDock .meterFooter { border-radius: 0; }
+.dockToast {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #0a0e16;
+  background: #8fc2ff;
+}
+.dockToast[hidden] { display: none; }
+
+/* ============================================================
+   SETTINGS: a calmer, card-based look
+   ------------------------------------------------------------
+   One accent (--cs-accent, Settings → Window) for every active
+   thing; each section's settings sit on cards with a small
+   heading; the nav is a quiet list with a bar on the open item;
+   search on top of it filters every section at once.
+   ============================================================ */
+:root {
+  --cs-accent: #5fb4ff;
+  --cs-accent-rgb: 95, 180, 255;
+  --cs-ink: #e8edf5;
+  --cs-ink-2: rgba(214, 224, 240, 0.62);
+  --cs-ink-3: rgba(214, 224, 240, 0.42);
+  --cs-surface: #0c111a;
+  --cs-card: rgba(255, 255, 255, 0.035);
+  --cs-card-line: rgba(255, 255, 255, 0.07);
+}
+
+html.settingsWindow,
+html.settingsWindow body,
+html.settingsWindow .settingsPanel,
+html.settingsWindow .settingsHeader {
+  background: var(--cs-surface);
+}
+.settingsPanel {
+  --isUser-fill: var(--cs-accent);
+  --set-field-bg: rgba(255, 255, 255, 0.045);
+  --set-field-border: rgba(255, 255, 255, 0.09);
+  --set-label: var(--cs-ink);
+}
+
+/* Header: the app's mark and name, then the page. */
+.settingsPanel .settingsHeader {
+  padding: 10px 14px 9px 16px;
+  border-bottom: 1px solid var(--cs-card-line);
+}
+.settingsPanel .settingsHeader { gap: 8px; }
+.settingsPanel .settingsHeader .settingsTitle {
+  font-size: 13px;
+  color: var(--cs-ink-2);
+  font-variation-settings: "wght" 500, "wdth" 87.5;
+}
+.settingsPanel .csBrand {
+  flex: 0 0 auto;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.settingsPanel .csBrand img {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+.settingsPanel .csBrandName {
+  color: var(--cs-ink);
+  font-variation-settings: "wght" 700, "wdth" 87.5;
+  letter-spacing: 0.01em;
+}
+.settingsPanel .csBrandSep { color: var(--cs-ink-3); }
+
+/* Nav: quiet rows; the open one gets the accent bar and a soft tint. */
+.settingsPanel .settingsNav {
+  gap: 1px;
+  padding: 12px 10px;
+  border-right: 1px solid var(--cs-card-line);
+  background: rgba(255, 255, 255, 0.012);
+}
+.settingsPanel .settingsNavItem {
+  height: 30px;
+  padding: 0 10px 0 12px;
+  border-radius: 7px;
+  color: var(--cs-ink-2);
+}
+.settingsPanel .settingsNavItem svg {
+  color: currentColor;
+  opacity: 0.75;
+}
+.settingsPanel .settingsNavItem:hover {
+  color: var(--cs-ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+.settingsPanel .settingsNavItem.isActive {
+  color: var(--cs-ink);
+  text-shadow: none;
+  background: rgba(var(--cs-accent-rgb), 0.12);
+}
+.settingsPanel .settingsNavItem.isActive::before {
+  inset: 7px auto 7px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--cs-accent);
+  opacity: 1;
+}
+.settingsPanel .settingsNavItem.isActive svg {
+  color: var(--cs-accent);
+  opacity: 1;
+}
+.settingsPanel .settingsNav .settingsVersionLink { color: var(--cs-ink-3); }
+
+/* Search, at the top of the nav. */
+.settingsPanel .csSearch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  margin: 0 0 10px;
+  padding: 0 9px;
+  border: 1px solid var(--set-field-border);
+  border-radius: 8px;
+  background: var(--set-field-bg);
+  color: var(--cs-ink-3);
+  flex: 0 0 auto;
+}
+.settingsPanel .csSearch:focus-within {
+  border-color: rgba(var(--cs-accent-rgb), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--cs-accent-rgb), 0.14);
+}
+.settingsPanel .csSearch svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.settingsPanel .csSearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cs-ink);
+  font: inherit;
+  font-size: 12.5px;
+}
+.settingsPanel .csSearch input::placeholder { color: var(--cs-ink-3); }
+html.csSearching .settingsPanel .settingsNavItem.isActive { background: transparent; }
+html.csSearching .settingsPanel .settingsNavItem.isActive::before { display: none; }
+html.csSearching .settingsPanel .settingsSection:not([hidden]) { display: flex; }
+html.csSearching .settingsPanel .settingsSection + .settingsSection { margin-top: 22px; }
+.settingsPanel .csMiss { display: none !important; }
+html.csSearching .settingsPanel .settingsGroupBody:not(:has(> :not(.csMiss))) { display: none; }
+
+/* Pane and sections. */
+.settingsPanel .settingsPane { padding: 18px 22px 22px; }
+.settingsPanel .settingsSection { gap: 8px; max-width: 600px; }
+.settingsPanel .settingsSectionTitle {
+  margin: 0;
+  font-size: 18px;
+  color: var(--cs-ink);
+  letter-spacing: 0.005em;
+}
+.settingsPanel .csSectionLead {
+  margin: -2px 0 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--cs-ink-2);
+}
+.settingsPanel .csGroupTitle,
+.settingsPanel .settingsSubTitle {
+  margin: 12px 2px 2px;
+  font-size: 10.5px;
+  font-weight: normal;
+  font-variation-settings: "wght" 650, "wdth" 87.5;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--cs-ink-3);
+}
+.settingsPanel .csBadge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--cs-accent);
+  background: rgba(var(--cs-accent-rgb), 0.12);
+}
+
+/* Every group of settings is a card. */
+.settingsPanel .settingsGroupBody {
+  padding: 2px 14px;
+  border: 1px solid var(--cs-card-line);
+  border-radius: 10px;
+  background: var(--cs-card);
+}
+.settingsPanel .settingsGroupBody > * + * { border-top-color: var(--cs-card-line); }
+.settingsPanel .settingsRow,
+.settingsPanel .settingsToggle {
+  min-height: 36px;
+  padding: 7px 0;
+}
+.settingsPanel .settingsGroupBody > .settingsRow:has(.settingsToggle) { padding: 0; }
+.settingsPanel .settingsLabel { font-size: 13px; }
+.settingsPanel .settingsLabel[data-i18n-title] {
+  text-decoration-color: rgba(255, 255, 255, 0.16);
+}
+.settingsPanel .csHint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--cs-ink-3);
+  font-variation-settings: "wght" 400, "wdth" 87.5;
+  text-decoration: none;
+}
+.settingsPanel .settingsToggleLabel .csHint { max-width: 46ch; }
+
+/* Controls in the accent. */
+.settingsPanel .settingsToggleControl { width: 34px; height: 19px; }
+.settingsPanel .settingsToggleTrack::after { width: 13px; height: 13px; }
+.settingsPanel .settingsToggleControl input[type="checkbox"]:checked + .settingsToggleTrack::after {
+  transform: translateX(15px);
+}
+.settingsPanel .settingsRange::-webkit-slider-runnable-track {
+  height: 4px;
+  background: linear-gradient(to right, var(--cs-accent) 0 var(--range-pct, 50%), rgba(255, 255, 255, 0.12) var(--range-pct, 50%) 100%);
+}
+.settingsPanel .settingsRange::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(var(--cs-accent-rgb), 0.25), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.settingsPanel .settingsDropdownBtn,
+.settingsPanel .settingsAction,
+.settingsPanel .csSelect {
+  border-radius: 7px;
+}
+.settingsPanel .settingsAction:hover { border-color: rgba(var(--cs-accent-rgb), 0.55); }
+
+/* Window section: the snap grid, the monitor list, the swatches. */
+.settingsPanel .csSnapRow { align-items: flex-start; }
+.settingsPanel .csSnapGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 26px);
+  grid-template-rows: repeat(3, 18px);
+  gap: 4px;
+  padding: 6px;
+  flex: 0 0 auto;
+  border: 1px solid var(--set-field-border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.settingsPanel .csSnapCell {
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.settingsPanel .csSnapCell:hover { background: rgba(var(--cs-accent-rgb), 0.25); }
+.settingsPanel .csSnapCell[aria-pressed="true"] {
+  background: var(--cs-accent);
+  border-color: var(--cs-accent);
+  box-shadow: 0 0 10px rgba(var(--cs-accent-rgb), 0.45);
+}
+.settingsPanel .csSelect {
+  flex: 0 1 var(--set-control-w);
+  min-width: 0;
+  height: var(--set-field-h);
+  padding: 0 8px;
+  border: 1px solid var(--set-field-border);
+  background: var(--set-field-bg);
+  color: var(--cs-ink);
+  font: inherit;
+  font-size: 12px;
+  color-scheme: dark;
+}
+.settingsPanel .csSwatches { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+.settingsPanel .csSwatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.settingsPanel .csSwatch[aria-pressed="true"] {
+  border-color: var(--cs-surface);
+  box-shadow: 0 0 0 2px var(--sw);
+}
+.settingsPanel .csFootnote {
+  margin: 6px 2px 0;
+  font-size: 11.5px;
+  color: var(--cs-ink-3);
+}
+html:not(.csNoCompositorDesk) .settingsPanel .csNoCompositor { display: none; }
+html.csNoCompositorDesk .settingsPanel .csNeedsCompositor {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* The bar preview shows under Window too: its opacity sliders live there. */
+.settingsPanel .settingsBody[data-section="window"] .barPreview { display: block; }
+
+/* What this build doesn't have: supporter textures need an account. */
+.settingsPanel .settingsRow:has(.barTextureDropdownWrapper),
+.settingsPanel .settingsRow:has(.textureOffsetCheckbox),
+.settingsPanel .settingsToggle:has(.showSupporterColorsCheckbox),
+.a2toolsBadge {
+  display: none !important;
+}
+
+/* Footer. */
+.settingsPanel .settingsFooter { border-top-color: var(--cs-card-line); }

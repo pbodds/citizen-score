@@ -7,7 +7,7 @@ edition = "2024"
 # Required because this crate declares more than one binary: without it
 # `cargo run` (and therefore `npm run tauri dev`) cannot tell which one is the
 # app and refuses to start.
-default-run = "a2plus"
+default-run = "citizen-score"
 
 [lib]
 name = "a2tools_dps_meter_lib"
@@ -64,7 +64,7 @@ desktop = [
 # Both binaries are declared rather than left to auto-discovery, so adding the
 # second one cannot quietly change which target `tauri build` bundles.
 [[bin]]
-name = "a2plus"
+name = "citizen-score"
 path = "src/main.rs"
 required-features = ["desktop"]
 

@@ -3,7 +3,7 @@
   "name": "World Timers",
   "version": "1.0.0",
   "apiVersion": 2,
-  "author": "A2Tools Plus (from A2 Tools' Event Timers)",
+  "author": "Citizen Score",
   "description": "Event, scheduled boss and field boss timers. Field boss countdowns start the moment this meter sees one die, from respawn times it learns off the in-game map; bosses on your current map are marked, and alerts reach the desktop.",
   "permissions": [
     "storage",

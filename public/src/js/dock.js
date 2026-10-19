@@ -1,4 +1,4 @@
-// A2Tools Plus: the docked panels. The meter's main window hosts the Pet Map
+// Citizen Score: the docked panels. The meter's main window hosts the Pet Map
 // (plus-souls) and World Timers (plus-timers) plugins below the DPS list, each
 // opened from its header icon, one at a time. Both run from the start, hidden
 // when closed, so timers keep counting and alerts keep coming.
@@ -19,7 +19,7 @@
     { id: "plus-souls", btn: ".petMapBtn" },
     { id: "plus-timers", btn: ".timersBtn" },
   ];
-  const OPEN_KEY = "a2plus.dock.open";
+  const OPEN_KEY = "citizen.dock.open";
 
   // The panel area, under the header: the DPS list stays the meter, a panel
   // opens beneath it.
@@ -50,7 +50,7 @@
     const allowed = (permission) => !!manifest?.permissions?.includes(permission);
     const send = (msg) => frame?.contentWindow?.postMessage({ a2: 1, ...msg }, "*");
 
-    const CURSOR_KEY = `a2plus.dock.cursor.${id}`;
+    const CURSOR_KEY = `citizen.dock.cursor.${id}`;
     let run = null;
     let delivered = 0;
     const saveCursor = () => {

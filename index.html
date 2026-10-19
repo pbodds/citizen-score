@@ -5,13 +5,13 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1" />
-    <title>A2Tools DPS Meter</title>
+    <title>Citizen Score</title>
     <script src="/src/js/settingsBootstrap.js"></script>
     <link
       href="/src/styles.css"
       rel="stylesheet"
       type="text/css" />
-    <link href="/src/plus.css" rel="stylesheet" type="text/css" />
+    <link href="/src/citizen.css" rel="stylesheet" type="text/css" />
     <!--
       Webfonts, bundled (public/vendor/fonts), loaded without blocking
       first paint: the media="print" swap applies them once they load, so
@@ -458,6 +458,7 @@
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-account" aria-controls="settingsSection-account" aria-selected="false" tabindex="-1" data-section="account"><i data-lucide="circle-user" aria-hidden="true"></i><span data-i18n="settings.account.title">A2 Tools Account</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-meter" aria-controls="settingsSection-meter" aria-selected="false" tabindex="-1" data-section="meter"><i data-lucide="gauge" aria-hidden="true"></i><span data-i18n="settings.meterSettings">Meter Settings</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-appearance" aria-controls="settingsSection-appearance" aria-selected="false" tabindex="-1" data-section="appearance"><i data-lucide="palette" aria-hidden="true"></i><span data-i18n="settings.appearance">Appearance</span></button>
+                <button class="settingsNavItem" type="button" role="tab" id="settingsTab-window" aria-controls="settingsSection-window" aria-selected="false" tabindex="-1" data-section="window"><i data-lucide="app-window" aria-hidden="true"></i><span>Window</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-streaming" aria-controls="settingsSection-streaming" aria-selected="false" tabindex="-1" data-section="streaming"><i data-lucide="cast" aria-hidden="true"></i><span data-i18n="settings.streamOverlay.title">Streaming</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-keybinds" aria-controls="settingsSection-keybinds" aria-selected="false" tabindex="-1" data-section="keybinds"><i data-lucide="keyboard" aria-hidden="true"></i><span data-i18n="settings.keybinds">Keybinds</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-plugins" aria-controls="settingsSection-plugins" aria-selected="false" tabindex="-1" data-section="plugins"><i data-lucide="puzzle" aria-hidden="true"></i><span data-i18n="settings.plugins.title">Plugins</span></button>
@@ -776,42 +777,6 @@
                   </div>
                   <div class="settingsRow settingsRowInput">
                     <div class="settingsInfo">
-                      <div class="settingsLabel" data-i18n="settings.windowOpacity.label" title="How see-through the meter's background is. Bars and text stay as they are." data-i18n-title="settings.tips.windowOpacity">Background opacity</div>
-                    </div>
-                    <div class="settingsRangeInline">
-                      <input
-                        id="windowOpacityInput"
-                        class="settingsRange windowOpacityInput"
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        value="40"
-                        aria-label="Background opacity"
-                        data-i18n-aria-label="settings.windowOpacity.label" />
-                      <div class="settingsValue windowOpacityValue">40%</div>
-                    </div>
-                  </div>
-                  <div class="settingsRow settingsRowInput">
-                    <div class="settingsInfo">
-                      <div class="settingsLabel" data-i18n="settings.titleOpacity.label" title="How see-through the meter's title bar is, apart from the background under it. Until you move it, it follows the background." data-i18n-title="settings.tips.titleOpacity">Title bar opacity</div>
-                    </div>
-                    <div class="settingsRangeInline">
-                      <input
-                        id="titleOpacityInput"
-                        class="settingsRange titleOpacityInput"
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        value="40"
-                        aria-label="Title bar opacity"
-                        data-i18n-aria-label="settings.titleOpacity.label" />
-                      <div class="settingsValue titleOpacityValue">40%</div>
-                    </div>
-                  </div>
-                  <div class="settingsRow settingsRowInput">
-                    <div class="settingsInfo">
                       <div class="settingsLabel" data-i18n="settings.meterOpacity.label" title="How solid the coloured damage bars are." data-i18n-title="settings.tips.meterOpacity">Bar opacity</div>
                     </div>
                     <div class="settingsRangeInline">
@@ -904,6 +869,162 @@
                     </div>
                   </div>
                 </div>
+              </section>
+              <section class="settingsSection" id="settingsSection-window" role="tabpanel" aria-labelledby="settingsTab-window" data-section="window" hidden>
+                <h2 class="settingsSectionTitle">Window</h2>
+                <p class="csSectionLead">Where the meter sits, how it floats over the game, and how it looks on your desktop.</p>
+                <h3 class="csGroupTitle">Placement</h3>
+                <div class="settingsGroupBody csCard">
+                  <div class="settingsRow csSnapRow">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Snap to</div>
+                      <div class="csHint">Pick a spot and the meter moves there, and stays there as it grows or shrinks. The middle of the grid is the centre; click the chosen spot again to move freely.</div>
+                    </div>
+                    <div class="csSnapGrid" role="group" aria-label="Snap to"><button type="button" class="csSnapCell" data-corner="top-left" aria-label="Top left" title="Top left"></button><button type="button" class="csSnapCell" data-corner="top" aria-label="Top" title="Top"></button><button type="button" class="csSnapCell" data-corner="top-right" aria-label="Top right" title="Top right"></button><button type="button" class="csSnapCell" data-corner="left" aria-label="Left" title="Left"></button><button type="button" class="csSnapCell" data-corner="center" aria-label="Centre" title="Centre"></button><button type="button" class="csSnapCell" data-corner="right" aria-label="Right" title="Right"></button><button type="button" class="csSnapCell" data-corner="bottom-left" aria-label="Bottom left" title="Bottom left"></button><button type="button" class="csSnapCell" data-corner="bottom" aria-label="Bottom" title="Bottom"></button><button type="button" class="csSnapCell" data-corner="bottom-right" aria-label="Bottom right" title="Bottom right"></button></div>
+                  </div>
+                  <div class="settingsRow settingsRowSelect csNeedsCompositor">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Monitor</div>
+                      <div class="csHint">The screen to snap to.</div>
+                    </div>
+                    <select class="csSelect csMonitorSelect" aria-label="Monitor"><option value="">The one it's on</option></select>
+                  </div>
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Edge gap</div>
+                      <div class="csHint">Space between the meter and the screen's edges (bars excluded).</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input class="settingsRange csSnapGapInput" type="range" min="0" max="64" step="2" value="12" aria-label="Edge gap" data-unit="px" />
+                      <div class="settingsValue csSnapGapInputValue">12px</div>
+                    </div>
+                  </div>
+                </div>
+                <h3 class="csGroupTitle">Behaviour</h3>
+                <div class="settingsGroupBody csCard">
+                  <label class="settingsToggle" title="Stays above other windows, the game included.">
+                    <span class="settingsToggleLabel settingsLabel">Keep on top<span class="csHint">Stays above other windows, the game included.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csOnTopCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="Follows you from workspace to workspace.">
+                    <span class="settingsToggleLabel settingsLabel">Show on every workspace<span class="csHint">Follows you from workspace to workspace.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csPinCheckbox csNeedsCompositor" />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                </div>
+                <h3 class="csGroupTitle">Look</h3>
+                <div class="settingsGroupBody csCard">
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel" data-i18n="settings.windowOpacity.label" title="How see-through the meter's background is. Bars and text stay as they are." data-i18n-title="settings.tips.windowOpacity">Background opacity</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input
+                        id="windowOpacityInput"
+                        class="settingsRange windowOpacityInput"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value="40"
+                        aria-label="Background opacity"
+                        data-i18n-aria-label="settings.windowOpacity.label" />
+                      <div class="settingsValue windowOpacityValue">40%</div>
+                    </div>
+                  </div>
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel" data-i18n="settings.titleOpacity.label" title="How see-through the meter's title bar is, apart from the background under it. Until you move it, it follows the background." data-i18n-title="settings.tips.titleOpacity">Title bar opacity</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input
+                        id="titleOpacityInput"
+                        class="settingsRange titleOpacityInput"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value="40"
+                        aria-label="Title bar opacity"
+                        data-i18n-aria-label="settings.titleOpacity.label" />
+                      <div class="settingsValue titleOpacityValue">40%</div>
+                    </div>
+                  </div>
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Interface scale</div>
+                      <div class="csHint">Size of everything in the meter window.</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input class="settingsRange csScaleInput" type="range" min="80" max="150" step="5" value="100" aria-label="Interface scale" data-unit="%" />
+                      <div class="settingsValue csScaleInputValue">100%</div>
+                    </div>
+                  </div>
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Corner rounding</div>
+                      <div class="csHint">How round the meter's corners are.</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input class="settingsRange csRadiusInput" type="range" min="0" max="18" step="1" value="8" aria-label="Corner rounding" data-unit="px" />
+                      <div class="settingsValue csRadiusInputValue">8px</div>
+                    </div>
+                  </div>
+                  <div class="settingsRow settingsRowInput">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Panel height</div>
+                      <div class="csHint">Height of the Pet map and World timers panels under the meter.</div>
+                    </div>
+                    <div class="settingsRangeInline">
+                      <input class="settingsRange csDockHeightInput" type="range" min="320" max="760" step="20" value="470" aria-label="Panel height" data-unit="px" />
+                      <div class="settingsValue csDockHeightInputValue">470px</div>
+                    </div>
+                  </div>
+                  <div class="settingsRow">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Accent colour</div>
+                      <div class="csHint">Highlights, switches and the active section.</div>
+                    </div>
+                    <div class="csSwatches" role="group" aria-label="Accent colour"><button type="button" class="csSwatch" data-accent="#5fb4ff" style="--sw:#5fb4ff" aria-label="Sky" title="Sky"></button><button type="button" class="csSwatch" data-accent="#9be7d8" style="--sw:#9be7d8" aria-label="Mint" title="Mint"></button><button type="button" class="csSwatch" data-accent="#8f8cff" style="--sw:#8f8cff" aria-label="Iris" title="Iris"></button><button type="button" class="csSwatch" data-accent="#ff8fb1" style="--sw:#ff8fb1" aria-label="Rose" title="Rose"></button><button type="button" class="csSwatch" data-accent="#ffb35f" style="--sw:#ffb35f" aria-label="Amber" title="Amber"></button><button type="button" class="csSwatch" data-accent="#7fdc6f" style="--sw:#7fdc6f" aria-label="Lime" title="Lime"></button><button type="button" class="csSwatch" data-accent="#e5e7eb" style="--sw:#e5e7eb" aria-label="Silver" title="Silver"></button></div>
+                  </div>
+                </div>
+                <h3 class="csGroupTitle csNeedsCompositor">Desktop effects <span class="csBadge">Hyprland</span></h3>
+                <div class="settingsGroupBody csCard csNeedsCompositor">
+                  <label class="settingsToggle" title="Frosted glass behind the see-through background.">
+                    <span class="settingsToggleLabel settingsLabel">Blur behind<span class="csHint">Frosted glass behind the see-through background.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csBlurCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="The compositor's shadow around the window.">
+                    <span class="settingsToggleLabel settingsLabel">Drop shadow<span class="csHint">The compositor's shadow around the window.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csShadowCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="The compositor's coloured border.">
+                    <span class="settingsToggleLabel settingsLabel">Window border<span class="csHint">The compositor's coloured border.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csBorderCheckbox" />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="Slide and fade when the window opens, moves and closes.">
+                    <span class="settingsToggleLabel settingsLabel">Animations<span class="csHint">Slide and fade when the window opens, moves and closes.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csAnimCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                </div>
+                <p class="csFootnote csNoCompositor">Monitor, workspaces and desktop effects need Hyprland; this desktop only supports Keep on top and the look settings.</p>
               </section>
               <section class="settingsSection" id="settingsSection-streaming" role="tabpanel" aria-labelledby="settingsTab-streaming" data-section="streaming" hidden>
                 <h2 class="settingsSectionTitle" data-i18n="settings.streamOverlay.title">Streaming</h2>
@@ -1204,33 +1325,6 @@
               </div>
             </div>
             <div class="settingsFooter">
-              <div class="settingsFooterLinks">
-                <button class="discordButton" type="button">
-                  <span class="discordIcon" aria-hidden="true">
-                    <svg viewBox="0 0 126.644 96" role="img" focusable="false" aria-hidden="true">
-                      <path d="M81.15,0c-1.2376,2.1973-2.3489,4.4704-3.3591,6.794-9.5975-1.4396-19.3718-1.4396-28.9945,0-.985-2.3236-2.1216-4.5967-3.3591-6.794-9.0166,1.5407-17.8059,4.2431-26.1405,8.0568C2.779,32.5304-1.6914,56.3725.5312,79.8863c9.6732,7.1476,20.5083,12.603,32.0505,16.0884,2.6014-3.4854,4.8998-7.1981,6.8698-11.0623-3.738-1.3891-7.3497-3.1318-10.8098-5.1523.9092-.6567,1.7932-1.3386,2.6519-1.9953,20.281,9.547,43.7696,9.547,64.0758,0,.8587.7072,1.7427,1.3891,2.6519,1.9953-3.4601,2.0457-7.0718,3.7632-10.835,5.1776,1.97,3.8642,4.2683,7.5769,6.8698,11.0623,11.5419-3.4854,22.3769-8.9156,32.0509-16.0631,2.626-27.2771-4.496-50.9172-18.817-71.8548C98.9811,4.2684,90.1918,1.5659,81.1752.0505l-.0252-.0505ZM42.2802,65.4144c-6.2383,0-11.4159-5.6575-11.4159-12.6535s4.9755-12.6788,11.3907-12.6788,11.5169,5.708,11.4159,12.6788c-.101,6.9708-5.026,12.6535-11.3907,12.6535ZM84.3576,65.4144c-6.2637,0-11.3907-5.6575-11.3907-12.6535s4.9755-12.6788,11.3907-12.6788,11.4917,5.708,11.3906,12.6788c-.101,6.9708-5.026,12.6535-11.3906,12.6535Z"/>
-                    </svg>
-                  </span>
-                  <span data-i18n="settings.discord">Discord</span>
-                </button>
-                <button
-                  type="button"
-                  class="a2toolsButton"
-                  onclick="window.javaBridge?.openBrowser?.('https://A2Tools.app')">
-                  A2Tools.app
-                </button>
-                <button class="supportButton" type="button">
-                  <span class="supportIcon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M10 2v2"/>
-                      <path d="M14 2v2"/>
-                      <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>
-                      <path d="M6 2v2"/>
-                    </svg>
-                  </span>
-                  <span data-i18n="support.button">Support Me</span>
-                </button>
-              </div>
               <button class="quitButton" type="button" data-i18n="settings.quit">Quit</button>
             </div>
           </div>
@@ -1367,173 +1461,6 @@
         <div class="updateStatusText" id="updateStatusText" style="display:none"></div>
       </div>
     </div>
-    <div class="discordPromo" id="discordPromo" aria-hidden="true">
-      <div
-        class="discordPromoCard"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="discordPromoTitle">
-        <button
-          class="discordPromoClose"
-          type="button"
-          data-i18n-aria-label="discordPromo.close"
-          aria-label="Close">
-          ×
-        </button>
-        <div class="discordPromoTitle" id="discordPromoTitle" data-i18n="discordPromo.title">New: Discord activity</div>
-        <div class="discordPromoText" data-i18n="discordPromo.text">Let friends see your character, class, level and server, and the boss or dungeon you're in, right in your Discord status.</div>
-        <img class="discordPromoPreview" src="./assets/discord-presence.png" alt="" />
-        <label class="discordPromoToggle">
-          <input type="checkbox" class="discordPromoCheckbox" checked />
-          <span data-i18n="settings.discord.activity">Show what I'm playing in Discord</span>
-        </label>
-        <div class="discordPromoHint" data-i18n="discordPromo.hint">Uses the Discord app on this PC; no account needed. You can change this any time in Settings.</div>
-        <button class="discordPromoDone" type="button" data-i18n="discordPromo.done">Done</button>
-      </div>
-    </div>
-    <div class="discordPromo partyPromo" id="partyPromo" aria-hidden="true">
-      <div class="discordPromoCard" role="dialog" aria-modal="true" aria-labelledby="partyPromoTitle">
-        <button class="discordPromoClose partyPromoClose" type="button" data-i18n-aria-label="discordPromo.close" aria-label="Close">×</button>
-        <div class="discordPromoTitle" id="partyPromoTitle" data-i18n="partyPromo.title">New: see A2Tools users in your party</div>
-        <div class="discordPromoText" data-i18n="partyPromo.text">Party members who also use A2Tools get a small A2 tag beside their name, and you get one beside yours on their meter.</div>
-        <label class="discordPromoToggle">
-          <input type="checkbox" class="partyPromoCheckbox" checked />
-          <span data-i18n="settings.partyPresence">Show A2Tools users in my party</span>
-        </label>
-        <div class="discordPromoHint" data-i18n="partyPromo.hint">Anyone in your party who uses A2Tools will be able to see that you use a third-party meter. Only hashes of character names and servers are sent. You can change this any time in Settings.</div>
-        <button class="discordPromoDone partyPromoDone" type="button" data-i18n="discordPromo.done">Done</button>
-      </div>
-    </div>
-    <div class="discordPromo accountPromo" id="accountPromo" aria-hidden="true">
-      <div
-        class="discordPromoCard"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="accountPromoTitle">
-        <button
-          class="discordPromoClose accountPromoClose"
-          type="button"
-          data-i18n-aria-label="accountPromo.close"
-          aria-label="Close">
-          ×
-        </button>
-        <div class="discordPromoTitle" id="accountPromoTitle" data-i18n="accountPromo.title">Keep your boss fights on a2tools.app</div>
-        <div class="discordPromoText" data-i18n="accountPromo.text">Create a free account or sign in, and every boss fight is saved online: a link to share each one, your logs on any device, and your place on the leaderboard.</div>
-        <label class="discordPromoToggle">
-          <input type="checkbox" class="accountPromoCheckbox" checked />
-          <span data-i18n="settings.account.autoUpload">Upload boss fights automatically</span>
-        </label>
-        <div class="discordPromoHint" data-i18n="accountPromo.hint">Other players' names stay masked, and training dummies are never uploaded. You can change this any time in Settings.</div>
-        <div class="accountPromoCodeBox" style="display:none">
-          <div class="discordPromoHint" data-i18n="settings.account.codePrompt">Approve this code in your browser:</div>
-          <div class="accountPromoCode"></div>
-        </div>
-        <div class="discordPromoHint accountPromoState"></div>
-        <div class="accountPromoActions">
-          <button class="accountPromoLater" type="button" data-i18n="accountPromo.later">Not now</button>
-          <button class="discordPromoDone accountPromoSignIn" type="button" data-i18n="accountPromo.signIn">Sign in</button>
-        </div>
-      </div>
-    </div>
-    <div class="supportModal" id="supportModal" aria-hidden="true">
-      <div
-        class="supportModalCard"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="supportModalTitle">
-        <button
-          class="supportModalClose"
-          type="button"
-          data-i18n-aria-label="support.aria.close"
-          aria-label="Close">
-          ×
-        </button>
-        <div class="supportModalTitle" id="supportModalTitle" data-i18n="support.title">
-          在爱发电支持作者
-        </div>
-        <div class="supportQrContainer">
-          <img
-            class="supportQrImage"
-            src="/src/assets/afdian.png"
-            alt="Afdian QR code" />
-        </div>
-        <p class="supportPerks" data-i18n="support.perks">Every $5 gives you 12 months of supporter perks, up to 2 years per payment. Use the code from your A2 Tools account page in your Ko-fi message, or the same email on Patreon.</p>
-        <p class="supportLinksHint" data-i18n="support.linksHint">Ko-fi, Patreon, Afdian and PayPal open their site in your browser. The crypto buttons copy an address.</p>
-        <div class="supportActions">
-          <button
-            class="supportIconButton supportPrimaryButton"
-            type="button"
-            data-support="afdian"
-            data-url="https://afdian.com/a/hiddencube"
-            data-i18n-aria-label="support.aria.afdian"
-            aria-label="Afdian">
-            <span class="supportLabel">爱发电</span>
-            <span class="supportIcon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.5 2 5 13h5l-1.5 9L19 10h-5.5L13.5 2z" fill="currentColor"/></svg></span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="patreon"
-            data-url="https://www.patreon.com/hiddencube"
-            data-i18n-aria-label="support.aria.patreon"
-            aria-label="Patreon">
-            <span class="supportLabel">Patreon</span>
-            <span class="supportIcon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="14.5" cy="9.5" r="6.5" fill="currentColor"/><rect x="3" y="3" width="3.2" height="18" rx="0.6" fill="currentColor"/></svg></span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="wechat"
-            data-qr="wechat"
-            data-i18n-aria-label="support.aria.wechat"
-            aria-label="WeChat">
-            <span class="supportLabel" data-i18n="support.label.wechat">微信</span>
-            <span class="supportIcon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4c-3.87 0-7 2.69-7 6 0 1.9 1.03 3.59 2.62 4.69L4 19l3.66-1.85A8.4 8.4 0 0 0 9 17c3.87 0 7-2.69 7-6s-3.13-7-7-7z" fill="currentColor"/><path d="M16.5 10.5c3.04 0 5.5 2.01 5.5 4.5 0 1.42-.79 2.69-2.02 3.52L20.5 22l-2.79-1.41c-.39.08-.79.12-1.21.12-3.04 0-5.5-2.01-5.5-4.5s2.46-4.5 5.5-4.5z" fill="currentColor" opacity="0.78"/></svg></span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="paypal"
-            data-url="https://www.paypal.me/taengoo"
-            data-i18n-aria-label="support.aria.paypal"
-            aria-label="PayPal">
-            <span class="supportLabel">PayPal</span>
-            <span class="supportIcon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 3.2h7.2c3.2 0 5.3 1.9 4.9 4.7-.42 2.85-2.8 4.58-6.1 4.58h-2.4l-.75 4.35H5.9L7.2 3.2z" fill="currentColor"/><path d="M9.3 5.6h4.05c1.3 0 2.05.74 1.83 1.82-.22 1.13-1.2 1.84-2.49 1.84H8.55L9.3 5.6z" fill="currentColor" opacity="0.55"/><path d="M10.55 9.05h2.52c1.95 0 3.2 1.14 2.93 2.86-.3 1.92-1.95 3.12-4.19 3.12h-2.38l.56-3.18h2.2c.75 0 1.23-.4 1.33-1 .1-.56-.3-.93-1.02-.93h-2.15l.2-.87z" fill="#0b2f63" opacity="0.45"/></svg></span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="btc"
-            data-copy="1GexKhgVZPYRqpfCKydXLoNUXRRRUoAUwT"
-            data-i18n-aria-label="support.aria.btc"
-            aria-label="BTC">
-            <span class="supportLabel">BTC</span>
-            <span class="supportIcon">₿</span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="eth"
-            data-copy="0x38F0bc371A563A24eCa6034cFf77eB6173c7e3e7"
-            data-i18n-aria-label="support.aria.eth"
-            aria-label="ETH">
-            <span class="supportLabel">ETH</span>
-            <span class="supportIcon">Ξ</span>
-          </button>
-          <button
-            class="supportIconButton"
-            type="button"
-            data-support="usdc"
-            data-copy="0xA9571Fc95666350f6DFFB8Fb80ee27eE7db46b56"
-            data-i18n-aria-label="support.aria.usdc"
-            aria-label="USDC">
-            <span class="supportLabel">USDC</span>
-            <span class="supportIcon">＄</span>
-          </button>
-        </div>
-        <div class="supportCopyStatus" role="status" aria-live="polite"></div>
-      </div>
-    </div>
     <script src="/src/js/tauriBridge.js?v=202b2"></script>
     <script src="/src/js/battleTime.js"></script>
     <script src="/src/js/ttk.js"></script>
@@ -1551,5 +1478,6 @@
     <script src="/src/js/core.js?v=2018a"></script>
     <script src="/src/js/pluginSettings.js"></script>
     <script src="/src/js/dock.js"></script>
+    <script src="/src/js/citizen.js"></script>
   </body>
 </html>

@@ -152,7 +152,7 @@ const SORTS = {
   left: (a, b) => a.rank - b.rank,
 };
 
-// A2Tools Plus: a pet's monsters, zones and maps as one lowercase string, in
+// Citizen Score: a pet's monsters, zones and maps as one lowercase string, in
 // English and the meter's language, so a search finds pets by where they drop.
 const placeCache = new Map();
 function placesOf(id) {
@@ -167,7 +167,7 @@ function placesOf(id) {
 }
 
 function render() {
-  // A2Tools Plus: every pet whose souls the game says drop somewhere, synced
+  // Citizen Score: every pet whose souls the game says drop somewhere, synced
   // or not, so the map finds any pet.
   const ids = new Set([...Object.keys(state.levels), ...Object.keys(state.points), ...Object.keys(PET_SOURCES)]);
   // Special pets come at their highest level and take no souls, so they are

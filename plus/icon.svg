@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Citizen Score: a gauge over three rising bars, on a deep slate tile. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2433"/>
+      <stop offset="1" stop-color="#0b0f17"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#5fb4ff"/>
+      <stop offset="1" stop-color="#9be7d8"/>
+    </linearGradient>
+  </defs>
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="url(#tile)"/>
+  <rect x="48.5" y="48.5" width="927" height="927" rx="207.5" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="6"/>
+  <path d="M232 600a280 280 0 0 1 560 0" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width="56" stroke-linecap="round"/>
+  <path d="M232 600a280 280 0 0 1 455-218" fill="none" stroke="url(#accent)" stroke-width="56" stroke-linecap="round"/>
+  <rect x="352" y="600" width="72" height="168" rx="20" fill="#5fb4ff" fill-opacity=".55"/>
+  <rect x="476" y="520" width="72" height="248" rx="20" fill="#5fb4ff" fill-opacity=".8"/>
+  <rect x="600" y="436" width="72" height="332" rx="20" fill="url(#accent)"/>
+</svg>

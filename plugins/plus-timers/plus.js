@@ -1,4 +1,4 @@
-// World Timers+ (A2Tools Plus): what this meter sees itself, on top of Event
+// World Timers+ (Citizen Score): what this meter sees itself, on top of Event
 // Timers' shared feed.
 //
 // - A field boss this meter sees die (a2.on("bossKill")) starts its countdown

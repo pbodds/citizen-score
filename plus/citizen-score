@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Citizen Score: launcher and upkeep for the checkout in ~/Work/citizen-score.
+# Usage: citizen-score [start]   start detached (or do nothing if already running)
+#        citizen-score stop | restart
+#        citizen-score build     build the checkout
+#        citizen-score install   install the build to /opt/citizen-score (asks via polkit)
+#        citizen-score sync      pull upstream's latest, rebase the fork on it, build, install
+#        citizen-score log       follow the log
+repo="$HOME/Work/citizen-score"
+bin=/opt/citizen-score/citizen-score
+log="${XDG_STATE_HOME:-$HOME/.local/state}/citizen-score.log"
+mkdir -p "$(dirname "$log")"
+
+# Settings, history and pet counts from before the rename (com.a2plus.meter)
+# move over once.
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+if [ ! -d "$data/com.citizenscore.meter" ] && [ -d "$data/com.a2plus.meter" ]; then
+  cp -a "$data/com.a2plus.meter" "$data/com.citizenscore.meter"
+fi
+
+running() { pgrep -x citizen-score >/dev/null; }
+
+build() {
+  cd "$repo" || exit 1
+  mkdir -p public/i18n public/data public/src/data
+  cp -r src/data/i18n/* public/i18n/
+  cp src/data/skill_icons.json src/data/dot_skill_ids.json public/data/
+  cp src/data/skill_icons.json src/data/dot_skill_ids.json public/src/data/
+  npm ci --silent &&
+    # Offline: none of the upstream services (account, uploads, supporter
+    # roster, Discord, Send Logs, updater) are compiled in.
+    mise exec rust -- npx tauri build --no-bundle -- --no-default-features --features desktop &&
+    mise exec rust -- cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin a2tools-hotkeys
+}
+
+install_build() {
+  pkexec "$repo/plus/install-root.sh" "$repo"
+}
+
+case "${1:-start}" in
+  stop)    pkill -x citizen-score; exit 0 ;;
+  restart) "$0" stop; sleep 1; exec "$0" start ;;
+  build)   build ;;
+  install) install_build ;;
+  sync)
+    cd "$repo" || exit 1
+    git fetch upstream || exit 1
+    if ! git rebase upstream/main; then
+      echo "Rebase hit a conflict: fix it in $repo (git status), then 'git rebase --continue' and 'citizen-score build && citizen-score install'."
+      exit 1
+    fi
+    build && install_build && echo "Synced to upstream $(git rev-parse --short upstream/main). Restart with: citizen-score restart" ;;
+  log)     exec tail -f "$log" ;;
+  start)
+    if running; then echo "Citizen Score already running."; exit 0; fi
+    [ -x "$bin" ] || { echo "Not installed: citizen-score build && citizen-score install"; exit 1; }
+    if ! getcap "$bin" | grep -q cap_net_raw=ep; then
+      notify-send "Citizen Score" "Packet capture permission missing: reinstalling to grant it"
+      install_build >>"$log" 2>&1 ||
+        notify-send -u critical "Citizen Score" "Packet capture not granted; the meter won't see combat"
+    fi
+    if command -v uwsm-app >/dev/null; then
+      setsid -f uwsm-app -- "$bin" >>"$log" 2>&1 </dev/null
+    else
+      setsid -f "$bin" >>"$log" 2>&1 </dev/null
+    fi
+    echo "Citizen Score started (log: $log). Safe to close this terminal." ;;
+  *) sed -n '2,9p' "$0"; exit 1 ;;
+esac

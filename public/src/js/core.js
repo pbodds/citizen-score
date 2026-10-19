@@ -2672,7 +2672,7 @@ class DpsApp {
     // and the next start agree.
     const wasClassic = this.safeGetSetting(this.storageKeys.betaUi) === "false";
     this.setBetaUi(true, { persist: wasClassic && syncBackend });
-    // A2Tools Plus: Slim unless Standard was picked.
+    // Citizen Score: Slim unless Standard was picked.
     const storedSlimMode = this.safeGetSetting(this.storageKeys.slimMode) !== "false";
     this.setSlimMode(storedSlimMode, { persist: false });
     this.setMainPlayerNamesBold(storedMainPlayerNamesBold, { persist: false });

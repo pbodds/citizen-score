@@ -1279,7 +1279,7 @@ async fn show_update_window(
     let msg = format!("A new update is available!\n\nCurrent: {}\nLatest: {}\n\nDownload and install now?", current, latest);
 
     let accepted = tokio::task::spawn_blocking(move || {
-        platform::dialog::ask_yes_no("A2Tools - Update Available", &msg)
+        platform::dialog::ask_yes_no("Citizen Score - Update Available", &msg)
     }).await.unwrap_or(false);
 
     if accepted {
@@ -1292,7 +1292,7 @@ async fn show_update_window(
                 // Show error dialog
                 let _ = tokio::task::spawn_blocking(move || {
                     platform::dialog::show_error(
-                        "A2Tools - Update Error",
+                        "Citizen Score - Update Error",
                         &format!("Download failed: {}\n\nPlease download manually.", e),
                     );
                 }).await;
@@ -1810,7 +1810,7 @@ fn open_details_on_monitor_inner(
         tauri::WebviewUrl::App("index.html".into()),
     )
     .initialization_script("window.__A2_VIEW__ = 'details';")
-    .title("A2Tools DPS Meter — Details")
+    .title("Citizen Score — Details")
     .decorations(false)
     .transparent(false)
     // Intentional: the point of this window is to stay readable on a second
@@ -2141,7 +2141,7 @@ fn build_settings_window(app: &tauri::AppHandle) -> Result<(), String> {
     // Injected before any page script. WebviewUrl::App is a path, so a ?query
     // gets percent-encoded — this is the one channel that is reliable.
     .initialization_script(SETTINGS_WINDOW_SCRIPT)
-    .title("A2Tools DPS Meter — Settings")
+    .title("Citizen Score — Settings")
     .decorations(false)
     .transparent(false)
     // Matches Details: the overlay itself is always-on-top, so a settings window
@@ -2391,7 +2391,7 @@ fn open_fight_window(app: &tauri::AppHandle, label: &str) -> Result<(), String> 
         tauri::WebviewUrl::App("index.html".into()),
     )
     .initialization_script("window.__A2_VIEW__ = 'details';")
-    .title("A2Tools DPS Meter — Fight")
+    .title("Citizen Score — Fight")
     .decorations(false)
     .transparent(false)
     .always_on_top(true)
@@ -2417,7 +2417,7 @@ fn open_history_window_inner(app: &tauri::AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("index.html".into()),
     )
     .initialization_script("window.__A2_VIEW__ = 'history';")
-    .title("A2Tools DPS Meter — Battle History")
+    .title("Citizen Score — Battle History")
     .decorations(false)
     .transparent(false)
     .always_on_top(true)
@@ -2457,7 +2457,7 @@ fn open_details_windowed(app: &tauri::AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("index.html".into()),
     )
     .initialization_script("window.__A2_VIEW__ = 'details';")
-    .title("A2Tools DPS Meter — Details")
+    .title("Citizen Score — Details")
     .decorations(false)
     .transparent(false)
     .always_on_top(true)
@@ -2991,12 +2991,12 @@ pub fn run() {
 
             let resource_dir = app.path().resource_dir()
                 .unwrap_or_else(|_| std::path::PathBuf::from("."));
-            // A2Tools Plus: installed as /opt/a2plus/{a2plus,data,plugins},
+            // Citizen Score: installed as /opt/citizen-score/{citizen-score,data,plugins},
             // the data sits next to the executable.
             let exe_dir = std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf()))
                 .unwrap_or_else(|| std::path::PathBuf::from("."));
             let candidate_dirs = [
-                exe_dir.join("data"),                             // A2Tools Plus: /opt/a2plus/data
+                exe_dir.join("data"),                             // Citizen Score: /opt/citizen-score/data
                 resource_dir.join("data"),                        // production: resources/data
                 resource_dir.join("_up_").join("src").join("data"), // production: resources/_up_/src/data (from ../src/data)
                 resource_dir.join("..").join("src").join("data"), // dev: src-tauri/../src/data
@@ -3536,6 +3536,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_app_version,
+            crate::citizen_window::citizen_window,
+            crate::citizen_window::citizen_window_caps,
             get_hotkey_status,
             crate::plugins::plugin_list,
             crate::plugins::plugin_set_dev_mode,

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "A2Tools Plus",
+  "productName": "Citizen Score",
   "version": "2.0.70",
-  "identifier": "com.a2plus.meter",
+  "identifier": "com.citizenscore.meter",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "A2Tools Plus",
+        "title": "Citizen Score",
         "width": 400,
         "height": 300,
         "decorations": false,

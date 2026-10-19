@@ -9,6 +9,7 @@
     <div class="viewTabs" role="tablist">
       <button type="button" class="viewTab" data-view="pets" role="tab" aria-selected="true">All pets</button>
       <button type="button" class="viewTab" data-view="areas" role="tab" aria-selected="false">Best areas</button>
+      <button type="button" class="viewTab" data-view="map" role="tab" aria-selected="false">Map</button>
     </div>
     <div class="searchRow">
       <input type="search" class="search" placeholder="Search pets, monsters or zones" aria-label="Search pets" spellcheck="false" />
@@ -35,11 +36,28 @@
       <p class="areaNote"></p>
       <ol class="areaList"></ol>
     </section>
+    <section class="mapView">
+      <div class="mapBar">
+        <div class="chips mapPick" role="group" aria-label="Map"></div>
+      </div>
+      <div class="mapBar mapBar2">
+        <span class="mapFocus" hidden>Only <strong class="mapFocusName"></strong> <button type="button" class="mapFocusClear" title="Show every pet">×</button></span>
+        <label class="option mapKib"><input type="checkbox" class="mapKibToggle" checked /> <span class="kibIcon" aria-hidden="true"></span> Kibelisks</label>
+        <span class="mapLegend" aria-label="Heat: fewer to more souls per kill"><span>fewer</span><i></i><span>more souls / kill</span></span>
+      </div>
+      <div class="mapStage">
+        <canvas class="mapCanvas"></canvas>
+        <div class="mapTip" hidden></div>
+      </div>
+      <p class="mapNote"></p>
+    </section>
     <p class="foot">Click a pet to see where its souls drop. ☆ pins a pet to the top, and the pet you last picked up a soul for shows first for 30 minutes. Double-click a name to rename it. Souls per level are 5, 25 and 75 (the first is inferred).</p>
     <script src="/_sdk/a2.js"></script>
     <script src="pets.js"></script>
     <script src="sources.js"></script>
     <script src="plugin.js"></script>
     <script src="areas.js"></script>
+    <script src="mapdata.js"></script>
+    <script src="map.js"></script>
   </body>
 </html>

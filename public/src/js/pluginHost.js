@@ -71,7 +71,7 @@
       if (!allowed("feed:boss-timers")) throw new Error('the plugin lacks the "feed:boss-timers" permission');
       return invoke("plugin_boss_follow", { server: Number(server), bosses: (Array.isArray(bosses) ? bosses : []).map(String) });
     },
-    // A2Tools Plus: the map you are on and the field bosses seen killed
+    // Citizen Score: the map you are on and the field bosses seen killed
     // this run (permission "events:zone").
     localWorld: () => {
       if (!allowed("events:zone")) throw new Error('the plugin lacks the "events:zone" permission');
@@ -122,7 +122,7 @@
       showToast(String(text));
       return true;
     },
-    // A2Tools Plus: the alert as a desktop notification too, over the game.
+    // Citizen Score: the alert as a desktop notification too, over the game.
     desktopNotify: ([title, body]) => {
       if (!allowed("notify")) throw new Error('the plugin lacks the "notify" permission');
       return invoke("plugin_desktop_notify", { title: String(title), body: String(body ?? "") });

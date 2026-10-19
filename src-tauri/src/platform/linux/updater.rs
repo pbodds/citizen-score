@@ -95,7 +95,7 @@ fn manager() -> Option<Manager> {
 
 /// Only a meter a package manager installed updates itself.
 pub fn supported() -> bool {
-    // A2Tools Plus updates from its own checkout (a2plus sync), never from
+    // Citizen Score updates from its own checkout (citizen-score sync), never from
     // upstream's packages, which would replace the pacman-installed meter.
     false
 }

@@ -14,7 +14,7 @@
 //   a2.on("bossMap", ({ map, bosses }) => ...) a map the player just opened, its field bosses as
 //                                              a2.bossTimers gives them (permission
 //                                              "feed:boss-timers", meter 2.0.65 on)
-//   A2Tools Plus (permission "events:zone"):
+//   Citizen Score (permission "events:zone"):
 //   a2.on("zone", ({ map, openWorld }) => ...) the map you are on, at each zone load
 //   a2.on("bossKill", ({ boss, npc, diedAt }) => ...)  a field boss this meter saw die
 //                                              (boss: world-map id, diedAt: unix seconds)
