@@ -106,12 +106,12 @@ windows = { version = "0.59", features = [
     "Win32_System_Memory",
     "Win32_Security",
     "Win32_Security_Authorization",
-    # DPAPI, for encrypting the account token at rest.
+    # DPAPI (upstream's account token, removed): drop once a Windows build confirms nothing else needs it.
     "Win32_Security_Cryptography",
     "Win32_System_Threading",
     # Npcap's folder on the DLL search path (SetDllDirectoryW).
     "Win32_System_LibraryLoader",
-    # ShellExecuteExW, to run Npcap's installer elevated (its struct needs HKEY).
+    # ShellExecuteExW and HKEY (upstream ran Npcap's installer elevated; removed): as above.
     "Win32_System_Registry",
     # Screenshots: the folder picker (IFileOpenDialog) and the Pictures folder.
     "Win32_System_Com",
