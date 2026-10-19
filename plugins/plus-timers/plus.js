@@ -130,7 +130,9 @@ function showBannerWidget() {
 }
 els.dismiss.addEventListener("click", closeBannerWidget);
 a2.on("widget-message", (msg) => {
-  if (msg?.name !== "banner" || !msg?.data?.dismiss) return;
+  if (msg?.name !== "banner") return;
+  if (msg.data?.ready && lines.length) a2.widgets.send("banner", { banner: true, lines: [...lines] }).catch(() => {});
+  if (!msg.data?.dismiss) return;
   clearBanner();
   closeBannerWidget();
 });

@@ -123,6 +123,9 @@ pub async fn plugin_widget_open(
             crate::platform::window::show_on_top_without_focus(&widget);
         }
         apply_lock(&widget, is_locked(&app, &id));
+        if id == "plus-timers" && name == "banner" {
+            crate::citizen_window::place_banner(&widget);
+        }
         return Ok(());
     }
     if open_widgets(&app, &id).len() >= MAX_WIDGETS {
@@ -163,6 +166,10 @@ pub async fn plugin_widget_open(
     });
     if let Some((x, y)) = place {
         let _ = widget.set_position(tauri::PhysicalPosition::new(x, y));
+    }
+    // Citizen Score: the alert banner goes to a corner of another monitor.
+    if id == "plus-timers" && name == "banner" {
+        crate::citizen_window::place_banner(&widget);
     }
     Ok(())
 }

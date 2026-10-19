@@ -165,6 +165,52 @@ pub fn citizen_window(app: tauri::AppHandle, op: String, args: Value) -> Result<
     }
 }
 
+/// World Timers' alert banner (a plugin widget): pinned, without blur, shadow
+/// or border, in the bottom-right corner of a monitor other than the focused
+/// one (where the game is), else the focused one. A window rule can't do this:
+/// the window takes its title only after Hyprland has mapped it. Waits for the
+/// window to be listed, off the caller's thread.
+pub fn place_banner(window: &tauri::WebviewWindow) {
+    if !hyprland() {
+        return;
+    }
+    let Ok(title) = window.title() else { return };
+    std::thread::spawn(move || {
+        let pid = std::process::id() as u64;
+        let mut client = None;
+        for _ in 0..40 {
+            client = hyprctl_json("clients").and_then(|list| {
+                list.as_array()?
+                    .iter()
+                    .find(|c| c["pid"].as_u64() == Some(pid) && c["title"].as_str() == Some(title.as_str()) && c["mapped"].as_bool() == Some(true))
+                    .cloned()
+            });
+            if client.is_some() {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        let Some(client) = client else { return };
+        let Some(address) = client["address"].as_str() else { return };
+        let target = format!("address:{address}");
+        for prop in ["no_blur", "no_shadow", "no_border"] {
+            let _ = dispatch(&format!(r#"hl.dsp.window.set_prop({{ prop = "{prop}", value = "1", window = "{target}" }})"#));
+        }
+        if client["pinned"].as_bool() != Some(true) {
+            let _ = dispatch(&format!(r#"hl.dsp.window.pin({{ window = "{target}" }})"#));
+        }
+        let Some(monitors) = hyprctl_json("monitors") else { return };
+        let Some(list) = monitors.as_array() else { return };
+        let monitor = list
+            .iter()
+            .filter(|m| m["focused"].as_bool() != Some(true))
+            .max_by_key(|m| m["x"].as_i64().unwrap_or(0))
+            .or_else(|| list.first());
+        let Some((x, y)) = monitor.and_then(|m| snap_target(m, pair(&client["size"]), "bottom-right", 24)) else { return };
+        let _ = dispatch(&format!(r#"hl.dsp.window.move({{ x = {x}, y = {y}, window = "{target}" }})"#));
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

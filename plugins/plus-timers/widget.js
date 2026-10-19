@@ -152,3 +152,5 @@ document.addEventListener("contextmenu", (e) => {
 });
 
 a2.ready();
+// The banner may open after its alert was sent: ask for the lines again.
+a2.widget.post({ ready: true }).catch(() => {});
