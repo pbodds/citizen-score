@@ -9,10 +9,9 @@
 // Resets are one moment on every Global server: 07:00 UTC.
 //
 // Field bosses respawn a while after each kill: their timers come from what
-// players' meters read off the in-game map, shared through a2tools.app
-// (a2.bossTimers, meter 2.0.65 on), fetched when the window opens and every
-// 15 minutes; a map the player opens themselves comes straight from their
-// meter (a2.on("bossMap")), and for each boss the newest word stands.
+// this meter reads off the in-game map when the player opens it
+// (a2.on("bossMap")) and from the kills it sees; a2.bossTimers, a shared feed,
+// is asked too and is empty here. For each boss the newest word stands.
 //
 // Alerts: each event or boss can sound an alert a set time before it starts,
 // once per showing, and another lead while AION2 is closed (to leave time to
@@ -43,7 +42,6 @@ const els = {
   fieldHead: $(".fieldHead"),
   fieldNote: $(".fieldNote"),
   field: $(".fieldList"),
-  fieldCredit: $(".fieldCredit"),
   soundLabel: $(".soundLabel"),
   sound: $(".sound"),
   testAlert: $(".testAlert"),
@@ -846,10 +844,6 @@ function renderHidden(shown) {
 // meter has reported yet.
 function renderField(now) {
   const words = ui();
-  // Timers from Aion 2 Timers (the shared feed marks them): credited, with a
-  // link to their site, wherever they show.
-  const fromA2t = fieldBosses().some((b) => fieldTimer(b.id)?.source === "a2t");
-  els.fieldCredit.hidden = !fromA2t;
   const fmt = clock();
   if (typeof a2.bossTimers !== "function") els.fieldNote.textContent = words.noFeed;
   else if (!serverId()) els.fieldNote.textContent = words.noServer;

@@ -1,17 +1,17 @@
-//! `a2t-probe` — a workbench for reversing packet structure.
+//! `cs-probe` — a workbench for reversing packet structure.
 //!
 //! The parser was built one opcode at a time by staring at hex. This is the tool
 //! that work wanted: it decodes a capture into plain packets (streams
 //! reassembled, LZ4 bundles expanded) and then lets you ask questions of it.
 //!
 //! ```text
-//! a2t-probe opcodes  <capture>                     what is in this capture
-//! a2t-probe find     <capture> --u32 110730120     where does this value appear
-//! a2t-probe find     <capture> --string Misti      ...or this text
-//! a2t-probe find     <capture> --hex 0F            ...or these bytes
-//! a2t-probe tables   <capture> --items items.json  item-id tables, slot-decoded
-//! a2t-probe dump     <capture> --opcode 45,36      annotated hexdump
-//! a2t-probe diff     <before> <after>              what changed between captures
+//! cs-probe opcodes  <capture>                     what is in this capture
+//! cs-probe find     <capture> --u32 110730120     where does this value appear
+//! cs-probe find     <capture> --string Misti      ...or this text
+//! cs-probe find     <capture> --hex 0F            ...or these bytes
+//! cs-probe tables   <capture> --items items.json  item-id tables, slot-decoded
+//! cs-probe dump     <capture> --opcode 45,36      annotated hexdump
+//! cs-probe diff     <before> <after>              what changed between captures
 //! ```
 //!
 //! **`diff` is the one that finds structure.** Take a capture, change one thing
@@ -27,10 +27,10 @@
 use std::collections::{HashMap, HashSet};
 use std::process::ExitCode;
 
-use a2tools_dps_meter_lib::capture::framing::{self, FrameKind};
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::read_varint;
-use a2tools_dps_meter_lib::share;
+use citizen_score_lib::capture::framing::{self, FrameKind};
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::read_varint;
+use citizen_score_lib::share;
 
 /// A packet as the parser would see it, with where it came from.
 struct Packet {
@@ -432,7 +432,7 @@ fn main() -> ExitCode {
                 }
             }
             println!(
-                "\nNarrow it: a2t-probe find <after> --u32 <value>  then  dump --packet N --at OFF"
+                "\nNarrow it: cs-probe find <after> --u32 <value>  then  dump --packet N --at OFF"
             );
         }
 
@@ -459,22 +459,22 @@ fn load_item_ids(path: &str) -> Option<HashSet<u32>> {
 }
 
 const USAGE: &str = "\
-a2t-probe — explore the structure of an AION 2 packet capture
+cs-probe — explore the structure of an AION 2 packet capture
 
-  a2t-probe opcodes <capture>
+  cs-probe opcodes <capture>
       What is in this capture: every leading opcode, packet count, mean size.
 
-  a2t-probe find <capture> (--u32 N | --string S | --hex BYTES) [--limit N] [--near N]
+  cs-probe find <capture> (--u32 N | --string S | --hex BYTES) [--limit N] [--near N]
       Where a value appears, with the bytes around each hit.
 
-  a2t-probe dump <capture> [--opcode 45,36] [--packet N] [--at OFFSET] [--near N]
+  cs-probe dump <capture> [--opcode 45,36] [--packet N] [--at OFFSET] [--near N]
       Annotated hexdump: each offset read as a varint, a u32 and a length-prefixed
       string at once, which is what makes a field obvious.
 
-  a2t-probe tables <capture> --items <_raw_items.json> [--limit N]
+  cs-probe tables <capture> --items <_raw_items.json> [--limit N]
       Item-id tables, with the tag byte before each id and the bytes after it.
 
-  a2t-probe diff <before> <after>
+  cs-probe diff <before> <after>
       Values present in one capture and not the other. Change ONE thing in game
       between the two and the field you are hunting falls out of this list.
 

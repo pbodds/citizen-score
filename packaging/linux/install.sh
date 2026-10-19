@@ -29,7 +29,7 @@ command -v setcap >/dev/null || { echo "setcap is missing: install libcap (libca
 
 stage=$(mktemp -d /opt/.citizen-score.XXXXXX)
 trap 'rm -rf "$stage"' EXIT
-install -m755 "$here/citizen-score" "$here/a2tools-hotkeys" "$stage/"
+install -m755 "$here/citizen-score" "$here/citizen-score-hotkeys" "$stage/"
 cp -r "$here/data" "$here/plugins" "$stage/"
 install -m644 "$here/icon.png" "$here/LICENSE" "$stage/"
 chown -R root:root "$stage"

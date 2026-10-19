@@ -2,15 +2,15 @@
 //!
 //! `share::preview` is the only place a user can inspect what sharing a fight
 //! would send, so the thing worth asserting is that it produces both files, that
-//! the slice is readable by `a2t-inspect`'s decoder, and that neither artifact
+//! the slice is readable by `cs-inspect`'s decoder, and that neither artifact
 //! carries a character name from the capture it was built from.
 //!
 //!   A2_REPLAY_CAPTURE=.../packets_20260815_183732.txt cargo test --test share_preview
 
-use a2tools_dps_meter_lib::capture::evidence_slice;
-use a2tools_dps_meter_lib::entity::details_context::TargetDetailsResponse;
-use a2tools_dps_meter_lib::entity::fight_record::FightRecord;
-use a2tools_dps_meter_lib::share;
+use citizen_score_lib::capture::evidence_slice;
+use citizen_score_lib::entity::details_context::TargetDetailsResponse;
+use citizen_score_lib::entity::fight_record::FightRecord;
+use citizen_score_lib::share;
 
 fn capture_path() -> Option<String> {
     match std::env::var("A2_REPLAY_CAPTURE") {
@@ -67,7 +67,7 @@ fn the_dry_run_writes_both_files_and_neither_holds_a_name() {
     let end = packets.last().unwrap().captured_at_ms;
     let record = record_spanning(start, end - start);
 
-    let out_dir = std::env::temp_dir().join("a2tools-share-preview-test");
+    let out_dir = std::env::temp_dir().join("cs-share-preview-test");
     let _ = std::fs::remove_dir_all(&out_dir);
 
     let result = share::preview(&record, std::slice::from_ref(&src), &out_dir)
@@ -106,7 +106,7 @@ fn the_dry_run_writes_both_files_and_neither_holds_a_name() {
         slice_bytes.len()
     );
 
-    let (records, _) = evidence_slice::decode(&slice_bytes).expect("a2t-inspect can read it");
+    let (records, _) = evidence_slice::decode(&slice_bytes).expect("cs-inspect can read it");
     assert!(!records.is_empty(), "the slice decoded to no records");
     // Records are framed packets and bundles; a bundle holds many kept packets,
     // so there are never more records than packets kept.
@@ -152,10 +152,10 @@ fn the_dry_run_writes_both_files_and_neither_holds_a_name() {
 
 /// Replay the capture far enough to learn who was in it.
 fn names_in(path: &std::path::Path) -> Vec<String> {
-    use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-    use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-    use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-    use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
+    use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+    use citizen_score_lib::capture::stream_processor::StreamProcessor;
+    use citizen_score_lib::combat::data_storage::DataStorage;
+    use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
     use std::collections::HashMap;
     use std::sync::Arc;
 
@@ -186,7 +186,7 @@ fn names_in(path: &std::path::Path) -> Vec<String> {
 #[test]
 fn a_fight_no_capture_covers_says_so_rather_than_producing_nothing() {
     let record = record_spanning(1_000, 5_000);
-    let out_dir = std::env::temp_dir().join("a2tools-share-preview-empty");
+    let out_dir = std::env::temp_dir().join("cs-share-preview-empty");
     let err = share::preview(&record, &[], &out_dir).unwrap_err();
     assert!(
         err.contains("Packet logging"),

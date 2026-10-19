@@ -1,8 +1,8 @@
 [package]
-name = "a2tools-dps-meter"
+name = "citizen-score"
 version = "2.0.70"
-description = "A2Tools DPS Meter - AION 2 real-time DPS overlay"
-authors = ["taengu"]
+description = "Citizen Score - AION 2 real-time DPS overlay"
+authors = ["taengu", "pbodds"]
 edition = "2024"
 # Required because this crate declares more than one binary: without it
 # `cargo run` (and therefore `npm run tauri dev`) cannot tell which one is the
@@ -10,7 +10,7 @@ edition = "2024"
 default-run = "citizen-score"
 
 [lib]
-name = "a2tools_dps_meter_lib"
+name = "citizen_score_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [features]
@@ -43,38 +43,31 @@ desktop = [
     "dep:zbus",
 ]
 
-# Both binaries are declared rather than left to auto-discovery, so adding the
-# second one cannot quietly change which target `tauri build` bundles.
+# Every binary is declared rather than left to auto-discovery, so adding one
+# cannot quietly change which target `tauri build` bundles.
 [[bin]]
 name = "citizen-score"
 path = "src/main.rs"
 required-features = ["desktop"]
 
-# The transparency tool from docs/PRIVACY.md: reads an Evidence Slice back and
-# prints what is in it. Kept outside src/bin/, which .gitignore excludes for
-# scratch debug binaries — this one has to ship in the public repo to be worth
-# anything.
 # Linux global hotkeys, in a process without the meter's capture permission
 # (platform::linux::hotkeys). Packaged next to the meter, never given caps.
 [[bin]]
-name = "a2tools-hotkeys"
-path = "tools/a2t_hotkeys.rs"
+name = "citizen-score-hotkeys"
+path = "tools/hotkeys_helper.rs"
 required-features = ["desktop"]
 
+# A workbench for reversing packet structure (developer tool).
 [[bin]]
-name = "a2t-probe"
-path = "tools/a2t_probe.rs"
+name = "cs-probe"
+path = "tools/cs_probe.rs"
 required-features = ["desktop"]
 
-
+# Reads an Evidence Slice back and prints what is in it (docs/PRIVACY.md).
+# Kept outside src/bin/, which .gitignore excludes for scratch debug binaries.
 [[bin]]
-name = "a2t-derive"
-path = "tools/a2t_derive.rs"
-required-features = ["desktop"]
-
-[[bin]]
-name = "a2t-inspect"
-path = "tools/a2t_inspect.rs"
+name = "cs-inspect"
+path = "tools/cs_inspect.rs"
 required-features = ["desktop"]
 
 [build-dependencies]

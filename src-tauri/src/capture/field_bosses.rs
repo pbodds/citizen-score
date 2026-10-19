@@ -1,7 +1,6 @@
 //! The respawning field bosses on open maps, by the NPC code their spawn
-//! names: the ones whose kills and HP milestones the meter shares
-//! (`boss_report.rs`). From the game's tables, as a2tools.app's
-//! `field_bosses.py` (tools/boss_timers/build_bosses.py) lists them.
+//! names: the ones whose kills and HP milestones the meter follows for World
+//! Timers. From the game's tables.
 
 /// (NPC code, world-map boss id) of each, sorted by NPC code.
 pub const FIELD_BOSSES: &[(i32, u32)] = &[
@@ -56,7 +55,7 @@ pub const FIELD_BOSSES: &[(i32, u32)] = &[
     (2600068, 2001), // Argo, the Spirit King
 ];
 
-/// The world-map boss id of a field boss's NPC code, the id a2tools.app
+/// The world-map boss id of a field boss's NPC code, the id the in-game map
 /// knows it by.
 pub fn world_map_id(code: i32) -> Option<u32> {
     FIELD_BOSSES.binary_search_by_key(&code, |&(npc, _)| npc).ok().map(|i| FIELD_BOSSES[i].1)

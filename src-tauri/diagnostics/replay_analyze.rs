@@ -10,10 +10,10 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::stream_assembler::StreamAssembler;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::capture::stream_assembler::StreamAssembler;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
 
 fn decode_hex(hex: &str) -> Vec<u8> {
     let h = hex.trim();

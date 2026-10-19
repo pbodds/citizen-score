@@ -345,13 +345,5 @@ html.csNoCompositorDesk .settingsPanel .csNeedsCompositor {
 /* The bar preview shows under Window too: its opacity sliders live there. */
 .settingsPanel .settingsBody[data-section="window"] .barPreview { display: block; }
 
-/* What this build doesn't have: supporter textures need an account. */
-.settingsPanel .settingsRow:has(.barTextureDropdownWrapper),
-.settingsPanel .settingsRow:has(.textureOffsetCheckbox),
-.settingsPanel .settingsToggle:has(.showSupporterColorsCheckbox),
-.a2toolsBadge {
-  display: none !important;
-}
-
 /* Footer. */
 .settingsPanel .settingsFooter { border-top-color: var(--cs-card-line); }

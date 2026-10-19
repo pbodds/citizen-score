@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn temporary_is_private_before_any_payload_and_replacement_preserves_mode() {
-        let dir = std::env::temp_dir().join(format!("a2t-private-temp-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("cs-private-temp-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("settings.json");

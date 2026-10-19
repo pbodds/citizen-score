@@ -958,14 +958,6 @@ async fn write_cached_icon(app: tauri::AppHandle, key: String, data: String) -> 
 
 
 
-// ── the private build ──────────────────────────────────────────────────────
-// Built without the `online` feature (`npm run build:offline`), the meter links
-// no network client and none of the code above that reaches a service: the
-// A2 Tools account and uploads, Discord activity, the stream overlay, Send Logs
-// to Dev, update checks and the updater. The pages still invoke these commands
-// by name, so each keeps its name here and says it is not in this build; the
-// pages ask `build_features` first and hide what is missing.
-
 #[tauri::command]
 fn open_url(url: String) {
     platform::shell::open_url(&url);
@@ -1840,8 +1832,8 @@ struct ScreenshotResult {
 /// that asked, so the Details window captures itself rather than whatever sits
 /// at the same offset from the meter. `include_meter` adds the whole meter
 /// window, for a tool window that cannot measure the meter itself. With
-/// `save_file`, also writes a PNG to `folder` (default: Pictures\A2Tools DPS
-/// Meter) named `filename`.
+/// `save_file`, also writes a PNG to `folder` (default: Pictures\Citizen
+/// Score) named `filename`.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 async fn capture_screenshot(

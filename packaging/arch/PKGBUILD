@@ -49,7 +49,7 @@ build() {
   # The release workflow packs the binaries its Linux job built
   # (CS_PREBUILT=1) rather than compiling them again.
   if [ -n "${CS_PREBUILT:-}" ] && [ -f src-tauri/target/release/citizen-score ] \
-     && [ -f src-tauri/target/release/a2tools-hotkeys ]; then
+     && [ -f src-tauri/target/release/citizen-score-hotkeys ]; then
     return 0
   fi
   # Files a clean checkout lacks (they are gitignored mirrors of src/data).
@@ -61,14 +61,14 @@ build() {
   npx tauri build --no-bundle -- --no-default-features --features desktop
   # The hotkeys helper, run without the meter's capture permission
   # (platform/linux/hotkeys.rs); the .install script gives caps to the meter only.
-  cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin a2tools-hotkeys
+  cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin citizen-score-hotkeys
 }
 
 package() {
   local root
   root="$(_root)"
   install -Dm755 "$root/src-tauri/target/release/citizen-score" "$pkgdir/usr/bin/citizen-score"
-  install -Dm755 "$root/src-tauri/target/release/a2tools-hotkeys" "$pkgdir/usr/bin/a2tools-hotkeys"
+  install -Dm755 "$root/src-tauri/target/release/citizen-score-hotkeys" "$pkgdir/usr/bin/citizen-score-hotkeys"
 
   install -d "$pkgdir/usr/lib/Citizen Score"
   cp -r "$root/src/data" "$pkgdir/usr/lib/Citizen Score/data"

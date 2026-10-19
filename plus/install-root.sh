@@ -7,10 +7,10 @@ set -euo pipefail
 src=${1:?usage: install-root.sh <checkout>}
 dest=/opt/citizen-score
 rel="$src/src-tauri/target/release"
-[ -x "$rel/citizen-score" ] && [ -x "$rel/a2tools-hotkeys" ] || { echo "not built: run citizen-score build first" >&2; exit 1; }
+[ -x "$rel/citizen-score" ] && [ -x "$rel/citizen-score-hotkeys" ] || { echo "not built: run citizen-score build first" >&2; exit 1; }
 stage=$(mktemp -d /opt/.citizen-score.XXXXXX)
 trap 'rm -rf "$stage"' EXIT
-install -m755 "$rel/citizen-score" "$rel/a2tools-hotkeys" "$stage/"
+install -m755 "$rel/citizen-score" "$rel/citizen-score-hotkeys" "$stage/"
 cp -r "$src/src/data" "$stage/data"
 cp -r "$src/plugins" "$stage/plugins"
 install -Dm644 "$src/src-tauri/icons/128x128.png" "$stage/icon.png"

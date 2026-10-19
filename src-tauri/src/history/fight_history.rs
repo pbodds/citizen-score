@@ -234,7 +234,7 @@ mod tests {
         assert!(is_plain_name("auto_36734_1759578598645"));
         assert!(is_plain_name("Skill_Icon_01.png"));
 
-        let dir = std::env::temp_dir().join(format!("a2t-history-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("cs-history-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let history = FightHistoryManager::new(dir.clone());
         std::fs::write(dir.join("keep.json"), b"{}").unwrap();

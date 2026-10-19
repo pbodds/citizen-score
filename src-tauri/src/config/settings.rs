@@ -244,7 +244,7 @@ mod tests {
     use std::time::Duration;
 
     fn fixture(name: &str) -> (std::path::PathBuf, Arc<Settings>) {
-        let dir = std::env::temp_dir().join(format!("a2t-settings-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("cs-settings-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         // A nonempty fixture avoids consulting any legacy user settings.

@@ -307,7 +307,7 @@ const createI18n = ({
   };
 
   // The instance's tier ({ key: "hard", label: "Hard" }), or null when it is
-  // not known. An instance id's last digit is its tier, as on a2tools.app:
+  // not known. An instance id's last digit is its tier:
   // Krao Cave is 600001-600004, Ferocious Horn Den 600091-600093. 1, 2 and 3
   // are Exploration, Conquest Normal and Conquest Hard; a dungeon with nine
   // ids (Deus Research Base, Shattered Arkanis) has levels instead; the older

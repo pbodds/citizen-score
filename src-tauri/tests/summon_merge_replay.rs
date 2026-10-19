@@ -9,13 +9,13 @@
 
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::combat::dps_calculator::DpsCalculator;
-use a2tools_dps_meter_lib::combat::ping_tracker::PingTracker;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
-use a2tools_dps_meter_lib::share::read_capture;
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::combat::dps_calculator::DpsCalculator;
+use citizen_score_lib::combat::ping_tracker::PingTracker;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::share::read_capture;
 
 const NYXIE: i64 = 13520;
 
@@ -119,7 +119,7 @@ fn other_players_spirits_merge_into_their_owner() {
 /// A Spiritmaster's spirits in an uploaded slice, as the log service derives
 /// it.
 ///
-/// `A2_SM_SLICE`: the slice of a2tools.app log `8iW_nvXE9po3RIVGrWgrxA`
+/// `A2_SM_SLICE`: the slice of uploaded log `8iW_nvXE9po3RIVGrWgrxA`
 /// (2026-10-10, Neglected Gadioton, Krao Cave). Five spirits spawned before
 /// the slice began, so nothing in it links them to their owner. Their damage
 /// carries the Spiritmaster's power scalars, and they cast 16xxxxxx skills,
@@ -132,7 +132,7 @@ fn spirits_spawned_before_the_slice_merge_into_their_owner() {
         return;
     };
     let slice = std::fs::read(path).unwrap();
-    let fight = a2tools_dps_meter_lib::rederive::derive_fight(
+    let fight = citizen_score_lib::rederive::derive_fight(
         &slice,
         include_str!("../../src/data/i18n/npcs/en.json"),
         include_str!("../../src/data/i18n/skills/en.json"),

@@ -7,10 +7,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::stream_assembler::StreamAssembler;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::capture::stream_assembler::StreamAssembler;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
 
 // Pre-lock signature gate (mirrors capture_dispatcher::COMBAT_SIGNATURES).
 const SIGS: &[&[u8]] = &[&[0x0E, 0x00, 0x36], &[0x06, 0x00, 0x36]];

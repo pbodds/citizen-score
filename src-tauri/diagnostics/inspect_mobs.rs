@@ -6,7 +6,7 @@
 // e.g.
 //   cargo run --bin inspect_mobs -- dump.txt 63558 2100002:19870 2100009:26951
 
-use a2tools_dps_meter_lib::capture::stream_processor::read_varint;
+use citizen_score_lib::capture::stream_processor::read_varint;
 
 fn hexval(b: u8) -> Option<u8> {
     match b {

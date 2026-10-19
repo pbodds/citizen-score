@@ -3,7 +3,7 @@
 //! Nothing here opens a socket. The dry run exists so that "we do not upload
 //! your character names" is a claim you can check rather than one you have to
 //! believe: it writes the exact two files an upload would send, into a folder it
-//! then opens for you, and `a2t-inspect` reads them back.
+//! then opens for you, and `cs-inspect` reads them back.
 //!
 //! The artifacts are deliberately separate:
 //!
@@ -13,7 +13,7 @@
 //!   the wire, except the name tokens, which every cut draws with its own key.
 //!   Both are written because the compressed one is what
 //!   gets sent and the uncompressed one is what is easy to check, and making
-//!   people choose between those would defeat the point. (`a2t-inspect` reads
+//!   people choose between those would defeat the point. (`cs-inspect` reads
 //!   either.)
 //! - `<fight>.upload.json` — the derived summary. **No field of it holds a
 //!   character name**, not even your own; participants are identified by
@@ -418,7 +418,7 @@ pub fn preview(
     let compressed = compress_slice(&encoded)?;
 
     std::fs::create_dir_all(out_dir).map_err(|e| e.to_string())?;
-    // Both: the `.a2es` is what `a2t-inspect` reads, the `.gz` is what an
+    // Both: the `.a2es` is what `cs-inspect` reads, the `.gz` is what an
     // upload would put on the wire, cut the same way. Not byte for byte: every
     // cut blinds names with its own random key (`slice_key`), so an upload's
     // tokens differ from the preview's; everything else is the same. Writing

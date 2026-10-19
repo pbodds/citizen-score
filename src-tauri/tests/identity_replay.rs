@@ -17,10 +17,10 @@
 
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
 
 const STALE_NAME: &str = "Aveline";
 

@@ -1,4 +1,4 @@
-//! `a2t-inspect` — read an Evidence Slice back and show what is in it.
+//! `cs-inspect` — read an Evidence Slice back and show what is in it.
 //!
 //! The point of this tool is that you should not have to take our word for it.
 //! `docs/PRIVACY.md` claims a slice carries no character names and only packets
@@ -6,9 +6,9 @@
 //! against the file the meter would actually upload.
 //!
 //! ```text
-//! a2t-inspect <file.a2es>              summary, opcode histogram, blind map
-//! a2t-inspect <file.a2es> --strings    every printable run in the content
-//! a2t-inspect <file.a2es> --find NAME  search the decompressed content
+//! cs-inspect <file.a2es>              summary, opcode histogram, blind map
+//! cs-inspect <file.a2es> --strings    every printable run in the content
+//! cs-inspect <file.a2es> --find NAME  search the decompressed content
 //! ```
 //!
 //! It decompresses before searching. A slice keeps the game's LZ4 bundles, so
@@ -18,9 +18,9 @@
 use std::collections::HashMap;
 use std::process::ExitCode;
 
-use a2tools_dps_meter_lib::capture::evidence_slice::{self, ALLOWED_OPCODES};
-use a2tools_dps_meter_lib::capture::framing::{self, FrameKind};
-use a2tools_dps_meter_lib::capture::stream_processor::read_varint;
+use citizen_score_lib::capture::evidence_slice::{self, ALLOWED_OPCODES};
+use citizen_score_lib::capture::framing::{self, FrameKind};
+use citizen_score_lib::capture::stream_processor::read_varint;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -193,11 +193,11 @@ fn main() -> ExitCode {
 }
 
 const USAGE: &str = "\
-a2t-inspect — show what is inside an A2Tools Evidence Slice
+cs-inspect — show what is inside an Evidence Slice
 
-  a2t-inspect <file.a2es>              summary, opcode histogram, blind map
-  a2t-inspect <file.a2es> --strings    every printable run in the content
-  a2t-inspect <file.a2es> --find NAME  search the content; exits 1 if found
+  cs-inspect <file.a2es>              summary, opcode histogram, blind map
+  cs-inspect <file.a2es> --strings    every printable run in the content
+  cs-inspect <file.a2es> --find NAME  search the content; exits 1 if found
 
 A slice is what the meter uploads when you share a fight. It is not a packet
 capture: see docs/PRIVACY.md for the difference, which matters.";

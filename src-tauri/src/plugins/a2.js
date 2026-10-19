@@ -31,11 +31,10 @@
 //   await a2.storage.get("state")              the plugin's own saved data
 //   await a2.storage.set("state", value)
 //   a2.notify("Text")                          a short message in the plugin's window
-//   await a2.bossTimers(serverId)              a server's field boss timers, as players' meters
-//                                              share them through a2tools.app (permission
-//                                              "feed:boss-timers", meter 2.0.65 on): { bosses: { <id>:
+//   await a2.bossTimers(serverId)              a server's shared field boss timers (permission
+//                                              "feed:boss-timers"): { bosses: { <id>:
 //                                              { state, upSince, nextSpawn, reportedAt, confirmed } } }
-//                                              or null
+//                                              or null; Citizen Score shares none, so null
 //   await a2.followBosses(serverId, ["101006", ...])  follow these field bosses live (permission
 //                                              "feed:boss-timers", meter 2.0.68 on): each change comes at
 //                                              once as a2.on("bossLive", (m) => ...), m being

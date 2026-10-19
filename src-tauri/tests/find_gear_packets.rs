@@ -1,12 +1,11 @@
 //! Hunting for the packets that carry equipped gear.
 //!
-//! The official armory is rate-limited, regional, and — by its own module's
-//! account in `A2-Tools/src/armory.py` — cannot report which specialisation node
-//! a player picked. A packet-sourced cache would not have those limits, but only
+//! The official armory is rate-limited, regional, and cannot report which
+//! specialisation node a player picked. A packet-sourced cache would not have those limits, but only
 //! if we can find where the game states a character's equipment.
 //!
-//! Rather than guess at opcodes, this uses the item database A2-Tools already
-//! has (`data/gamedata/_raw_items.json`, ~3.2 MB of real item ids) as an oracle:
+//! Rather than guess at opcodes, this uses an item database extracted from the
+//! game (`_raw_items.json`, ~3.2 MB of real item ids) as an oracle:
 //! decode every packet in a capture, look for little-endian u32s that are known
 //! item ids, and report which opcodes carry clusters of them. A packet holding
 //! six known item ids at once is an equipment record; one holding a single hit
@@ -17,12 +16,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use a2tools_dps_meter_lib::capture::framing::{self, FrameKind};
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::read_varint;
-use a2tools_dps_meter_lib::share;
+use citizen_score_lib::capture::framing::{self, FrameKind};
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::read_varint;
+use citizen_score_lib::share;
 
-/// Item ids from the A2-Tools game data dump.
+/// Item ids from the game data dump.
 fn load_item_ids(path: &str) -> HashSet<u32> {
     let text = std::fs::read_to_string(path).expect("item db");
     let value: serde_json::Value = serde_json::from_str(&text).expect("item db is json");

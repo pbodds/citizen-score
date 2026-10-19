@@ -20,11 +20,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::evidence_slice::{self, CapturedPacket, NameMap};
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::capture::evidence_slice::{self, CapturedPacket, NameMap};
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
 
 fn decode_hex(hex: &str) -> Option<Vec<u8>> {
     let b = hex.as_bytes();
@@ -388,7 +388,7 @@ fn which_dropped_opcodes_carry_damage() {
 }
 
 fn leading_opcode(packet: &[u8]) -> Option<[u8; 2]> {
-    let li = a2tools_dps_meter_lib::capture::stream_processor::read_varint(packet, 0);
+    let li = citizen_score_lib::capture::stream_processor::read_varint(packet, 0);
     if li.length <= 0 {
         return None;
     }
@@ -408,7 +408,7 @@ fn allowed(packet: &[u8]) -> bool {
 
 /// Frame a buffer into plain packets, decompressing bundles. Returns consumed.
 fn expand_all(buffer: &[u8], out: &mut Vec<Vec<u8>>) -> usize {
-    use a2tools_dps_meter_lib::capture::framing::{self, FrameKind};
+    use citizen_score_lib::capture::framing::{self, FrameKind};
     fn inner(buf: &[u8], out: &mut Vec<Vec<u8>>, depth: usize) {
         if depth > 4 {
             return;
@@ -443,7 +443,7 @@ fn expand_all(buffer: &[u8], out: &mut Vec<Vec<u8>>) -> usize {
 /// The named-participant check above only covers names the *meter resolved*.
 /// That is not the whole risk: a capture also carries bystanders' names, legion
 /// names and public chat, none of which the meter ever puts in a map. Running
-/// `a2t-inspect --strings` on an early slice found a stranger's name and a
+/// `cs-inspect --strings` on an early slice found a stranger's name and a
 /// recruitment message sitting in the clear, which is what prompted the
 /// structural blinding pass.
 ///
@@ -521,7 +521,7 @@ fn no_readable_text_from_the_capture_survives_into_the_slice() {
     }
 
     // A second, deliberately non-circular check. The strings below are real
-    // content `a2t-inspect --strings` found in an early slice: players who were
+    // content `cs-inspect --strings` found in an early slice: players who were
     // never in the party, and public chat. Naming them here means this test
     // still guards the specific defect even if the structural rule above is
     // later loosened, since it does not depend on that rule's own predicate.
@@ -595,7 +595,7 @@ fn length_prefixed_strings(buf: &[u8]) -> Vec<String> {
 /// without ever reading a clock.
 #[test]
 fn the_server_derives_the_same_fight_from_an_uploaded_slice() {
-    use a2tools_dps_meter_lib::rederive;
+    use citizen_score_lib::rederive;
 
     let Some(path) = capture_path() else { return };
     let lines = read_capture(&path);

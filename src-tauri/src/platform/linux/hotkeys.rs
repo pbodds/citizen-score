@@ -7,13 +7,13 @@
 //! change them; GNOME 48 and later do the same. Hyprland's portal ignores the
 //! suggested keys: the user binds each shortcut in their config with the
 //! `global` dispatcher, by the id `hyprctl globalshortcuts` lists
-//! (`com.a2tools.dps-meter:reset`), as docs/linux.md shows. With no portal, or
+//! (`com.citizenscore.meter:reset`), as docs/linux.md shows. With no portal, or
 //! one without GlobalShortcuts, there are no hotkeys, as before.
 //!
 //! The keys are only suggestions here, so the meter's own Keybinds settings
 //! decide what is suggested; the desktop decides what is bound.
 //!
-//! The portal work runs in a helper process, `a2tools-hotkeys`, never in the
+//! The portal work runs in a helper process, `citizen-score-hotkeys`, never in the
 //! meter. The portal reads a caller's /proc/<pid>/root, and Linux refuses that
 //! to a program lacking the capabilities its target holds: the packaged meter
 //! holds cap_net_raw (for capture) and the portal does not, so every call the
@@ -34,9 +34,9 @@ const PORTAL: &str = "org.freedesktop.portal.Desktop";
 const PORTAL_PATH: &str = "/org/freedesktop/portal/desktop";
 const SHORTCUTS: &str = "org.freedesktop.portal.GlobalShortcuts";
 /// The app id the shortcuts are filed under: Tauri's identifier. The .deb and
-/// .rpm name their desktop file after the product ("A2Tools DPS Meter"),
+/// .rpm name their desktop file after the product ("Citizen Score"),
 /// which is no valid app id, so the identifier is registered instead.
-const APP_ID: &str = "com.a2tools.dps-meter";
+const APP_ID: &str = "com.citizenscore.meter";
 
 /// The shortcut ids, stable: Hyprland users bind them by name.
 const RELOAD: &str = "reset";
@@ -48,7 +48,7 @@ const LOCK: &str = "lock";
 pub const DEFAULT_ON: bool = false;
 
 /// The helper's file name, next to the meter's own executable.
-const HELPER: &str = "a2tools-hotkeys";
+const HELPER: &str = "citizen-score-hotkeys";
 
 pub struct HotkeyManager {
     /// The running helper, if any.
@@ -319,10 +319,10 @@ fn listen(
     let activations = portal.receive_signal("Activated")?;
 
     let mut options: HashMap<&str, Value> = HashMap::new();
-    options.insert("handle_token", Value::from("a2t_session_req"));
-    options.insert("session_handle_token", Value::from("a2t_session"));
+    options.insert("handle_token", Value::from("cs_session_req"));
+    options.insert("session_handle_token", Value::from("cs_session"));
     let (code, results) =
-        request(&connection, &portal, "a2t_session_req", "CreateSession", &(options,), || {})?;
+        request(&connection, &portal, "cs_session_req", "CreateSession", &(options,), || {})?;
     if code != 0 {
         return Err(zbus::Error::Failure(format!("CreateSession refused ({code})")));
     }
@@ -344,11 +344,11 @@ fn listen(
         })
         .collect();
     let mut bind_options: HashMap<&str, Value> = HashMap::new();
-    bind_options.insert("handle_token", Value::from("a2t_bind_req"));
+    bind_options.insert("handle_token", Value::from("cs_bind_req"));
     let (code, bound) = request(
         &connection,
         &portal,
-        "a2t_bind_req",
+        "cs_bind_req",
         "BindShortcuts",
         &(&session_path, shortcuts, "", bind_options),
         || {},

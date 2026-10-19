@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "A2Tools DPS Meter",
+    "title": "Citizen Score",
     "display": {
       "dps": "DPS",
       "total": "DMG",
@@ -422,7 +422,7 @@
       "meterSaturation": "How strong the bars' colours are: lower for softer, higher for more vivid.",
       "bossNameSize": "Size of the boss or target name above the bars.",
       "partyStat": "The number beside each player's name, in the meter and in Details. Only your own party's members have one.",
-      "barTexture": "A pattern over the meter's bars. A thank-you for supporting A2 Tools.",
+      "barTexture": "A pattern over the meter's bars.",
       "textureOffset": "Each bar starts its texture at a different place, so the bars don't all look alike.",
       "trainingMode": "In Train mode, which dummies the Details window shows: all of them together, or only the one you hit hardest.",
       "allTargetsWindow": "In All Targets mode, the meter adds up every target hit within this time of the latest hit.",

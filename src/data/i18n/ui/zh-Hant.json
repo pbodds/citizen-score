@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "A2Tools DPS Meter",
+    "title": "Citizen Score",
     "display": {
       "dps": "DPS",
       "total": "DMG",
@@ -417,7 +417,7 @@
       "meterSaturation": "條形顏色的濃淡：調低更柔和，調高更鮮豔。",
       "bossNameSize": "條形上方首領或目標名稱的大小。",
       "partyStat": "在計量器和詳細資訊中顯示在每位玩家名稱旁的數字。只有你自己隊伍的成員才有。",
-      "barTexture": "為計量條加上紋理，感謝您對 A2 Tools 的支持。",
+      "barTexture": "為計量條加上紋理。",
       "textureOffset": "每條的紋理從不同位置開始，讓各條看起來不一樣。",
       "trainingMode": "訓練模式下詳細資料視窗顯示哪些木樁：全部一起，或只顯示你打得最多的那個。",
       "allTargetsWindow": "全部目標模式下，計量器彙總最後一次命中前這段時間內命中的所有目標。",

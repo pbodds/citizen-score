@@ -1,6 +1,6 @@
 # Plugins: design
 
-Status: 2026-10-12. Built: developer mode, the plugin window and SDK, decoders, the signed catalog and install/update/remove in Settings, the plugins repo with CI. Not yet: the a2tools.app Plugins section.
+Status: the plugin window and SDK, decoders, widgets and developer mode are built, and Citizen Score docks its two plugins (Pet Map, World Timers) in the meter's window. Upstream also built a signed catalog for installing reviewed plugins from its servers; Citizen Score left it out, so plugins come bundled with the meter or load from a folder in developer mode.
 
 ## Why
 
@@ -11,10 +11,8 @@ One player already had an AI add boss timers to a copy of the meter "in one shot
 ## Goals
 
 - Plugins add features without growing the core: the core gains a plugin host, a small API and a Plugins tab, nothing per plugin.
-- Only reviewed plugins install from the app, and the app itself enforces that (signatures), not just the menu.
-- A plugin can only do what its manifest declares, and the user sees that in plain words before installing.
+- A plugin can only do what its manifest declares.
 - Plugins see only the player's own character. Never other players' names or identities.
-- Easy to find, read and submit: one public repo, and a Plugins section on a2tools.app.
 
 ## Non-goals (for now)
 
@@ -26,10 +24,9 @@ One player already had an AI add boss timers to a copy of the meter "in one shot
 ## Overview
 
 ```
-A2Tools-Plugins repo (GitHub)          a2tools.app/plugins          Meter: Settings → Plugins
-  plugins/pet-souls/...   ──merge──▶   catalog built from     ◀──   Browse / Install / Update
-  plugins/boss-timers/...   CI signs   plugins/index.json            verifies signature,
-                            + publishes  (on the CDN)                 runs plugin in a sandbox
+plugins/<id>/  (bundled next to the meter)  ──▶  Meter: plugin host
+<any folder>   (developer mode)             ──▶    runs each plugin in a sandboxed frame,
+                                                    gives it only what its manifest permits
 ```
 
 ## What a plugin is
@@ -123,44 +120,11 @@ For pet souls, the opcode and field layout still have to be found in a capture (
 
 `app_data/plugins/<id>/` holds the installed bundle and `data/<character-key>.json`. Uninstall offers to keep or delete the data. Plugins never see each other's data.
 
-## Distribution and review
-
-**The plugins repo (`taengu/A2Tools-Plugins`, private for now, public later):** one folder per plugin under `plugins/`, plus `CONTRIBUTING.md` (how to build and submit) and the author docs.
-
-**Submitting:** a pull request adding or updating a plugin folder. CI checks it automatically:
-- manifest schema valid, `apiVersion` supported, version bumped on update;
-- permissions and decoders well formed; no strings in decoders; `self` present;
-- bundle size limit; no remote URLs in code; no minified or obfuscated code (reviewability);
-- a README and at least one screenshot.
-
-**Approval:** your review and merge. A review checklist lives in the repo (permissions match the purpose, decoders read only what they say, no attempts to escape the sandbox, data stays local).
-
-**Publishing (built):** on merge, `publish.yml` runs `tools/build_catalog.py`, which checks every plugin and writes `index.json` (format 1: id, name, version, apiVersion, description, author, permissions, source, and each file's SHA-256). It signs the index with the Ed25519 key in the `PLUGIN_SIGNING_KEY` secret (`index.json.sig`, hex) and uploads `plugins/<id>/<version>/<file>`, then the signature and index, to `cdn.a2tools.app/plugins/`. A published version is immutable: the workflow fails if a file changed under an existing version.
-
-**The meter's check (built, `src-tauri/src/plugins/catalog.rs`):** it embeds the public key, verifies `index.json`'s signature, and installs a plugin only if every file's SHA-256 matches the signed index, staging the files and swapping the folder in only when all of them match. A plugin from anywhere else will not install. (Today's app updater checks a hash from the manifest but has no signature; the same key could later sign `latest-v2.json` too.)
-
-**Authors without GitHub:** not supported at first; they can send files for you to add if it comes up.
-
 ## In the meter: Settings → Plugins
 
-- **Browse**: the catalog from the signed index, with name, description, author, and an install button.
-- **Install**: a dialog listing what the plugin can do, in plain words ("Read your pet soul pickups", "Show notifications", "Save its own data"), then Install / Cancel.
-- **Installed**: enable/disable, open its panel, update when a newer approved version exists (shown with any new permissions, which need agreeing to again), remove.
+- **Installed**: enable/disable, open its panel, remove.
+- **Check for updates**: reads every plugin folder again and reloads open plugin windows.
 - **Developer mode** (Advanced): "Load plugin folder…" runs a local, unsigned plugin for authors to build and test, always with an "Unreviewed plugin" banner. Off by default.
-
-## Website: a2tools.app/plugins
-
-Built from the same signed `index.json`, so the site and the app never disagree:
-
-- a list with search and categories (Timers, Tracking, Tools);
-- a page per plugin: screenshots, description, author, version and changelog, "What it can access" in plain words, "View source on GitHub", and "Install: Settings → Plugins in the meter" (optionally an `a2tools://plugins/<id>` link that opens the meter on it);
-- "Make a plugin": the author docs and how to submit.
-
-No uploads or review UI on the site: GitHub does that part.
-
-## The private offline build
-
-Recommendation: no plugin host at all in the offline build (it is behind the `online` feature), keeping that build's promise simple. Open question 2.
 
 ## Example plugins
 
@@ -170,14 +134,10 @@ Recommendation: no plugin host at all in the offline build (it is behind the `on
 
 ## Phases
 
-1. **Host and API, locally.** Sandbox host window, `a2` SDK, core events, storage, notify, decoders, developer mode. Prove it with the boss timer and pet soul plugins loaded from folders.
-2. **Distribution.** The plugins repo with CI checks, signing and publishing; the Plugins tab with browse, install, update and remove.
-3. **Website.** The a2tools.app Plugins section from `index.json`.
+1. **Host and API, locally.** Sandbox host window, `a2` SDK, core events, storage, notify, decoders, developer mode. Proved with the boss timer and pet soul plugins (done).
+2. **Docked panels.** Pet Map and World Timers open under the DPS list in the meter's own window (done, `public/src/js/dock.js`).
 
 ## Open questions
 
 1. Confirm the sandbox holds on WebView2 and WebKitGTK: no IPC from a sandboxed child frame.
-2. Offline build: no plugins (recommended), or locally installed signed plugins?
-3. Pet souls: which packets carry soul drops, pickups and current counts? Needs a capture made while picking up souls and while logging in.
-4. Plugin panels: their own small windows (like Details), or docked into the main meter window? Windows are simpler and isolate better.
-5. Who else can approve: just you, or named reviewers with merge rights on the plugins repo?
+2. Pet souls: which packets carry soul drops, pickups and current counts? Needs a capture made while picking up souls and while logging in.

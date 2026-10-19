@@ -16,13 +16,13 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::combat::dps_calculator::DpsCalculator;
-use a2tools_dps_meter_lib::combat::ping_tracker::PingTracker;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
-use a2tools_dps_meter_lib::share::read_capture;
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::combat::dps_calculator::DpsCalculator;
+use citizen_score_lib::combat::ping_tracker::PingTracker;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::share::read_capture;
 
 #[test]
 fn boss_mode_shows_bosses_only() {

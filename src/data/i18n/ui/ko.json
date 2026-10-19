@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "A2Tools DPS Meter",
+    "title": "Citizen Score",
     "display": {
       "dps": "DPS",
       "total": "DMG",
@@ -417,7 +417,7 @@
       "meterSaturation": "막대 색의 진하기입니다. 낮추면 부드럽게, 높이면 더 선명하게 보입니다.",
       "bossNameSize": "막대 위에 있는 보스 또는 대상 이름의 크기입니다.",
       "partyStat": "미터와 상세에서 각 플레이어 이름 옆에 표시되는 숫자입니다. 내 파티원에게만 표시됩니다.",
-      "barTexture": "미터 막대 위에 무늬를 입힙니다. A2 Tools를 후원해 주신 분들께 드리는 감사의 표시입니다.",
+      "barTexture": "미터 막대 위에 무늬를 입힙니다.",
       "textureOffset": "막대마다 질감이 다른 위치에서 시작해 막대들이 똑같아 보이지 않습니다.",
       "trainingMode": "훈련 모드에서 상세 정보 창이 보여 줄 허수아비입니다: 전부 함께, 또는 가장 많이 때린 하나만.",
       "allTargetsWindow": "전체 대상 모드에서 마지막 타격 전 이 시간 안에 맞힌 모든 대상을 합산합니다.",

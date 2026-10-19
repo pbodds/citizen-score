@@ -1244,10 +1244,8 @@ fn require(app: &tauri::AppHandle, id: &str, permission: &str) -> Result<(), Str
     if has { Ok(()) } else { Err(format!("the plugin lacks the {permission:?} permission")) }
 }
 
-/// A server's field boss timers, as players' meters reported them
-/// (a2tools.app's feed, `boss_report.rs`), for plugins with
-/// `feed:boss-timers`: the published file as it is, or None when the server
-/// has none yet. Kept a minute, so plugins asking often fetch it once.
+/// A server's shared field boss timers, for plugins with `feed:boss-timers`.
+/// Citizen Score shares nothing, so there are none: always None.
 #[tauri::command]
 pub async fn plugin_boss_timers(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, server: u32) -> Result<Option<Value>, String> {
     let id = window_plugin(&window, plugin.as_deref())?;
@@ -1260,7 +1258,9 @@ pub async fn plugin_boss_timers(app: tauri::AppHandle, window: tauri::WebviewWin
 
 
 async fn boss_timers(_app: &tauri::AppHandle, _server: u32) -> Result<Option<Value>, String> {
-    Err("this meter is built without network features".into())
+    // No shared feed: World Timers counts field bosses from what this meter
+    // sees (the in-game map and kills, `bossMap` and `bossKill` events).
+    Ok(None)
 }
 
 #[tauri::command]

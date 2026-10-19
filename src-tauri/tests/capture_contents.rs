@@ -9,7 +9,7 @@
 //! Diagnostic only — run it deliberately:
 //!   A2_REPLAY_CAPTURE=... cargo test --test capture_contents -- --ignored --nocapture
 
-use a2tools_dps_meter_lib::capture::framing::{walk, FrameKind};
+use citizen_score_lib::capture::framing::{walk, FrameKind};
 
 fn decode_hex(hex: &str) -> Option<Vec<u8>> {
     let b = hex.as_bytes();
@@ -107,7 +107,7 @@ fn what_is_in_a_capture() {
         };
         for p in &before {
             // Opcode sits just past the length varint.
-            let li = a2tools_dps_meter_lib::capture::stream_processor::read_varint(p, 0);
+            let li = citizen_score_lib::capture::stream_processor::read_varint(p, 0);
             if li.length > 0 {
                 let o = li.length as usize;
                 if o + 1 < p.len() {

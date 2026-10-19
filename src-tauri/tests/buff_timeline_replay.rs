@@ -26,17 +26,17 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::abnormal::{self, End, Instance, Record, Track};
-use a2tools_dps_meter_lib::capture::framing::{self, FrameKind};
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::{read_varint, StreamProcessor};
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::combat::dps_calculator::DpsCalculator;
-use a2tools_dps_meter_lib::combat::ping_tracker::PingTracker;
-use a2tools_dps_meter_lib::entity::fight_record::FightRecord;
-use a2tools_dps_meter_lib::entity::summon_resolver;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
-use a2tools_dps_meter_lib::share::read_capture;
+use citizen_score_lib::capture::abnormal::{self, End, Instance, Record, Track};
+use citizen_score_lib::capture::framing::{self, FrameKind};
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::{read_varint, StreamProcessor};
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::combat::dps_calculator::DpsCalculator;
+use citizen_score_lib::combat::ping_tracker::PingTracker;
+use citizen_score_lib::entity::fight_record::FightRecord;
+use citizen_score_lib::entity::summon_resolver;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::share::read_capture;
 use parking_lot::Mutex;
 
 /// One abnormal record of the capture, read on its own beside the meter.

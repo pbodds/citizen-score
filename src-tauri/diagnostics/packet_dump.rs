@@ -1,4 +1,4 @@
-// Standalone packet-capture diagnostic for A2Tools DPS Meter.
+// Standalone packet-capture diagnostic for Citizen Score.
 //
 // Purpose: after an AION 2 game update, the meter stops detecting packets.
 // The built-in packet logger only runs AFTER the combat port locks (which
@@ -26,8 +26,8 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use a2tools_dps_meter_lib::capture::captured_payload::CapturedPayload;
-use a2tools_dps_meter_lib::capture::pcap_capturer::PcapCapturer;
+use citizen_score_lib::capture::captured_payload::CapturedPayload;
+use citizen_score_lib::capture::pcap_capturer::PcapCapturer;
 use tokio::sync::mpsc;
 
 // Known protocol signatures (pre-update) we want to detect presence of.
@@ -182,12 +182,12 @@ async fn main() {
     println!(" Flow log:  {}", flow_path.display());
     let _ = writeln!(
         dump,
-        "# A2Tools raw packet dump {}\n# Format: TIMESTAMP_MS|SRCIP:SRCPORT->DSTIP:DSTPORT|DEV|TLS/PLAIN|LEN|HEX\n",
+        "# Citizen Score raw packet dump {}\n# Format: TIMESTAMP_MS|SRCIP:SRCPORT->DSTIP:DSTPORT|DEV|TLS/PLAIN|LEN|HEX\n",
         chrono::Local::now().format("%+")
     );
 
     println!("\n========================================================");
-    println!(" A2Tools DPS Meter — RAW packet capture (diagnostic)");
+    println!(" Citizen Score — RAW packet capture (diagnostic)");
     println!("========================================================");
     println!(" Dump file: {}", dump_path.display());
     println!(" 1. Make sure AION 2 is running.");

@@ -118,7 +118,7 @@ jobs:
           npm ci
           # The hotkeys helper first: tauri.linux.conf.json packs it next to
           # the meter (platform/linux/hotkeys.rs), without capabilities.
-          cargo build --release --manifest-path src-tauri/Cargo.toml $FEATURES --bin a2tools-hotkeys
+          cargo build --release --manifest-path src-tauri/Cargo.toml $FEATURES --bin citizen-score-hotkeys
           npx tauri build --bundles deb,rpm -- $FEATURES
       # Tauri's .rpm can only grant capture permission from a %post script,
       # which rpm-ostree (Bazzite and the other image-based Fedoras) runs
@@ -154,7 +154,7 @@ jobs:
           cp rpmbuild/RPMS/x86_64/*.rpm "out/citizen-score-${version}-1.x86_64.rpm"
           t="citizen-score-${version}-linux-x86_64"
           mkdir -p "$t"
-          cp $rel/citizen-score $rel/a2tools-hotkeys packaging/linux/install.sh LICENSE "$t/"
+          cp $rel/citizen-score $rel/citizen-score-hotkeys packaging/linux/install.sh LICENSE "$t/"
           cp src-tauri/icons/128x128.png "$t/icon.png"
           cp -r src/data plugins "$t/"
           tar -czf "out/$t.tar.gz" "$t"
@@ -162,10 +162,10 @@ jobs:
       - name: What is in them
         run: |
           dpkg-deb --info out/*.deb
-          dpkg-deb --contents out/*.deb | grep -q usr/bin/a2tools-hotkeys
+          dpkg-deb --contents out/*.deb | grep -q usr/bin/citizen-score-hotkeys
           dpkg-deb --contents out/*.deb | grep -q 'plugins/plus-timers/manifest.json'
           rpm -qp --filecaps out/*.rpm | grep cap_net_raw
-          rpm -qlp out/*.rpm | grep -qx /usr/bin/a2tools-hotkeys
+          rpm -qlp out/*.rpm | grep -qx /usr/bin/citizen-score-hotkeys
           ! ldd src-tauri/target/release/citizen-score | grep "not found"
       # The Arch job packs these rather than compiling them again.
       - uses: actions/upload-artifact@v7
@@ -173,7 +173,7 @@ jobs:
           name: linux-binaries
           path: |
             src-tauri/target/release/citizen-score
-            src-tauri/target/release/a2tools-hotkeys
+            src-tauri/target/release/citizen-score-hotkeys
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
@@ -247,7 +247,7 @@ jobs:
           set -e
           test -x /usr/bin/citizen-score
           getcap /usr/bin/citizen-score | tee /dev/stderr | grep -q cap_net_raw
-          test -x /usr/bin/a2tools-hotkeys && test -z "$(getcap /usr/bin/a2tools-hotkeys)"
+          test -x /usr/bin/citizen-score-hotkeys && test -z "$(getcap /usr/bin/citizen-score-hotkeys)"
           if ldd /usr/bin/citizen-score | grep 'not found'; then exit 1; fi
 
   release:
@@ -275,7 +275,7 @@ jobs:
         run: |
           cd dist
           # The bare binaries were only for the Arch job.
-          rm -f citizen-score a2tools-hotkeys
+          rm -f citizen-score citizen-score-hotkeys
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Release

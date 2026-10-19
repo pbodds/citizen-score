@@ -3,37 +3,6 @@
 version = 4
 
 [[package]]
-name = "a2tools-dps-meter"
-version = "2.0.70"
-dependencies = [
- "chrono",
- "flate2",
- "getrandom 0.3.4",
- "gtk",
- "libc",
- "libloading 0.8.9",
- "lz4_flex",
- "parking_lot",
- "ruzstd",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-single-instance",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "webkit2gtk",
- "windows 0.59.0",
- "x11-dl",
- "zbus",
- "zstd",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -505,6 +474,37 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "windows-link 0.2.1",
+]
+
+[[package]]
+name = "citizen-score"
+version = "2.0.70"
+dependencies = [
+ "chrono",
+ "flate2",
+ "getrandom 0.3.4",
+ "gtk",
+ "libc",
+ "libloading 0.8.9",
+ "lz4_flex",
+ "parking_lot",
+ "ruzstd",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-single-instance",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "webkit2gtk",
+ "windows 0.59.0",
+ "x11-dl",
+ "zbus",
+ "zstd",
 ]
 
 [[package]]

@@ -181,7 +181,7 @@
   const blobPending = new Map();  // url → Promise<blobUrl|null>
   // URLs whose fetch failed. The icon CDN only sends CORS headers to
   // NCSoft's own sites (aion2.plaync.com, www.plaync.com), so a fetch from the
-  // meter's webview or from a2tools.app is refused, while a plain <img> load
+  // meter's webview is refused, while a plain <img> load
   // of the same URL needs no CORS and works. Those go straight to <img>, and
   // are not fetched again on every redraw.
   const fetchFailed = new Set();
@@ -298,7 +298,7 @@
           unavailable.add(url);
           logFailure(`not found (${err.status}); using fallback: ${url}`);
         } else {
-          console.debug(`[A2Tools] Skill icon: cache download failed (${err?.message || err}); trying direct image: ${url}`);
+          console.debug(`[Citizen Score] Skill icon: cache download failed (${err?.message || err}); trying direct image: ${url}`);
         }
         return null;
       })

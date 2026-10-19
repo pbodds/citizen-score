@@ -9,13 +9,13 @@
 
 use std::sync::Arc;
 
-use a2tools_dps_meter_lib::capture::packet_accumulator::PacketAccumulator;
-use a2tools_dps_meter_lib::capture::stream_processor::StreamProcessor;
-use a2tools_dps_meter_lib::combat::data_storage::DataStorage;
-use a2tools_dps_meter_lib::combat::dps_calculator::DpsCalculator;
-use a2tools_dps_meter_lib::combat::ping_tracker::PingTracker;
-use a2tools_dps_meter_lib::i18n::lookup::{NpcLookup, SkillLookup};
-use a2tools_dps_meter_lib::share::read_capture;
+use citizen_score_lib::capture::packet_accumulator::PacketAccumulator;
+use citizen_score_lib::capture::stream_processor::StreamProcessor;
+use citizen_score_lib::combat::data_storage::DataStorage;
+use citizen_score_lib::combat::dps_calculator::DpsCalculator;
+use citizen_score_lib::combat::ping_tracker::PingTracker;
+use citizen_score_lib::i18n::lookup::{NpcLookup, SkillLookup};
+use citizen_score_lib::share::read_capture;
 
 #[test]
 fn party_members_are_named_from_the_roster_before_their_spawns() {
@@ -35,7 +35,7 @@ fn party_members_are_named_from_the_roster_before_their_spawns() {
     // ends, so the History records carry the names known at that moment.
     let mut saved = Vec::new();
     for (i, p) in read_capture(std::path::Path::new(&path)).unwrap().into_iter().enumerate() {
-        a2tools_dps_meter_lib::clock::set_override(Some(p.captured_at_ms));
+        citizen_score_lib::clock::set_override(Some(p.captured_at_ms));
         processor.set_override_timestamp(Some(p.captured_at_ms));
         acc.append(&p.bytes);
         let used = processor.consume_stream(acc.snapshot());
@@ -47,7 +47,7 @@ fn party_members_are_named_from_the_roster_before_their_spawns() {
             saved.extend(calc.snapshot_boss_fights());
         }
     }
-    a2tools_dps_meter_lib::clock::set_override(None);
+    citizen_score_lib::clock::set_override(None);
 
     for (id, name) in [(199, "Stellargoth"), (1803, "Nono"), (9250, "Wowsoanime"), (1352, "Nyxie"), (9873, "Sincarion")] {
         assert_eq!(storage.get_nickname(id).as_deref(), Some(name), "entity {id}");

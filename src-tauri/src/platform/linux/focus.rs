@@ -11,20 +11,20 @@
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
-const SERVICE: &str = "app.a2tools.DpsMeter";
+const SERVICE: &str = "com.citizenscore.Meter";
 const PATH: &str = "/Focus";
 /// The script's name in KWin, so a script left by an earlier run is replaced.
-const PLUGIN: &str = "a2tools-dps-meter-focus";
+const PLUGIN: &str = "citizen-score-focus";
 
 /// Values are passed as strings: KWin hands JavaScript numbers to D-Bus as
 /// doubles, which an integer argument would refuse. KWin 6 has
 /// `windowActivated` and `windowAdded`, KWin 5 `clientActivated` and
 /// `clientAdded`. `__PID__` is the meter's process id: only its windows are
 /// placed.
-const SCRIPT: &str = r#"// A2Tools DPS Meter: tells the meter which window is active, so it can hide
+const SCRIPT: &str = r#"// Citizen Score: tells the meter which window is active, so it can hide
 // while the game is not in front, and keeps the meter's own windows where
 // they were left. Loaded by the meter at each start.
-var SERVICE = "app.a2tools.DpsMeter", PATH = "/Focus", IFACE = "app.a2tools.DpsMeter.Focus";
+var SERVICE = "com.citizenscore.Meter", PATH = "/Focus", IFACE = "com.citizenscore.Meter.Focus";
 var MY_PID = __PID__;
 function report(w) {
     callDBus(SERVICE, PATH, IFACE, "Active",
@@ -155,7 +155,7 @@ pub fn game_or_meter_active() -> Option<bool> {
 
 struct Focus;
 
-#[zbus::interface(name = "app.a2tools.DpsMeter.Focus")]
+#[zbus::interface(name = "com.citizenscore.Meter.Focus")]
 impl Focus {
     fn active(&self, pid: String, class: String, caption: String) {
         let who = classify(pid.parse().unwrap_or(0), &class, &caption);
@@ -231,7 +231,7 @@ pub fn watch(on_change: impl Fn() + Send + Sync + 'static) -> Result<(), String>
         .map_err(|e| format!("D-Bus service: {e}"))?;
 
     let dir = std::env::var_os("XDG_RUNTIME_DIR").map(std::path::PathBuf::from).unwrap_or_else(std::env::temp_dir);
-    let path = dir.join("a2tools-dps-meter-focus.js");
+    let path = dir.join("citizen-score-focus.js");
     let script = SCRIPT.replace("__PID__", &std::process::id().to_string());
     std::fs::write(&path, script).map_err(|e| format!("writing the script: {e}"))?;
 

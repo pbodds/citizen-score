@@ -3700,7 +3700,7 @@ class DpsApp {
 
 
   parseDetailsIconSize(value) {
-    // The web viewer (a2tools.app) sets a smaller default for compact rows.
+    // A page embedding Details may set a smaller default for compact rows.
     const fallback = Number(globalThis.__A2_DETAILS_ICON_SIZE__) || 36;
     if (value === null || value === undefined || value === "") {
       return fallback;
@@ -4224,7 +4224,7 @@ class DpsApp {
    */
   openDetailsSurface(request, fallback) {
     const runFallback = () => {
-      try { fallback?.(); } catch (err) { console.error("[A2Tools] details fallback failed", err); }
+      try { fallback?.(); } catch (err) { console.error("[Citizen Score] details fallback failed", err); }
     };
     // A Details window is already the destination, so it renders in place
     // rather than asking for yet another window. The overlay and the History
@@ -4243,12 +4243,12 @@ class DpsApp {
     try {
       result = send.call(window.javaBridge, request);
     } catch (err) {
-      console.error("[A2Tools] requestDetailsView failed", err);
+      console.error("[Citizen Score] requestDetailsView failed", err);
       runFallback();
       return;
     }
     Promise.resolve(result).catch((err) => {
-      console.error("[A2Tools] requestDetailsView failed", err);
+      console.error("[Citizen Score] requestDetailsView failed", err);
       runFallback();
     });
   }
@@ -4451,7 +4451,7 @@ class DpsApp {
           defaultTargetId: payload.defaultTargetId ?? null,
         });
       } catch (err) {
-        console.error("[A2Tools] details request failed", err);
+        console.error("[Citizen Score] details request failed", err);
       } finally {
         this._detailsRequestsInFlight = Math.max(0, this._detailsRequestsInFlight - 1);
       }
@@ -5501,7 +5501,7 @@ class DpsApp {
       }
       return this.i18n?.t("target.train", "Training Scarecrow") ?? "Training Scarecrow";
     }
-    return this.i18n?.t("header.title", "A2Tools DPS Meter") ?? "A2Tools DPS Meter";
+    return this.i18n?.t("header.title", "Citizen Score") ?? "Citizen Score";
   }
 
   // "Gatekeeper Pinopi · Level 2": a Nightmare boss's level is its own, and

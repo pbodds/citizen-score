@@ -30,7 +30,7 @@ build() {
     # Offline: none of the upstream services (account, uploads, supporter
     # roster, Discord, Send Logs, updater) are compiled in.
     mise exec rust -- npx tauri build --no-bundle -- --no-default-features --features desktop &&
-    mise exec rust -- cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin a2tools-hotkeys
+    mise exec rust -- cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin citizen-score-hotkeys
 }
 
 install_build() {

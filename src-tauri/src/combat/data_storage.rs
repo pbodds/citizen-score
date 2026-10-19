@@ -630,9 +630,8 @@ struct Inner {
     current_target: i32,
 
     /// The address of the game server the locked connection reads from.
-    /// Korea and Taiwan share their server ids (10xx/20xx), so field boss
-    /// reports from them carry it for a2tools.app to tell the two apart
-    /// (`boss_report::with_host`).
+    /// Korea and Taiwan share their server ids (10xx/20xx); the address tells
+    /// the two apart.
     game_host: Option<std::net::Ipv4Addr>,
 
     /// Odyle energy, (basic, charged), as the game last sent it. See

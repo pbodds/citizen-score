@@ -134,7 +134,7 @@
         w.show();
         w.setFocus();
       } catch (e) {
-        console.error("[A2Tools] reveal failed", e);
+        console.error("[Citizen Score] reveal failed", e);
       }
     };
     const scheduleReveal = () => requestAnimationFrame(() => requestAnimationFrame(reveal));
@@ -365,7 +365,7 @@
         });
         return JSON.stringify(result);
       } catch (e) {
-        console.error("[A2Tools] getTargetDetails error:", e);
+        console.error("[Citizen Score] getTargetDetails error:", e);
         return null;
       }
     },
@@ -376,7 +376,7 @@
       try {
         return await invoke("get_fight_buffs", { targetId: Number(targetId) });
       } catch (e) {
-        console.error("[A2Tools] getFightBuffs error:", e);
+        console.error("[Citizen Score] getFightBuffs error:", e);
         return null;
       }
     },
@@ -493,12 +493,12 @@
         w.show();
         w.setFocus();
       } catch (e) {
-        console.error("[A2Tools] revealSelf failed", e);
+        console.error("[Citizen Score] revealSelf failed", e);
       }
       return invoke("details_window_ready").catch(() => {});
     },
     openSettingsWindow() {
-      return invoke("open_settings_window").catch((e) => console.error("[A2Tools] openSettingsWindow", e));
+      return invoke("open_settings_window").catch((e) => console.error("[Citizen Score] openSettingsWindow", e));
     },
     closeSettingsWindow() {
       return invoke("close_settings_window").catch(() => {});
@@ -515,7 +515,7 @@
         w.show();
         w.setFocus();
       } catch (e) {
-        console.error("[A2Tools] revealSelf failed", e);
+        console.error("[Citizen Score] revealSelf failed", e);
       }
       return invoke("tool_window_ready", { label: String(label) }).catch(() => {});
     },
@@ -981,7 +981,7 @@
           finished = await invoke("finish_window_resize", { cancel: true });
         }
       } catch (error) {
-        console.error("[A2Tools] finishing native resize failed", error);
+        console.error("[Citizen Score] finishing native resize failed", error);
       }
       if (!finished) {
         // WebKit can emit hover events during a grab; GTK must confirm release.
@@ -1030,7 +1030,7 @@
       if (held) return window.__TAURI__.window.getCurrentWindow().startResizeDragging(direction);
       queueMicrotask(() => finishNativeResize(true));
     }).catch((error) => {
-      console.error("[A2Tools] native window resize failed", error);
+      console.error("[Citizen Score] native window resize failed", error);
       // Run after this promise settles, so finishing cannot await itself.
       queueMicrotask(() => finishNativeResize(true));
     });
@@ -1314,7 +1314,7 @@
               .then(() => window.__TAURI__.window.getCurrentWindow().startResizeDragging(DIRECTION[edge]));
           }
         })
-          .catch((err) => console.error("[A2Tools] tool window resize failed", err));
+          .catch((err) => console.error("[Citizen Score] tool window resize failed", err));
         return;
       }
       dragFromHeader(e);
@@ -1383,11 +1383,11 @@
 
   // Startup diagnostics
   invoke("debug_status").then((s) => {
-    console.log("[A2Tools] Debug status:", JSON.stringify(s));
+    console.log("[Citizen Score] Debug status:", JSON.stringify(s));
     if (!s.isAdmin) {
-      console.warn("[A2Tools] NOT RUNNING AS ADMIN — packet capture will not work!");
+      console.warn("[Citizen Score] NOT RUNNING AS ADMIN — packet capture will not work!");
     }
-  }).catch((e) => console.error("[A2Tools] debug_status failed:", e));
+  }).catch((e) => console.error("[Citizen Score] debug_status failed:", e));
 
-  console.log("[A2Tools] Tauri bridge adapter loaded (javaBridge + dpsData)");
+  console.log("[Citizen Score] Tauri bridge adapter loaded (javaBridge + dpsData)");
 })();

@@ -3,12 +3,12 @@
     "linux": {
       "deb": {
         "files": {
-          "/usr/bin/a2tools-hotkeys": "target/release/a2tools-hotkeys"
+          "/usr/bin/citizen-score-hotkeys": "target/release/citizen-score-hotkeys"
         }
       },
       "rpm": {
         "files": {
-          "/usr/bin/a2tools-hotkeys": "target/release/a2tools-hotkeys"
+          "/usr/bin/citizen-score-hotkeys": "target/release/citizen-score-hotkeys"
         }
       }
     }

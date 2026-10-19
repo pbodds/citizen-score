@@ -319,13 +319,13 @@ pub fn set_size(window: &tauri::WebviewWindow, size: tauri::Size) {
             use gtk::prelude::*;
             let Ok(window) = window.gtk_window() else { return };
             let context = window.style_context();
-            if context.has_class("a2tools-overlay") { return; }
+            if context.has_class("citizen-score-overlay") { return; }
             let provider = gtk::CssProvider::new();
-            if provider.load_from_data(b"window.a2tools-overlay decoration { box-shadow: none; margin: 0; border: 0; }").is_ok() {
+            if provider.load_from_data(b"window.citizen-score-overlay decoration { box-shadow: none; margin: 0; border: 0; }").is_ok() {
                 gtk::StyleContext::add_provider_for_screen(
                     &window.display().default_screen(), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
                 );
-                context.add_class("a2tools-overlay");
+                context.add_class("citizen-score-overlay");
             }
         });
     }

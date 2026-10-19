@@ -6,7 +6,7 @@
 
 use std::io::Read;
 
-use a2tools_dps_meter_lib::rederive;
+use citizen_score_lib::rederive;
 
 const NPCS: &str = include_str!("../../src/data/i18n/npcs/en.json");
 const SKILLS: &str = include_str!("../../src/data/i18n/skills/en.json");

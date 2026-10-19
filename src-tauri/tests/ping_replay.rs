@@ -10,8 +10,8 @@
 //! `;`. The test skips when it is unset so it never fails on a machine that does
 //! not have the files.
 
-use a2tools_dps_meter_lib::capture::captured_payload::CapturedPayload;
-use a2tools_dps_meter_lib::combat::ping_tracker::PingTracker;
+use citizen_score_lib::capture::captured_payload::CapturedPayload;
+use citizen_score_lib::combat::ping_tracker::PingTracker;
 
 const DOTNET_EPOCH_OFFSET_MS: i64 = 62135596800000;
 /// The whole response frame header: length 0x18 (21 bytes) then `03 36 00 00`.

@@ -62,7 +62,7 @@ struct NpcInfo {
 }
 
 /// English names of training dummies, for a table that does not flag them all
-/// (`isDummy`). The rule a2tools.app uses too.
+/// (`isDummy`).
 const DUMMY_NAMES: &[&str] = &["Training Scarecrow", "Punching Bag"];
 
 impl NpcLookup {
@@ -123,7 +123,7 @@ impl NpcLookup {
     /// not boss fights: History marks them so and they are never uploaded.
     ///
     /// Taken from the NPC table, every language of which flags them
-    /// (`isDummy`), plus the English names a2tools.app also goes by. A list
+    /// (`isDummy`), plus their English names. A list
     /// kept by hand fell behind: it missed three scarecrows the table marks
     /// as bosses, so fights on them were saved, and uploaded, as boss fights.
     /// `TRAINING_DUMMY_CODES` still answers before a table has loaded.

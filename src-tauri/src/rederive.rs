@@ -275,10 +275,8 @@ fn canonicalise(record: &mut FightRecord) {
     }
 }
 
-/// Bumped when the service derives differently from the meter of the same
-/// version, so a2tools.app re-derives its logs: it re-derives every log whose
-/// parser version is older than the service's. `2.0.48.1` sorts after
-/// `2.0.48` and before `2.0.49`.
+/// Bumped when a slice derives differently from the meter of the same
+/// version. `2.0.48.1` sorts after `2.0.48` and before `2.0.49`.
 const SERVICE_REVISION: u32 = 4;
 
 pub fn parser_version() -> String {

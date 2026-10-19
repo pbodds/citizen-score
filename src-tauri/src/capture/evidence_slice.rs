@@ -369,7 +369,7 @@ const MAX_NAME_BYTES: usize = 40;
 /// Two passes, and the second one is why this is a struct rather than a
 /// function. Blinding only the names the meter resolved is not enough: a capture
 /// also carries the names of players who merely stood nearby, and legion names,
-/// and those are never in any map the meter builds. `a2t-inspect --strings` on a
+/// and those are never in any map the meter builds. `cs-inspect --strings` on a
 /// slice built that way showed a bystander's name and a recruitment message
 /// still in the clear.
 ///
@@ -724,7 +724,7 @@ fn looks_like_text(span: &[u8]) -> bool {
 /// Every byte of a record in the clear, bundles decompressed.
 ///
 /// This is what a reader actually has to inspect: the verifier below, and
-/// `a2t-inspect`, both need to see through the compression rather than take a
+/// `cs-inspect`, both need to see through the compression rather than take a
 /// compressed buffer's silence as evidence of anything.
 pub fn expand(record: &[u8]) -> Vec<u8> {
     fn walk_into(buffer: &[u8], out: &mut Vec<u8>, depth: usize, top: bool) {
@@ -1113,7 +1113,7 @@ fn bundle_inner(packet: &[u8]) -> Option<Vec<u8>> {
 /// Versions 1 and 2 had `u16 len | bytes` and no kind.
 ///
 /// Deliberately not the game's framing: a reader must not be able to mistake a
-/// slice for a capture, and `a2t-inspect` needs a magic number to refuse one.
+/// slice for a capture, and `cs-inspect` needs a magic number to refuse one.
 pub fn encode(slice: &EvidenceSlice) -> Vec<u8> {
     let mut out = Vec::with_capacity(slice.stats.bytes_kept + 256);
     out.extend_from_slice(MAGIC);
@@ -1147,7 +1147,7 @@ pub fn encode(slice: &EvidenceSlice) -> Vec<u8> {
     out
 }
 
-/// Read a `.a2es` back. Used by the server, and by `a2t-inspect` so a user can
+/// Read a `.a2es` back. Used by the server, and by `cs-inspect` so a user can
 /// see exactly what an upload would contain.
 pub fn decode(data: &[u8]) -> Option<(Vec<(i32, Vec<u8>)>, HashMap<String, u64>)> {
     decode_from(data, usize::MAX)

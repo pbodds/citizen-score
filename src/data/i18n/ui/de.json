@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "A2Tools DPS-Meter",
+    "title": "Citizen Score",
     "display": {
       "dps": "DPS",
       "total": "SCH",
@@ -417,7 +417,7 @@
       "meterSaturation": "Wie kräftig die Balkenfarben sind: niedriger für sanfter, höher für leuchtender.",
       "bossNameSize": "Größe des Boss- oder Zielnamens über den Balken.",
       "partyStat": "Die Zahl neben jedem Spielernamen, im Meter und in den Details. Nur Mitglieder deiner eigenen Gruppe haben eine.",
-      "barTexture": "Ein Muster auf den Balken des Meters. Ein Dankeschön für die Unterstützung von A2 Tools.",
+      "barTexture": "Ein Muster auf den Balken des Meters.",
       "textureOffset": "Jeder Balken beginnt seine Textur an einer anderen Stelle, damit nicht alle gleich aussehen.",
       "trainingMode": "Im Trainingsmodus: welche Puppen das Detailfenster zeigt – alle zusammen oder nur die, die du am stärksten triffst.",
       "allTargetsWindow": "Im Modus „Alle Ziele“ zählt das Meter alle Ziele, die innerhalb dieser Zeit vor dem letzten Treffer getroffen wurden.",

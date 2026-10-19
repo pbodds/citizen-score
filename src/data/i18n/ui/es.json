@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "A2Tools DPS Meter",
+    "title": "Citizen Score",
     "display": {
       "dps": "DPS",
       "total": "DÑO",
@@ -417,7 +417,7 @@
       "meterSaturation": "La intensidad de los colores de las barras: más bajo para suavizar, más alto para más viveza.",
       "bossNameSize": "Tamaño del nombre del jefe u objetivo sobre las barras.",
       "partyStat": "El número junto al nombre de cada jugador, en el medidor y en Detalles. Solo los miembros de tu grupo tienen uno.",
-      "barTexture": "Un diseño sobre las barras del medidor. Un agradecimiento por apoyar A2 Tools.",
+      "barTexture": "Un diseño sobre las barras del medidor.",
       "textureOffset": "Cada barra empieza su textura en un punto distinto, para que no se vean todas iguales.",
       "trainingMode": "En modo entrenamiento, qué muñecos muestra la ventana de detalles: todos juntos o solo el que más golpeas.",
       "allTargetsWindow": "En el modo Todos los objetivos, el medidor suma cada objetivo golpeado dentro de este tiempo antes del último golpe.",

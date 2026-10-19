@@ -35,13 +35,13 @@
         <!-- Auto launch app after installation, useful for passive mode which usually used in updates -->
         <Property Id="AUTOLAUNCHAPP" Secure="yes" />
 
-        <!-- A2Tools: whether the desktop shortcut is there before this install
+        <!-- Citizen Score: whether the desktop shortcut is there before this install
              touches anything (AppSearch runs before the old version is
              removed). An update brings the shortcut back only if the player
              kept it; one who deleted it does not get it again. -->
-        <Property Id="A2T_DESKTOP_SHORTCUT_FOUND" Secure="yes">
+        <Property Id="CS_DESKTOP_SHORTCUT_FOUND" Secure="yes">
             <DirectorySearch Id="A2tDesktopSearch" Path="[DesktopFolder]" Depth="0">
-                <FileSearch Id="A2tDesktopShortcutFile" Name="{{product_name}}.lnk" />
+                <FileSearch Id="CsDesktopShortcutFile" Name="{{product_name}}.lnk" />
             </DirectorySearch>
         </Property>
         <!-- Property to forward cli args to the launched app to not lose those of the pre-update instance -->
@@ -123,8 +123,8 @@
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="DesktopFolder" Name="Desktop">
                 <Component Id="ApplicationShortcutDesktop" Guid="*">
-                    <!-- A2Tools: a first install, or an update where the shortcut was kept. -->
-                    <Condition>NOT WIX_UPGRADE_DETECTED OR A2T_DESKTOP_SHORTCUT_FOUND</Condition>
+                    <!-- Citizen Score: a first install, or an update where the shortcut was kept. -->
+                    <Condition>NOT WIX_UPGRADE_DETECTED OR CS_DESKTOP_SHORTCUT_FOUND</Condition>
                     <Shortcut Id="ApplicationDesktopShortcut" Name="{{product_name}}" Description="Runs {{product_name}}" Target="[!Path]" WorkingDirectory="INSTALLDIR" />
                     <RemoveFolder Id="DesktopFolder" On="uninstall" />
                     <RegistryValue Root="HKCU" Key="Software\\{{manufacturer}}\\{{product_name}}" Name="Desktop Shortcut" Type="integer" Value="1" KeyPath="yes" />
