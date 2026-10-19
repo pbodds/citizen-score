@@ -11,7 +11,7 @@
 //! - `linux/` — Linux, for players running the game under Proton. Partly
 //!   ported; what is not ported yet is borrowed from `unsupported/`.
 //! - `unsupported/` — every other target. It compiles, and does the safe
-//!   nothing: no capture library, no screenshots, no hotkeys, no stored token.
+//!   nothing: no capture library, no screenshots, no hotkeys.
 //!
 //! OS-neutral helpers that only *support* platform code (the screenshot rect
 //! maths and PNG encoder, hotkey-label parsing) live beside this file and
@@ -38,29 +38,9 @@ pub mod procfs;
 pub mod screenshot;
 
 pub use os::{
-    admin, clock, dialog, discord_ipc, pcap, process, secret, shell, updater, window, window_detector, window_rules, window_startup,
+    admin, clock, dialog, pcap, process, shell, window, window_detector, window_rules, window_startup,
 };
 
 pub use os::atomic_file;
 
-/// Why `secret::unprotect` could not give a stored secret back.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UnsealError {
-    /// The store did not answer, stayed locked, or does not show the item
-    /// now. The same data may unseal later.
-    Unavailable,
-    /// The data can never be unsealed: not ours, or sealed for another user.
-    Invalid,
-}
 
-/// The installer the update manifest names for each kind of install: the MSI
-/// for Windows, and on Linux one package per package manager. Each platform's
-/// `updater::package_url` picks the one it can install ("" where the manifest
-/// has none).
-#[derive(Debug, Default, Clone, Copy)]
-pub struct UpdatePackages<'a> {
-    pub msi: &'a str,
-    pub arch: &'a str,
-    pub deb: &'a str,
-    pub rpm: &'a str,
-}

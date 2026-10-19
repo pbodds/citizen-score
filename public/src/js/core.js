@@ -2420,7 +2420,6 @@ class DpsApp {
     this.partyStatDropdownBtn = document.querySelector(".partyStatDropdownBtn");
     this.barTextureDropdownBtn = document.querySelector(".barTextureDropdownBtn");
     this.barTextureDropdownMenu = document.querySelector(".barTextureDropdownMenu");
-    this.barTextureHint = document.querySelector(".barTextureHint");
     this.textureOffsetCheckbox = document.querySelector(".textureOffsetCheckbox");
     this.partyStatDropdownMenu = document.querySelector(".partyStatDropdownMenu");
     this.trainSelectionModeDropdownMenu = document.querySelector(".trainSelectionModeDropdownMenu");

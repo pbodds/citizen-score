@@ -594,8 +594,6 @@ struct Inner {
     /// (`local_kills_since`); every build, online or not.
     local_kills: VecDeque<(u64, BossEvent)>,
     local_kill_seq: u64,
-    /// Party members who also run A2Tools, by name (`party_presence.rs`).
-    a2tools_users: HashSet<String>,
     /// Each party member's last HP (`1b 92`): falling to 0 from above is a
     /// death. The game sends no `42 36` death for a player (Ultimate Berk,
     /// 2026-10-11: 184 monster deaths, not one of the four that died).
@@ -650,9 +648,6 @@ struct Inner {
 
     // Local player
     local_player_id: Option<i64>,
-    /// Behind an Arc because `get_dps` reads it every 500ms and the set can hold
-    /// thousands of entries; cloning it on each tick would be pure waste.
-    supporters: std::sync::Arc<crate::supporters::Roster>,
     local_character_name: Option<String>,
     /// Set once the game itself has said who the local player is (the `33 36`
     /// self record). That outranks the window title and any name the UI has
@@ -752,7 +747,6 @@ impl DataStorage {
                 boss_events: VecDeque::new(),
                 local_kills: VecDeque::new(),
                 local_kill_seq: 0,
-                a2tools_users: HashSet::new(),
                 last_hp: HashMap::new(),
                 despawned_summon_ids: HashSet::new(),
                 boss_entity_ids: HashSet::new(),
@@ -767,7 +761,6 @@ impl DataStorage {
                 odyle_owner: None,
                 odyle_awaits_self_record: false,
                 local_player_id: None,
-                supporters: std::sync::Arc::new(crate::supporters::Roster::default()),
                 local_character_name: None,
                 local_identity_from_game: false,
                 loot_identity: LootIdentity::default(),
@@ -1260,14 +1253,7 @@ impl DataStorage {
         self.inner.read().local_identity_from_game
     }
 
-    /// Replace the supporter roster. Called after each download.
-    pub fn set_supporters(&self, roster: crate::supporters::Roster) {
-        self.inner.write().supporters = std::sync::Arc::new(roster);
-    }
 
-    pub fn supporters(&self) -> std::sync::Arc<crate::supporters::Roster> {
-        self.inner.read().supporters.clone()
-    }
 
     pub fn set_local_player_id(&self, id: Option<i64>) {
         let mut inner = self.inner.write();
@@ -1505,14 +1491,7 @@ impl DataStorage {
         }
     }
 
-    /// The party members who also run A2Tools (`party_presence.rs`).
-    pub fn set_a2tools_users(&self, names: HashSet<String>) {
-        self.inner.write().a2tools_users = names;
-    }
 
-    pub fn a2tools_users(&self) -> HashSet<String> {
-        self.inner.read().a2tools_users.clone()
-    }
 
     /// The field bosses to report now (`boss_report.rs`, every 3 seconds):
     /// each whose HP changed since the last call, and each still being
