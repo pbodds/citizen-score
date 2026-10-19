@@ -172,6 +172,7 @@ pub fn citizen_window(app: tauri::AppHandle, op: String, args: Value) -> Result<
 /// window to be listed, off the caller's thread.
 pub fn place_banner(window: &tauri::WebviewWindow) {
     if !hyprland() {
+        place_banner_portable(window);
         return;
     }
     let Ok(title) = window.title() else { return };
@@ -209,6 +210,31 @@ pub fn place_banner(window: &tauri::WebviewWindow) {
         let Some((x, y)) = monitor.and_then(|m| snap_target(m, pair(&client["size"]), "bottom-right", 24)) else { return };
         let _ = dispatch(&format!(r#"hl.dsp.window.move({{ x = {x}, y = {y}, window = "{target}" }})"#));
     });
+}
+
+/// Elsewhere (Windows, other Linux desktops), through Tauri: the bottom-right
+/// of the work area (taskbar excluded) of a monitor other than the meter's,
+/// which sits over the game, else the meter's own. Wayland desktops other than
+/// Hyprland ignore the move, and the banner opens where they put it.
+fn place_banner_portable(window: &tauri::WebviewWindow) {
+    let Ok(monitors) = window.available_monitors() else { return };
+    let meter = window.app_handle().get_webview_window("main").and_then(|w| w.current_monitor().ok().flatten());
+    let same = |m: &tauri::Monitor| meter.as_ref().is_some_and(|o| o.position() == m.position() && o.size() == m.size());
+    let Some(monitor) = monitors
+        .iter()
+        .filter(|m| !same(m))
+        .max_by_key(|m| m.position().x)
+        .or(meter.as_ref())
+        .or(monitors.first())
+    else {
+        return;
+    };
+    let Ok(size) = window.outer_size() else { return };
+    let area = monitor.work_area();
+    let gap = (24.0 * monitor.scale_factor()) as i32;
+    let x = area.position.x + area.size.width as i32 - size.width as i32 - gap;
+    let y = area.position.y + area.size.height as i32 - size.height as i32 - gap;
+    let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
 }
 
 #[cfg(test)]

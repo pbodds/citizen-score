@@ -3,13 +3,13 @@
 # src-tauri/tauri.conf.json, bundle.linux.deb). Packet capture needs
 # CAP_NET_RAW; grant it to the installed binary so the meter never has to run
 # as root. A new binary (every upgrade) needs it again. The Arch package does
-# the same in packaging/arch/a2tools-dps-meter.install; the .rpm declares it in
-# the package instead (packaging/linux/a2-tools-dps-meter.spec).
+# the same in packaging/arch/citizen-score.install; the .rpm declares it in
+# the package instead (packaging/linux/citizen-score.spec).
 
-BIN=/usr/bin/a2tools-dps-meter
+BIN=/usr/bin/citizen-score
 
 if setcap cap_net_raw=ep "$BIN" 2>/dev/null; then
-  echo "A2Tools DPS Meter may now capture packets."
+  echo "Citizen Score may now capture packets."
 else
   echo "Could not grant packet-capture permission. Run:"
   echo "    sudo setcap cap_net_raw=ep $BIN"

@@ -259,7 +259,7 @@ mod tests {
     fn the_game_is_known_by_title_or_class_and_the_meter_by_itself() {
         assert_eq!(classify(0, "", "AION2"), Who::Game);
         assert_eq!(classify(0, "aion2.exe", ""), Who::Game);
-        assert_eq!(classify(std::process::id(), "a2tools-dps-meter", "A2Tools DPS Meter"), Who::Meter);
+        assert_eq!(classify(std::process::id(), "citizen-score", "Citizen Score"), Who::Meter);
         assert_eq!(classify(0, "firefox", "Mozilla Firefox"), Who::Other);
     }
 }

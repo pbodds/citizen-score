@@ -1,0 +1,284 @@
+name: Release
+
+# Builds Citizen Score's downloads for Windows and Linux, and on a version tag
+# publishes them as a GitHub release:
+#
+#   git tag v2.0.70 && git push origin v2.0.70
+#
+# Run by hand (Actions tab, or `gh workflow run release.yml`) to build them
+# without releasing: they are kept as the run's artifacts.
+#
+# Every download is the offline build (`--no-default-features --features
+# desktop`): no account, uploads, update checks or anything else that talks
+# to a service outside the player's computer.
+#
+#   Windows  Citizen-Score_<v>_x64.msi                 installer
+#            Citizen-Score_<v>_windows-x64-portable.zip  unzip and run
+#   Linux    citizen-score_<v>_amd64.deb               Debian, Ubuntu, Mint, Pop!_OS
+#            citizen-score-<v>-1.x86_64.rpm            Fedora, openSUSE, Bazzite
+#            citizen-score-<v>-1-x86_64.pkg.tar.zst    Arch, CachyOS, Manjaro, EndeavourOS
+#            citizen-score-<v>-linux-x86_64.tar.gz     anything else (install.sh)
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  FEATURES: --no-default-features --features desktop
+
+jobs:
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      # Files a clean checkout lacks (gitignored mirrors of src/data).
+      - name: Frontend data
+        run: |
+          mkdir -p public/i18n public/data public/src/data
+          cp -r src/data/i18n/* public/i18n/
+          cp src/data/skill_icons.json src/data/dot_skill_ids.json public/data/
+          cp src/data/skill_icons.json src/data/dot_skill_ids.json public/src/data/
+      - name: Build
+        run: |
+          npm ci
+          npx tauri build --bundles msi -- $FEATURES
+      # The portable build finds its data and plugins next to the executable.
+      - name: Package
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          mkdir -p out "portable/Citizen Score"
+          cp src-tauri/target/release/bundle/msi/*.msi "out/Citizen-Score_${version}_x64.msi"
+          p="portable/Citizen Score"
+          cp src-tauri/target/release/citizen-score.exe "$p/Citizen Score.exe"
+          cp -r src/data plugins LICENSE "$p/"
+          printf '%s\r\n' \
+            "Citizen Score $version, portable." \
+            "" \
+            "1. Install Npcap first (https://npcap.com/#download), with" \
+            "   'WinPcap API-compatible Mode' ticked. The meter reads the game's" \
+            "   traffic through it." \
+            "2. Run 'Citizen Score.exe'. Keep this folder together: the meter" \
+            "   reads its data and plugins from it." \
+            "" \
+            "Settings and history are kept in %APPDATA%\\com.citizenscore.meter." > "$p/README.txt"
+          (cd portable && 7z a -tzip -mx=9 "../out/Citizen-Score_${version}_windows-x64-portable.zip" "Citizen Score" >/dev/null)
+          ls -la out
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: out/*
+          if-no-files-found: error
+
+  # Ubuntu 22.04: its older glibc means the binaries run there and on
+  # anything newer, Arch included.
+  linux:
+    name: Linux (.deb, .rpm, .tar.gz)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev rpm cpio
+      - name: Frontend data
+        run: |
+          mkdir -p public/i18n public/data public/src/data
+          cp -r src/data/i18n/* public/i18n/
+          cp src/data/skill_icons.json src/data/dot_skill_ids.json public/data/
+          cp src/data/skill_icons.json src/data/dot_skill_ids.json public/src/data/
+      - name: Build
+        run: |
+          npm ci
+          # The hotkeys helper first: tauri.linux.conf.json packs it next to
+          # the meter (platform/linux/hotkeys.rs), without capabilities.
+          cargo build --release --manifest-path src-tauri/Cargo.toml $FEATURES --bin a2tools-hotkeys
+          npx tauri build --bundles deb,rpm -- $FEATURES
+      # Tauri's .rpm can only grant capture permission from a %post script,
+      # which rpm-ostree (Bazzite and the other image-based Fedoras) runs
+      # without the privilege to do it. Repackage its files with our spec,
+      # which declares the permission in the package (%caps) instead.
+      - name: Rebuild the .rpm
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          mkdir -p rpmpayload
+          (cd rpmpayload && rpm2cpio ../src-tauri/target/release/bundle/rpm/*.rpm | cpio -idm --quiet)
+          (
+            cd rpmpayload
+            find "./usr/lib/Citizen Score" -type d | sed 's|^\.||; s|.*|%dir "&"|'
+            find . \( -type f -o -type l \) | sed 's|^\.||' | while IFS= read -r f; do
+              if [ "$f" = /usr/bin/citizen-score ]; then
+                printf '%%caps(cap_net_raw=ep) "%s"\n' "$f"
+              else
+                printf '"%s"\n' "$f"
+              fi
+            done
+          ) > rpm-files.txt
+          rpmbuild -bb packaging/linux/citizen-score.spec \
+            --define "_topdir $PWD/rpmbuild" \
+            --define "pkgversion $version" \
+            --define "payload $PWD/rpmpayload" \
+            --define "filelist $PWD/rpm-files.txt"
+      - name: Package
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          rel=src-tauri/target/release
+          mkdir -p out
+          cp $rel/bundle/deb/*.deb "out/citizen-score_${version}_amd64.deb"
+          cp rpmbuild/RPMS/x86_64/*.rpm "out/citizen-score-${version}-1.x86_64.rpm"
+          t="citizen-score-${version}-linux-x86_64"
+          mkdir -p "$t"
+          cp $rel/citizen-score $rel/a2tools-hotkeys packaging/linux/install.sh LICENSE "$t/"
+          cp src-tauri/icons/128x128.png "$t/icon.png"
+          cp -r src/data plugins "$t/"
+          tar -czf "out/$t.tar.gz" "$t"
+          ls -la out
+      - name: What is in them
+        run: |
+          dpkg-deb --info out/*.deb
+          dpkg-deb --contents out/*.deb | grep -q usr/bin/a2tools-hotkeys
+          dpkg-deb --contents out/*.deb | grep -q 'plugins/plus-timers/manifest.json'
+          rpm -qp --filecaps out/*.rpm | grep cap_net_raw
+          rpm -qlp out/*.rpm | grep -qx /usr/bin/a2tools-hotkeys
+          ! ldd src-tauri/target/release/citizen-score | grep "not found"
+      # The Arch job packs these rather than compiling them again.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-binaries
+          path: |
+            src-tauri/target/release/citizen-score
+            src-tauri/target/release/a2tools-hotkeys
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux
+          path: out/*
+          if-no-files-found: error
+
+  arch:
+    name: Arch (makepkg)
+    needs: linux
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      # git first, so checkout keeps the history pkgver() reads.
+      - name: Dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git \
+            webkit2gtk-4.1 gtk3 libpcap libcap hicolor-icon-theme \
+            gst-plugins-base gst-plugins-good
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux-binaries
+          path: src-tauri/target/release
+      - name: It loads on Arch
+        run: |
+          chmod +x src-tauri/target/release/*
+          ! ldd src-tauri/target/release/citizen-score | grep "not found"
+      # makepkg refuses to run as root. --nodeps: the makedepends (rust,
+      # npm) are not needed to pack prebuilt binaries.
+      - name: makepkg
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          useradd -m builder
+          chown -R builder "$GITHUB_WORKSPACE"
+          su builder -c "git config --global --add safe.directory '$GITHUB_WORKSPACE' && cd '$GITHUB_WORKSPACE/packaging/arch' && CS_PREBUILT=1 makepkg --noconfirm --nodeps"
+          ls -la "$GITHUB_WORKSPACE"/packaging/arch/*.pkg.tar.zst
+      - uses: actions/upload-artifact@v7
+        with:
+          name: arch
+          path: packaging/arch/*.pkg.tar.zst
+          if-no-files-found: error
+
+  # The packages install on clean systems: dependencies resolve, capture
+  # permission is granted, every library is found.
+  install-test:
+    name: Install on ${{ matrix.image }}
+    needs: linux
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:24.04
+            install: apt-get update && apt-get install -y ./citizen-score_*_amd64.deb
+          - image: debian:12
+            install: apt-get update && apt-get install -y ./citizen-score_*_amd64.deb
+          - image: fedora:41
+            install: dnf install -y ./citizen-score-*.x86_64.rpm
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux
+      - name: Install
+        run: ${{ matrix.install }}
+      - name: Check
+        run: |
+          set -e
+          test -x /usr/bin/citizen-score
+          getcap /usr/bin/citizen-score | tee /dev/stderr | grep -q cap_net_raw
+          test -x /usr/bin/a2tools-hotkeys && test -z "$(getcap /usr/bin/a2tools-hotkeys)"
+          if ldd /usr/bin/citizen-score | grep 'not found'; then exit 1; fi
+
+  release:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, arch, install-test]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # The tag names the version the downloads were built as.
+      - name: Tag matches the version
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          [ "${GITHUB_REF_NAME}" = "v$version" ] || { echo "tag $GITHUB_REF_NAME, but Cargo.toml says $version"; exit 1; }
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd dist
+          # The bare binaries were only for the Arch job.
+          rm -f citizen-score a2tools-hotkeys
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Citizen Score $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md \
+            --generate-notes

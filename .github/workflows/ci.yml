@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, citizen-score]
   pull_request:
   # By hand, for a branch: gh workflow run ci.yml --ref <branch>
   workflow_dispatch:
@@ -38,10 +38,10 @@ jobs:
         # The replay tests skip without A2_REPLAY_CAPTURE, which is a real packet
         # capture and not something to commit — it is a recording of five real
         # people playing. They run locally; everything else runs here.
-        run: cargo test --all-targets
+        run: cargo test --all-targets --no-default-features --features desktop
       - name: Build binaries
         working-directory: src-tauri
-        run: cargo build --bins
+        run: cargo build --bins --no-default-features --features desktop
 
   platform-boundary:
     name: OS code stays in src/platform

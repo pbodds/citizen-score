@@ -12,15 +12,15 @@
 
 /// The rule's group in `kwinrulesrc`. Fixed, so the meter can tell its own
 /// rule from the player's and never adds it twice.
-pub const GROUP: &str = "a2tools-dps-meter-overlay";
+pub const GROUP: &str = "citizen-score-overlay";
 
 /// The window class the meter's windows carry.
-pub const WINDOW_CLASS: &str = "a2tools-dps-meter";
+pub const WINDOW_CLASS: &str = "citizen-score";
 
 /// The rule, as (key, value) pairs in its group.
 pub fn rule_entries() -> Vec<(&'static str, &'static str)> {
     vec![
-        ("Description", "A2Tools DPS Meter above fullscreen games (added by the meter)"),
+        ("Description", "Citizen Score above fullscreen games (added by the meter)"),
         ("wmclass", WINDOW_CLASS),
         ("wmclassmatch", "1"),
         ("wmclasscomplete", "false"),
@@ -35,18 +35,18 @@ pub fn rule_entries() -> Vec<(&'static str, &'static str)> {
 /// The second rule's group: clicking the meter overlay does not take focus
 /// from the game (#71). Its own group, so installs that already have the
 /// first rule get it too.
-pub const NO_FOCUS_GROUP: &str = "a2tools-dps-meter-no-focus";
+pub const NO_FOCUS_GROUP: &str = "citizen-score-no-focus";
 
 /// The overlay's title. The meter's other windows (Settings, Details,
 /// Battle History, plugins) have their own titles and keep focus as usual:
 /// a window that takes no focus takes no typing either.
-pub const OVERLAY_TITLE: &str = "A2Tools DPS Meter";
+pub const OVERLAY_TITLE: &str = "Citizen Score";
 
 /// The no-focus rule: the overlay window only (class and exact title), and
 /// `acceptfocus` false, forced (`acceptfocusrule` 2). Clicks still reach it.
 pub fn no_focus_rule_entries() -> Vec<(&'static str, &'static str)> {
     vec![
-        ("Description", "A2Tools DPS Meter overlay keeps focus on the game (added by the meter)"),
+        ("Description", "Citizen Score overlay keeps focus on the game (added by the meter)"),
         ("wmclass", WINDOW_CLASS),
         ("wmclassmatch", "1"),
         ("wmclasscomplete", "false"),
@@ -135,7 +135,7 @@ mod tests {
         let value = |k: &str| rule.iter().find(|(key, _)| *key == k).map(|(_, v)| *v);
         assert_eq!(value("layer"), Some("overlay"));
         assert_eq!(value("layerrule"), Some("2"));
-        assert_eq!(value("wmclass"), Some("a2tools-dps-meter"));
+        assert_eq!(value("wmclass"), Some("citizen-score"));
         assert_eq!(value("wmclassmatch"), Some("1"));
     }
 
@@ -146,7 +146,7 @@ mod tests {
     fn the_no_focus_rule_is_the_overlays_alone_and_joins_the_first() {
         let rule = no_focus_rule_entries();
         let value = |k: &str| rule.iter().find(|(key, _)| *key == k).map(|(_, v)| *v);
-        assert_eq!(value("title"), Some("A2Tools DPS Meter"));
+        assert_eq!(value("title"), Some("Citizen Score"));
         assert_eq!(value("titlematch"), Some("1"));
         assert_eq!((value("acceptfocus"), value("acceptfocusrule")), (Some("false"), Some("2")));
         let listed = format!("abc-1,{GROUP}");

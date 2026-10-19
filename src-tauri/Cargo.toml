@@ -186,3 +186,13 @@ flate2 = "1"
 zstd = { version = "0.13", default-features = false }
 # The log service's pure-Rust zstd decoder, to check it reads what the meter writes.
 ruzstd = "0.7"
+
+# Citizen Score: what the downloads are built with. One codegen unit and thin
+# LTO let the optimiser see across crates (the parser's hot loops call into
+# several); stripping symbols takes the binary from ~32 MB to ~22 MB.
+# Panics still unwind, so a crashed worker thread is logged rather than taking
+# the meter down.
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true

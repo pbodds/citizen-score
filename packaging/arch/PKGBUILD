@@ -1,40 +1,38 @@
-# Package of the meter for Arch and derivatives (CachyOS, Manjaro,
-# EndeavourOS). The meter updates itself from the package each release
-# publishes (see src-tauri/src/platform/linux/updater.rs).
+# Citizen Score for Arch and derivatives (CachyOS, Manjaro, EndeavourOS).
 #
 # Builds from the repository this file sits in, not from a downloaded
-# tarball: CI builds it with `makepkg` in an Arch container (see
-# .github/workflows/arch-package.yml), and so can anyone from a checkout.
+# tarball: the release workflow (.github/workflows/release.yml) runs
+# `makepkg` in an Arch container, and so can anyone from a checkout:
 #
-# It installs the program to /usr/bin, the game data where Tauri looks for
-# resources (/usr/lib/<product name>/data), and grants packet-capture
-# permission in the install script, which is the one thing a Linux user would
-# otherwise have to do by hand (see a2tools-dps-meter.install).
+#   cd packaging/arch && makepkg -si
+#
+# The offline build (no account, uploads or updater), installed to /usr/bin,
+# with the game data and bundled plugins where Tauri looks for resources
+# (/usr/lib/Citizen Score). The install script grants packet-capture
+# permission, so the meter never runs as root (citizen-score.install).
 
-pkgname=a2tools-dps-meter
+pkgname=citizen-score
 pkgver=0
 pkgrel=1
-pkgdesc="A2Tools DPS Meter: real-time DPS overlay for AION 2 (Linux/Proton)"
+pkgdesc="Citizen Score: real-time DPS meter, Pet Map and World Timers for AION 2 (Linux/Proton)"
 arch=('x86_64')
-url="https://github.com/taengu/A2Tools-DPS-Meter"
+url="https://github.com/__REPO__"
 license=('GPL-3.0-only')
-# gst-plugins-base and -good: WebKitGTK plays sound (a plugin's alerts) through
-# GStreamer's audioconvert and autoaudiosink, which webkit2gtk-4.1 only lists as
-# optional; a bare Arch (the SteamOS distrobox) has neither, and stays silent.
+# gst-plugins-base and -good: WebKitGTK plays sound (World Timers' alerts)
+# through GStreamer's audioconvert and autoaudiosink, which webkit2gtk-4.1 only
+# lists as optional.
 depends=('webkit2gtk-4.1' 'gtk3' 'libpcap' 'libcap' 'hicolor-icon-theme' 'gst-plugins-base' 'gst-plugins-good')
 makedepends=('rust' 'nodejs' 'npm' 'git' 'pkgconf')
-install=a2tools-dps-meter.install
-options=('!lto' '!debug')
+install=citizen-score.install
+options=('!lto' '!debug' '!strip')
 
 # The repository root, two levels up from packaging/arch.
 _root() {
   cd "$startdir/../.." && pwd
 }
 
-# A release (the commit tagged v<version>) is plain <version>, which is what
-# the update manifest points at and what the meter's updater installs. Any
-# other commit is <version>.r<commits>.g<hash>, which pacman ranks after that
-# release, so a test build is never "downgraded" by the updater.
+# A release (the commit tagged v<version>) is plain <version>; any other
+# commit is <version>.r<commits>.g<hash>, which pacman ranks after it.
 pkgver() {
   cd "$(_root)"
   local version
@@ -48,9 +46,9 @@ pkgver() {
 
 build() {
   cd "$(_root)"
-  # CI packs the binaries its .deb job built (A2T_PREBUILT=1, see
-  # .github/workflows/arch-package.yml) rather than compiling them again.
-  if [ -n "${A2T_PREBUILT:-}" ] && [ -f src-tauri/target/release/a2tools-dps-meter ] \
+  # The release workflow packs the binaries its Linux job built
+  # (CS_PREBUILT=1) rather than compiling them again.
+  if [ -n "${CS_PREBUILT:-}" ] && [ -f src-tauri/target/release/citizen-score ] \
      && [ -f src-tauri/target/release/a2tools-hotkeys ]; then
     return 0
   fi
@@ -60,33 +58,33 @@ build() {
   cp src/data/skill_icons.json src/data/dot_skill_ids.json public/data/
   cp src/data/skill_icons.json src/data/dot_skill_ids.json public/src/data/
   npm ci
-  npx tauri build --no-bundle
+  npx tauri build --no-bundle -- --no-default-features --features desktop
   # The hotkeys helper, run without the meter's capture permission
   # (platform/linux/hotkeys.rs); the .install script gives caps to the meter only.
-  cargo build --release --manifest-path src-tauri/Cargo.toml --bin a2tools-hotkeys
+  cargo build --release --manifest-path src-tauri/Cargo.toml --no-default-features --features desktop --bin a2tools-hotkeys
 }
 
 package() {
   local root
   root="$(_root)"
-  install -Dm755 "$root/src-tauri/target/release/a2tools-dps-meter" "$pkgdir/usr/bin/a2tools-dps-meter"
+  install -Dm755 "$root/src-tauri/target/release/citizen-score" "$pkgdir/usr/bin/citizen-score"
   install -Dm755 "$root/src-tauri/target/release/a2tools-hotkeys" "$pkgdir/usr/bin/a2tools-hotkeys"
 
-  # Tauri resolves resources to /usr/lib/<name>; ship both spellings of the
-  # name so either resolution finds the data.
-  install -d "$pkgdir/usr/lib/A2Tools DPS Meter"
-  cp -r "$root/src/data" "$pkgdir/usr/lib/A2Tools DPS Meter/data"
-  ln -s "A2Tools DPS Meter" "$pkgdir/usr/lib/a2tools-dps-meter"
+  install -d "$pkgdir/usr/lib/Citizen Score"
+  cp -r "$root/src/data" "$pkgdir/usr/lib/Citizen Score/data"
+  cp -r "$root/plugins" "$pkgdir/usr/lib/Citizen Score/plugins"
+  ln -s "Citizen Score" "$pkgdir/usr/lib/citizen-score"
 
   install -Dm644 "$root/src-tauri/icons/128x128.png" \
-    "$pkgdir/usr/share/icons/hicolor/128x128/apps/a2tools-dps-meter.png"
-  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/a2tools-dps-meter.desktop" <<DESKTOP
+    "$pkgdir/usr/share/icons/hicolor/128x128/apps/citizen-score.png"
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/citizen-score.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
-Name=A2Tools DPS Meter
-Comment=Real-time DPS overlay for AION 2
-Exec=a2tools-dps-meter
-Icon=a2tools-dps-meter
+Name=Citizen Score
+Comment=Real-time DPS meter for AION 2
+Exec=citizen-score
+Icon=citizen-score
+StartupWMClass=citizen-score
 Categories=Game;Utility;
 DESKTOP
   install -Dm644 "$root/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

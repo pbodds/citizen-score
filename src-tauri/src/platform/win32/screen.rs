@@ -133,7 +133,7 @@ pub fn default_folder() -> Option<PathBuf> {
         let raw = SHGetKnownFolderPath(&FOLDERID_Pictures, KF_FLAG_DEFAULT, None).ok()?;
         let path = raw.to_string().ok();
         CoTaskMemFree(Some(raw.0 as *const _));
-        Some(PathBuf::from(path?).join("A2Tools DPS Meter"))
+        Some(PathBuf::from(path?).join("Citizen Score"))
     }
 }
 

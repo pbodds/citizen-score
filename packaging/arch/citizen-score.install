@@ -3,11 +3,11 @@
 # needs it again. setcap sets the whole list, so nothing older stays.
 
 _grant_capture() {
-  if setcap cap_net_raw=ep /usr/bin/a2tools-dps-meter; then
-    echo "==> A2Tools DPS Meter may now capture packets."
+  if setcap cap_net_raw=ep /usr/bin/citizen-score; then
+    echo "==> Citizen Score may now capture packets."
   else
     echo "==> Could not grant packet-capture permission. Run:"
-    echo "    sudo setcap cap_net_raw=ep /usr/bin/a2tools-dps-meter"
+    echo "    sudo setcap cap_net_raw=ep /usr/bin/citizen-score"
   fi
 }
 
