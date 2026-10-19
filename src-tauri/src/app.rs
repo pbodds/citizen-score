@@ -423,7 +423,6 @@ async fn delete_fight(app: tauri::AppHandle, id: String) -> Result<(), String> {
 }
 
 
-
 /// Save fights to History, with the packets behind each so it can be
 /// re-derived later (training dummies are not logs).
 fn save_fight_records(state: &AppState, records: Vec<FightRecord>) {
@@ -464,58 +463,10 @@ fn save_fights_before_reset(app: &tauri::AppHandle) {
 }
 
 
-
-
-
-/// Which fights have a slice to upload, and which already have a link.
-#[tauri::command]
-async fn share_status(
-    state: tauri::State<'_, AppState>,
-) -> Result<std::collections::HashMap<String, share::ShareStatus>, String> {
-    let dir = state.app_data_dir.clone();
-    tokio::task::spawn_blocking(move || share::share_status(&dir))
-        .await
-        .map_err(|e| e.to_string())
-}
-
 #[tauri::command]
 fn export_fight_json(state: tauri::State<'_, AppState>, record: FightRecord) -> Result<String, String> {
     state.fight_history.export_fight_json(&record)
 }
-
-/// Write what sharing this fight *would* upload, without uploading anything.
-///
-/// The point is auditability: it produces the `.a2es` and `.upload.json` an
-/// upload would send, cut the same way (only the name tokens differ: each cut
-/// draws its own key), so a user can open them — `a2t-inspect` reads the
-/// former — instead of taking `docs/PRIVACY.md` on faith. There is no network
-/// call anywhere in this path.
-///
-/// Async because it re-parses a packet capture and replays it to resolve the
-/// names the blinder has to remove; on a long capture that is seconds of CPU,
-/// and a sync command would hold the main thread (see `get_fight_history`).
-#[tauri::command]
-async fn preview_share(
-    state: tauri::State<'_, AppState>,
-    fight_id: String,
-) -> Result<share::PreviewResult, String> {
-    let record = state.fight_history.load_fight(&fight_id)?;
-    let app_data_dir = state.app_data_dir.clone();
-    tokio::task::spawn_blocking(move || {
-        let captures = share::find_captures(&app_data_dir);
-        let out_dir = app_data_dir.join("share-preview");
-        share::preview(&record, &captures, &out_dir)
-    })
-    .await
-    .map_err(|e| format!("preview task failed: {e}"))?
-}
-
-
-
-
-
-
-
 
 
 #[tauri::command]
@@ -1018,11 +969,6 @@ async fn write_cached_icon(app: tauri::AppHandle, key: String, data: String) -> 
 }
 
 
-
-
-
-
-
 /// A roster placed here overrides the downloaded one.
 ///
 /// Build it with `a2t-roster names.txt -o <this path>`. It exists so the gold
@@ -1073,7 +1019,6 @@ fn load_supporter_override(app_data_dir: &std::path::Path) -> Option<crate::supp
 }
 
 
-
 // ── the private build ──────────────────────────────────────────────────────
 // Built without the `online` feature (`npm run build:offline`), the meter links
 // no network client and none of the code above that reaches a service: the
@@ -1081,94 +1026,6 @@ fn load_supporter_override(app_data_dir: &std::path::Path) -> Option<crate::supp
 // to Dev, update checks and the updater. The pages still invoke these commands
 // by name, so each keeps its name here and says it is not in this build; the
 // pages ask `build_features` first and hide what is missing.
-
-const NOT_IN_THIS_BUILD: &str = "not in this build: it was built without online features";
-
-#[tauri::command]
-async fn upload_fight(fight_id: String) -> Result<serde_json::Value, String> {
-    let _ = fight_id;
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-async fn account_status() -> Result<Option<serde_json::Value>, String> {
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-fn account_status_cached() -> Option<Option<serde_json::Value>> {
-    None
-}
-
-#[tauri::command]
-fn discord_activity_available() -> bool {
-    false
-}
-
-#[tauri::command]
-async fn account_begin_link() -> Result<serde_json::Value, String> {
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-fn account_sign_out() {}
-
-#[tauri::command]
-fn stream_overlay_status() -> Result<serde_json::Value, String> {
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-async fn stream_overlay_configure(enabled: bool, port: u16) -> Result<serde_json::Value, String> {
-    let _ = (enabled, port);
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-async fn stream_overlay_new_key() -> Result<serde_json::Value, String> {
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-async fn send_logs_to_dev() -> Result<serde_json::Value, String> {
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-#[tauri::command]
-#[allow(clippy::too_many_arguments)]
-async fn show_update_window(
-    current: String,
-    latest: String,
-    msi_url: String,
-    arch_url: Option<String>,
-    deb_url: Option<String>,
-    rpm_url: Option<String>,
-    msi_sha256: Option<String>,
-    arch_sha256: Option<String>,
-    deb_sha256: Option<String>,
-    rpm_sha256: Option<String>,
-) -> Result<bool, String> {
-    let _ = (current, latest, msi_url, arch_url, deb_url, rpm_url, msi_sha256, arch_sha256, deb_sha256, rpm_sha256);
-    Ok(false)
-}
-
-#[tauri::command]
-async fn fetch_url(url: String) -> Result<String, String> {
-    let _ = url;
-    Err(NOT_IN_THIS_BUILD.into())
-}
-
-/// Which optional parts this build has. `online` is false in the private
-/// build: the pages hide the account, uploads, Streaming, Discord activity,
-/// Send Logs to Dev and the update prompt.
-#[tauri::command]
-fn build_features() -> serde_json::Value {
-    // A development build started with A2_DEV_SUPPORTER set acts as a
-    // supporter's account (bar textures), to test those without one. A
-    // release build ignores it.
-    let dev_supporter = cfg!(debug_assertions) && std::env::var_os("A2_DEV_SUPPORTER").is_some();
-    serde_json::json!({ "online": false, "devSupporter": dev_supporter })
-}
 
 #[tauri::command]
 fn open_url(url: String) {
@@ -1395,7 +1252,6 @@ fn open_details_on_monitor_inner(
     });
     Ok(())
 }
-
 
 
 /// The monitor the user has pinned Details to, or `None` when the setting is
@@ -3014,8 +2870,6 @@ pub fn run() {
             crate::plugins::plugin_add_folder,
             crate::plugins::plugin_remove_folder,
             crate::plugins::plugin_check_updates,
-            crate::plugins::plugin_catalog,
-            crate::plugins::plugin_install,
             crate::plugins::plugin_uninstall,
             crate::plugins::plugin_debug_frame,
             crate::plugins::plugin_window,
@@ -3050,17 +2904,6 @@ pub fn run() {
             load_fight,
             delete_fight,
             export_fight_json,
-            preview_share,
-            upload_fight,
-            share_status,
-            account_status,
-            account_status_cached,
-            discord_activity_available,
-            stream_overlay_status,
-            stream_overlay_configure,
-            stream_overlay_new_key,
-            account_begin_link,
-            account_sign_out,
             get_settings,
             update_settings,
             get_ping,
@@ -3075,7 +2918,6 @@ pub fn run() {
             set_language,
             set_debug_logging,
             set_packet_logging,
-            send_logs_to_dev,
             get_aion2_window_title,
             debug_status,
             quit_app,
@@ -3116,9 +2958,6 @@ pub fn run() {
             set_manual_device,
             replay_file,
             test_auto_hide,
-            fetch_url,
-            show_update_window,
-            build_features,
         ])
         .run(context)
         .expect("error while running tauri application");
@@ -3138,7 +2977,6 @@ mod tests {
         assert!(!click_through(true, false, true));
         assert!(!click_through(false, false, false));
     }
-
 
 
     #[test]

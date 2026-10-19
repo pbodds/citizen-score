@@ -13,6 +13,5 @@
     if (meter) for (const child of [...meter.children]) {
       if (!child.classList.contains("settingsPanel")) child.remove();
     }
-    document.querySelectorAll(".updateModal, .discordPromo").forEach(element => element.remove());
   }, { once: true });
 })();

@@ -767,17 +767,6 @@ pub struct PluginUpdate {
     pub to: String,
 }
 
-/// A newer reviewed version in the catalog, for an installed plugin.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PluginAvailable {
-    pub id: String,
-    pub name: String,
-    pub from: String,
-    pub to: String,
-    /// Permissions the new version asks for that the installed one did not.
-    pub new_permissions: Vec<String>,
-}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -785,10 +774,6 @@ pub struct UpdateCheck {
     pub view: PluginsView,
     /// Versions that changed on disk (developer folders), now loaded.
     pub updated: Vec<PluginUpdate>,
-    /// Newer reviewed versions waiting to be installed.
-    pub available: Vec<PluginAvailable>,
-    /// Why the catalog could not be checked, if it could not.
-    pub catalog_error: Option<String>,
 }
 
 /// Reload open plugin windows, closing those whose plugin is gone.
@@ -804,10 +789,9 @@ fn refresh_windows(app: &tauri::AppHandle, host: &PluginHost) {
 }
 
 
-
 /// Check for plugin updates: read every plugin folder again (a developer
 /// plugin's source is its folder) and reload open plugin windows so they run
-/// the new files, then ask the signed catalog for newer reviewed versions.
+/// the new files.
 #[tauri::command]
 pub async fn plugin_check_updates(app: tauri::AppHandle) -> Result<UpdateCheck, String> {
     let host = host(&app)?;
@@ -823,55 +807,9 @@ pub async fn plugin_check_updates(app: tauri::AppHandle) -> Result<UpdateCheck, 
         .collect();
     refresh_windows(&app, &host);
     restore_windows(&app);
-    let (available, catalog_error) = (Vec::new(), None);
-    Ok(UpdateCheck { view, updated, available, catalog_error })
+    Ok(UpdateCheck { view, updated })
 }
 
-/// Plugin updates the person said No to at start, a JSON object of id →
-/// version: that version is not offered again (a newer one is).
-pub const DECLINED_UPDATES_KEY: &str = "dpsMeter.pluginUpdatesDeclined";
-
-
-
-
-
-
-
-
-/// A catalog entry as Settings lists it.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CatalogItem {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub description: String,
-    pub author: String,
-    pub permissions: Vec<String>,
-    pub source: String,
-    /// The installed version, if any.
-    pub installed: Option<String>,
-}
-
-/// The reviewed plugins on offer, from the signed catalog.
-#[tauri::command]
-pub async fn plugin_catalog(app: tauri::AppHandle) -> Result<Vec<CatalogItem>, String> {
-    {
-        let _ = app;
-        Err("The offline build does not download plugins.".into())
-    }
-}
-
-
-/// Install a reviewed plugin from the catalog, or update it to the catalog's
-/// version. Its saved data is kept.
-#[tauri::command]
-pub async fn plugin_install(app: tauri::AppHandle, id: String) -> Result<PluginsView, String> {
-    {
-        let _ = (app, id);
-        Err("The offline build does not download plugins.".into())
-    }
-}
 
 /// Remove an installed plugin. Its saved data stays, for a later reinstall.
 #[tauri::command]
@@ -1583,9 +1521,6 @@ mod tests {
     use super::{within_reach, Pending, PluginInfo, SETTLE};
     use std::collections::HashSet;
     use std::time::{Duration, Instant};
-
-
-
 
 
     #[test]

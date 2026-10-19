@@ -455,11 +455,9 @@
             <nav class="settingsNav" aria-label="Settings sections">
               <div class="settingsTabs" role="tablist" aria-orientation="vertical">
                 <button class="settingsNavItem isActive" type="button" role="tab" id="settingsTab-connection" aria-controls="settingsSection-connection" aria-selected="true" tabindex="0" data-section="connection"><i data-lucide="plug" aria-hidden="true"></i><span data-i18n="settings.connection">Connection</span></button>
-                <button class="settingsNavItem" type="button" role="tab" id="settingsTab-account" aria-controls="settingsSection-account" aria-selected="false" tabindex="-1" data-section="account"><i data-lucide="circle-user" aria-hidden="true"></i><span data-i18n="settings.account.title">A2 Tools Account</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-meter" aria-controls="settingsSection-meter" aria-selected="false" tabindex="-1" data-section="meter"><i data-lucide="gauge" aria-hidden="true"></i><span data-i18n="settings.meterSettings">Meter Settings</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-appearance" aria-controls="settingsSection-appearance" aria-selected="false" tabindex="-1" data-section="appearance"><i data-lucide="palette" aria-hidden="true"></i><span data-i18n="settings.appearance">Appearance</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-window" aria-controls="settingsSection-window" aria-selected="false" tabindex="-1" data-section="window"><i data-lucide="app-window" aria-hidden="true"></i><span>Window</span></button>
-                <button class="settingsNavItem" type="button" role="tab" id="settingsTab-streaming" aria-controls="settingsSection-streaming" aria-selected="false" tabindex="-1" data-section="streaming"><i data-lucide="cast" aria-hidden="true"></i><span data-i18n="settings.streamOverlay.title">Streaming</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-keybinds" aria-controls="settingsSection-keybinds" aria-selected="false" tabindex="-1" data-section="keybinds"><i data-lucide="keyboard" aria-hidden="true"></i><span data-i18n="settings.keybinds">Keybinds</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-plugins" aria-controls="settingsSection-plugins" aria-selected="false" tabindex="-1" data-section="plugins"><i data-lucide="puzzle" aria-hidden="true"></i><span data-i18n="settings.plugins.title">Plugins</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-advanced" aria-controls="settingsSection-advanced" aria-selected="false" tabindex="-1" data-section="advanced"><i data-lucide="sliders-horizontal" aria-hidden="true"></i><span data-i18n="settings.advanced">Advanced</span></button>
@@ -528,59 +526,6 @@
                       type="button"
                       data-i18n="settings.resetDetection">Detect again</button>
                   </div>
-                </div>
-              </section>
-              <section class="settingsSection" id="settingsSection-account" role="tabpanel" aria-labelledby="settingsTab-account" data-section="account" hidden>
-                <h2 class="settingsSectionTitle" data-i18n="settings.account.title">A2 Tools Account</h2>
-                <div class="settingsGroupBody">
-                  <div class="settingsRow accountRow">
-                    <div class="settingsInfo">
-                      <div class="settingsLabel accountState" data-i18n="settings.account.signedOut">Not signed in</div>
-                      <div class="settingsHint accountHint" data-i18n="settings.account.hint">Sign in to sync characters and settings with a2tools.app.</div>
-                    </div>
-                    <div class="settingsRowEnd">
-                      <button class="settingsAction accountConnectBtn" type="button" data-i18n="settings.account.connect">Sign in</button>
-                      <button class="settingsAction settingsActionDanger accountSignOutBtn" type="button" style="display:none" data-i18n="settings.account.signOut">Sign out</button>
-                    </div>
-                  </div>
-                  <label class="settingsToggle discordActivityGroup" style="display:none" title="While AION2 is open, your Discord status shows your character's name, class, level and server, and the boss you are fighting. It goes through the Discord app on this computer; no account is needed." data-i18n-title="settings.discord.activityHint">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.discord.activity">Show what I'm playing in Discord</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="discordActivityCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                  <div class="settingsRow settingsRowSelect discordActivityGroup" style="display:none">
-                    <div class="settingsInfo">
-                      <div class="settingsLabel" data-i18n="settings.discord.stat" title="The number your Discord status shows after your level." data-i18n-title="settings.discord.statHint">Number in Discord</div>
-                    </div>
-                    <div class="settingsDropdownWrapper discordStatDropdownWrapper">
-                      <button class="settingsDropdownBtn discordStatDropdownBtn" type="button">
-                        <span class="settingsDropdownText">-</span>
-                        <span class="settingsDropdownCaret" aria-hidden="true">▾</span>
-                      </button>
-                      <div class="settingsDropdownMenu discordStatDropdownMenu" role="menu"></div>
-                    </div>
-                  </div>
-                  <label class="settingsToggle" title="When a boss fight ends it is uploaded to your account, with the visibility you chose on a2tools.app. Other players stay masked. Training dummies are never uploaded." data-i18n-title="settings.account.autoUploadHint">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.account.autoUpload">Upload boss fights automatically</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="autoUploadCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                  <label class="settingsToggle" title="Supporters' names render gold. Cosmetic only — it never changes any number." data-i18n-title="settings.showSupporterColorsHint">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.showSupporterColors">Show supporter colours</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="showSupporterColorsCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                </div>
-                <div class="accountCodeBox" style="display:none">
-                  <div class="accountCodeLabel" data-i18n="settings.account.codePrompt">Approve this code in your browser:</div>
-                  <div class="accountCode"></div>
-                  <div class="accountCodeHint" data-i18n="settings.account.codeHint">The page should have opened already. The code expires in 10 minutes.</div>
                 </div>
               </section>
               <section class="settingsSection" id="settingsSection-meter" role="tabpanel" aria-labelledby="settingsTab-meter" data-section="meter" hidden>
@@ -744,7 +689,6 @@
                   <div class="settingsRow settingsRowSelect">
                     <div class="settingsInfo">
                       <div class="settingsLabel" data-i18n="settings.barTexture.label" title="A pattern over the meter's bars. A thank-you for supporting A2 Tools." data-i18n-title="settings.tips.barTexture">Bar texture</div>
-                      <div class="settingsHint barTextureHint" data-i18n="settings.barTexture.supportersOnly">For supporters: sign in above, under A2 Tools account, to use it.</div>
                     </div>
                     <div class="settingsDropdownWrapper barTextureDropdownWrapper">
                       <button class="settingsDropdownBtn barTextureDropdownBtn" type="button">
@@ -1026,53 +970,6 @@
                 </div>
                 <p class="csFootnote csNoCompositor">Monitor, workspaces and desktop effects need Hyprland; this desktop only supports Keep on top and the look settings.</p>
               </section>
-              <section class="settingsSection" id="settingsSection-streaming" role="tabpanel" aria-labelledby="settingsTab-streaming" data-section="streaming" hidden>
-                <h2 class="settingsSectionTitle" data-i18n="settings.streamOverlay.title">Streaming</h2>
-                <div class="settingsGroupBody streamOverlayGroup" style="display:none">
-                  <label class="settingsToggle" title="Serves the meter on your home network so OBS on a second PC can show it as a Browser Source." data-i18n-title="settings.streamOverlay.enableHint">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.streamOverlay.enable">Stream overlay (OBS on another PC)</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="streamOverlayCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                  <div class="streamOverlayDetails" style="display:none">
-                    <div class="settingsRow">
-                      <label class="settingsLabel" for="streamOverlayPortInput" data-i18n="settings.streamOverlay.port">Port</label>
-                      <div class="settingsRowEnd">
-                        <input
-                          id="streamOverlayPortInput"
-                          class="streamOverlayPortInput"
-                          type="number"
-                          min="1024"
-                          max="65535"
-                          autocomplete="off" />
-                        <button class="settingsAction streamOverlayNewKeyBtn" type="button" data-i18n="settings.streamOverlay.newKey">New key</button>
-                      </div>
-                    </div>
-                    <div class="settingsRow">
-                      <label class="settingsLabel" for="streamOverlayNameInput" data-i18n="settings.streamOverlay.displayName">Your name on stream</label>
-                      <div class="settingsRowEnd">
-                        <input
-                          id="streamOverlayNameInput"
-                          class="streamOverlayNameInput"
-                          type="text"
-                          maxlength="24"
-                          spellcheck="false"
-                          autocomplete="off"
-                          placeholder="Your character name"
-                          data-i18n-placeholder="settings.streamOverlay.displayNamePlaceholder" />
-                      </div>
-                    </div>
-                    <div class="streamOverlayUrlBlock">
-                      <div class="settingsLabel" data-i18n="settings.streamOverlay.url">Browser Source URL</div>
-                      <div class="streamOverlayUrls"></div>
-                      <div class="streamOverlayStatus"></div>
-                      <div class="streamOverlayHelp" data-i18n="settings.streamOverlay.help">In OBS on the other PC, add a Browser Source with this URL. The first time, Windows Firewall asks about the meter: allow it on private networks. Anyone on your network with the link can see the meter; New key cuts off old links.</div>
-                    </div>
-                  </div>
-                </div>
-              </section>
               <section class="settingsSection" id="settingsSection-keybinds" role="tabpanel" aria-labelledby="settingsTab-keybinds" data-section="keybinds" hidden>
                 <h2 class="settingsSectionTitle" data-i18n="settings.keybinds">Keybinds</h2>
                 <div class="settingsGroupBody">
@@ -1142,9 +1039,6 @@
                   <h3 class="pluginListTitle" data-i18n="settings.plugins.installed">Installed</h3>
                   <div class="pluginList"></div>
                   <div class="settingsHint pluginListEmpty" data-i18n="settings.plugins.none">No plugins installed yet.</div>
-                  <h3 class="pluginListTitle" data-i18n="settings.plugins.available">Available</h3>
-                  <div class="pluginCatalog"></div>
-                  <div class="settingsHint pluginCatalogStatus"></div>
                   <label class="settingsToggle pluginDevToggle">
                     <span class="settingsToggleLabel settingsLabel" data-i18n="settings.plugins.devMode" title="Loads plugins from folders on this computer, for building and testing them. They are not reviewed, so only load plugins you trust." data-i18n-title="settings.tips.pluginDevMode">Plugin developer mode</span>
                     <span class="settingsToggleControl">
@@ -1158,17 +1052,6 @@
                     </div>
                     <div class="settingsRowEnd">
                       <button class="settingsAction pluginAddBtn" type="button" data-i18n="settings.plugins.add">Load plugin folder…</button>
-                    </div>
-                  </div>
-                  <div class="hotkeyConsent pluginConsent" hidden>
-                    <div class="hotkeyConsentCard" role="dialog" aria-modal="true" aria-labelledby="pluginConsentTitle">
-                      <h3 class="hotkeyConsentTitle" id="pluginConsentTitle"></h3>
-                      <p class="pluginConsentIntro"></p>
-                      <ul class="pluginConsentList"></ul>
-                      <div class="hotkeyConsentActions">
-                        <button class="settingsAction pluginConsentCancel" type="button" data-i18n="settings.plugins.consentCancel">Cancel</button>
-                        <button class="settingsAction hotkeyConsentConfirm pluginConsentConfirm" type="button"></button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1213,22 +1096,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="settingsGroupBody shareBossTimersRow">
-                  <label class="settingsToggle">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.partyPresence" title="Party members who also use A2Tools see a small A2 tag beside your name, and you see theirs. Anyone in your party using A2Tools can see it, so they'll know you use a third-party meter. Only hashes of character names and servers are sent." data-i18n-title="settings.tips.partyPresence">Show A2Tools users in my party</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="partyPresenceCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                  <label class="settingsToggle">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.shareBossTimers" title="Shares field boss timers with other players through a2tools.app (and its partner Aion 2 Timers): the bosses on your map when you open it, and the field bosses you see killed, and their HP while you fight them. Only the server, the bosses, their times and HP are sent." data-i18n-title="settings.tips.shareBossTimers">Share field boss timers</span>
-                    <span class="settingsToggleControl">
-                      <input type="checkbox" class="shareBossTimersCheckbox" />
-                      <span class="settingsToggleTrack" aria-hidden="true"></span>
-                    </span>
-                  </label>
-                </div>
                 <h3 class="settingsSubTitle" data-i18n="settings.diagnostics">Diagnostics</h3>
                 <div class="settingsGroupBody">
                   <label class="settingsToggle">
@@ -1245,14 +1112,6 @@
                       <span class="settingsToggleTrack" aria-hidden="true"></span>
                     </span>
                   </label>
-                  <div class="settingsRow sendLogsRow">
-                    <div class="settingsInfo">
-                      <div class="settingsHint sendLogsStatus" data-i18n="settings.sendLogs.hint">Sends your 3 most recent packet logs to the developer, for a bug report.</div>
-                    </div>
-                    <div class="settingsRowEnd">
-                      <button class="settingsAction sendLogsBtn" type="button" data-i18n="settings.sendLogs.button">Send Logs to Dev</button>
-                    </div>
-                  </div>
                 </div>
                 <div class="settingsRow settingsRowAction">
                   <button
@@ -1434,33 +1293,6 @@
           display: none;
         "></div>
     </div>
-    <div
-      class="updateModal"
-      id="updateModal">
-      <div class="updateModalCard">
-        <div class="updateModalTitle" data-i18n="update.title">New update available</div>
-        <div
-          class="updateModalText"
-          id="updateModalText"></div>
-        <div class="updateModalActions" id="updateModalActions">
-          <button class="updateModalBtn updateInstallBtn" data-i18n="update.install">Install Now</button>
-          <button class="updateModalBtn updateNotesBtn" data-i18n="update.notes">Release Notes</button>
-          <button class="updateModalBtn updateManualBtn" data-i18n="update.manual">Manual Install</button>
-          <button class="updateModalBtn updateLaterBtn" data-i18n="update.later">Update Later</button>
-        </div>
-        <div class="updateProgress" id="updateProgress" style="display:none">
-          <div class="updateProgressTrack">
-            <div class="updateProgressBar" id="updateProgressBar"></div>
-          </div>
-          <div class="updateProgressText" id="updateProgressText">0%</div>
-          <div class="updateProgressActions">
-            <button class="updateModalBtn updateNotesBtn updateProgressNotesBtn" data-i18n="update.notes">Release Notes</button>
-            <button class="updateModalBtn updateCancelBtn" data-i18n="update.cancel">Cancel</button>
-          </div>
-        </div>
-        <div class="updateStatusText" id="updateStatusText" style="display:none"></div>
-      </div>
-    </div>
     <script src="/src/js/tauriBridge.js?v=202b2"></script>
     <script src="/src/js/battleTime.js"></script>
     <script src="/src/js/ttk.js"></script>
@@ -1472,7 +1304,6 @@
     <script src="/src/js/history.js?v=2018a"></script>
 
     <!-- 추가 -->
-    <script src="/src/js/checkRelease.js?v=202b6"></script>
 
     <script src="/src/js/i18n.js"></script>
     <script src="/src/js/core.js?v=2018a"></script>

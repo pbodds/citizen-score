@@ -6,9 +6,7 @@ const SETTING_CHOICES = {
   trainSelectionMode: { allowed: ["all", "highestDamage"], fallback: "all" },
   // The figure beside each player's name, in the meter and in Details.
   partyStat: { allowed: ["combatPower", "gearScore", "both", "off"], fallback: "combatPower" },
-  // The number after the level in the Discord activity (presence.rs).
-  discordStat: { allowed: ["combatPower", "gearScore", "off"], fallback: "off" },
-  // A pattern over the meter's bars: a supporter's perk (applyBarTexture).
+  // A pattern over the meter's bars (applyBarTexture).
   barTexture: { allowed: ["none", "flames", "crystal", "glacier", "feathers", "wing", "storm", "nebula", "galaxy", "aura"], fallback: "none" },
 };
 // Themes whose bars differ from one another show those colours in the theme
@@ -43,12 +41,9 @@ const REMOTE_APPLIED_SETTING_CONTROLS = {
   "dpsMeter.showTtk": ".showTtkCheckbox",
   "dpsMeter.showHealModes": ".showHealModesCheckbox",
   "dpsMeter.bossNameSize": ".bossNameSizeInput",
-  "dpsMeter.showSupporterColors": ".showSupporterColorsCheckbox",
   "dpsMeter.barTextureOffset": ".textureOffsetCheckbox",
   "dpsMeter.showSuspendBtn": ".showSuspendBtnCheckbox",
   "dpsMeter.showLockBtn": ".showLockBtnCheckbox",
-  // Set from the main window by the account offer.
-  "dpsMeter.autoUpload": ".autoUploadCheckbox",
 };
 
 class DpsApp {
@@ -63,7 +58,6 @@ class DpsApp {
     this.pinMeToTop = false;
     this.slimMode = false;
     this.mainPlayerNamesBold = true;
-    this.showSupporterColors = true;
     this.mainPlayerDpsBold = true;
     this.includeMainMeterScreenshot = false;
     this.saveScreenshotToFolder = false;
@@ -93,10 +87,8 @@ class DpsApp {
       displayMode: "dpsMeter.displayMode",
       language: "dpsMeter.language",
       debugLogging: "dpsMeter.debugLoggingEnabled",
-      shareBossTimers: "dpsMeter.shareBossTimers",
       pinMeToTop: "dpsMeter.pinMeToTop",
       mainPlayerNamesBold: "dpsMeter.mainPlayerNamesBold",
-      showSupporterColors: "dpsMeter.showSupporterColors",
       mainPlayerDpsBold: "dpsMeter.mainPlayerDpsBold",
       showPing: "dpsMeter.showPing",
       showOdyle: "dpsMeter.showOdyle",
@@ -115,13 +107,6 @@ class DpsApp {
       globalHotkeys: "dpsMeter.globalHotkeys",
       bossLogs: "dpsMeter.bossLogsEnabled",
       saveRawPackets: "dpsMeter.saveRawPackets",
-      autoUpload: "dpsMeter.autoUpload",
-      discordActivity: "dpsMeter.discordActivity",
-      discordStat: "dpsMeter.discordStat",
-      discordPromoShown: "dpsMeter.discordPromoShown",
-      partyPresence: "dpsMeter.partyPresence",
-      partyPromoShown: "dpsMeter.partyPromoShown",
-      accountPromoShown: "dpsMeter.accountPromoShown",
       windowOpacity: "dpsMeter.windowOpacity",
       meterWidth: "dpsMeter.meterWidth",
       meterMinHeight: "dpsMeter.meterMinHeight",
@@ -158,11 +143,6 @@ class DpsApp {
       "obsidian",
       "varian",
     ];
-    this.supportQrImages = {
-      afdian: "./assets/afdian.png",
-      kofi: "./assets/kofi.png",
-      wechat: "./assets/wechat.png",
-    };
     this.jobColorMap = {
       정령성: "#E06BFF",
       Spiritmaster: "#E06BFF",
@@ -223,8 +203,6 @@ class DpsApp {
     this.trainSelectionMode = "all";
     this.partyStat = "combatPower";
     this.barTexture = "none";
-    // Whether the signed-in A2 Tools account is a supporter's (bar textures).
-    this.isSupporter = false;
     this._detailsFlashTimer = null;
     this._meterFlashTimer = null;
     this._recentLocalIdByName = new Map();
@@ -334,8 +312,6 @@ class DpsApp {
         this.settingsSelections.language = lang;
         this.initializeSettingsDropdowns();
         this.refreshConnectionInfo();
-        this.updateSupportPrimaryAction(lang);
-        this.updateSupportQrImage(this.supportPrimaryButton?.dataset.support || "afdian");
       });
       return;
     }
@@ -620,18 +596,7 @@ class DpsApp {
       }
       this.refreshConnectionInfo();
       this.refreshBossLabel();
-      this.updateSupportVisibility(lang);
-      this.updateSupportPrimaryAction(lang);
-      this.updateSupportQrImage(this.supportPrimaryButton?.dataset.support || "afdian");
     });
-    // Settings, Details and History run this same bundle; only the overlay
-    // checks, or every Settings open would ask again.
-    // Not in the private build, which checks for nothing (build_features).
-    if (window.A2_VIEW === "main") {
-      Promise.resolve(window.a2BuildReady).then((build) => {
-        if (build?.online !== false) window.ReleaseChecker?.start?.();
-      });
-    }
     this.setupConsoleDebugging();
     this.bindNativeHotkeyBridge();
 
@@ -1004,9 +969,7 @@ class DpsApp {
     const tooltipName = String(row?.name || "-").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const tooltipClassIcon = row?.job ? `<img class="hoverDetailsTooltipClassIcon" src="./assets/${row.job}.png" alt="" onerror="this.style.display='none'">` : "";
     // Wrapped rather than styled on the header, so the icon keeps its own colour.
-    const tooltipNameHtml = row?.isSupporter
-      ? `<span class="isSupporter">${tooltipName}</span>`
-      : tooltipName;
+    const tooltipNameHtml = tooltipName;
     this.hoverTooltipEl.innerHTML = `
       <div class="hoverDetailsTooltipHeader">${tooltipClassIcon}${tooltipNameHtml}</div>
       <div class="hoverDetailsTooltipStats">
@@ -1580,11 +1543,6 @@ class DpsApp {
         isUser: !isOthers && ((!!name && name === this.USER_NAME) || (hasLocalId && numericId === localId)),
         isOthers,
         isIdentifying,
-        // Resolved in Rust against a downloaded roster; the frontend only
-        // renders it. Cosmetic only — it must not reach sorting or bar colour.
-        isSupporter: !!(isObj && value.isSupporter) && this.showSupporterColors !== false,
-        // A party member who runs A2Tools too (party_presence.rs).
-        usesA2tools: !!(isObj && value.usesA2tools),
       });
     }
 
@@ -2447,95 +2405,6 @@ class DpsApp {
     }
   }
 
-  setAccountState(text) {
-    if (!this.accountStateEl) return;
-    this.accountStateEl.textContent = text;
-    // A short state stays on one line beside its button; a long one (an
-    // error saying why sign-in failed) wraps rather than being cut off.
-    this.accountStateEl.title = text || "";
-    this.accountStateEl.classList.toggle("isLong", String(text || "").length > 40);
-  }
-
-  // Reflects whatever the backend reports. Called on open, after sign-out, and
-  // from the "account-changed" event the device-grant poll emits when the
-  // player approves or declines in the browser.
-  async refreshAccountPanel(result) {
-    if (!this.accountStateEl) return;
-    const request = this._accountPanelRequest = (this._accountPanelRequest || 0) + 1;
-    const current = () => request === this._accountPanelRequest;
-    if (result && result.connected === false && result.error) {
-      const msg = String(result.error);
-      this.setAccountState(
-        window.i18n?.format?.("settings.account.failed", { error: msg }, `Sign-in failed: ${msg}`)
-      );
-      if (this.accountCodeBox) this.accountCodeBox.style.display = "none";
-      if (this.accountConnectBtn) this.accountConnectBtn.disabled = false;
-      return;
-    }
-
-    // The last known answer first, so the panel is right the moment it opens;
-    // the server's can take seconds, and nothing else waits on it.
-    if (!result) {
-      try {
-        const seen = await window.javaBridge?.accountStatusCached?.();
-        if (!current()) return;
-        if (seen) this.paintAccount(seen.who);
-      } catch {}
-    }
-    if (!current()) return;
-
-    let who = null;
-    try {
-      who = await window.javaBridge?.accountStatus?.();
-    } catch (err) {
-      if (!current()) return;
-      // A token is stored but could not be checked (keyring locked, server
-      // down): say why, and do not ask for a new sign-in.
-      this.paintAccountUnavailable(typeof err === "string" ? err : err?.message || String(err));
-      return;
-    }
-    if (current()) this.paintAccount(who);
-  }
-
-  paintAccountUnavailable(message) {
-    if (this.accountCodeBox?.style.display === "block") return;
-    if (this.accountConnectBtn) this.accountConnectBtn.style.display = "none";
-    if (this.accountSignOutBtn) this.accountSignOutBtn.style.display = "";
-    this.setAccountState(message);
-  }
-
-  paintAccount(who) {
-    const signedIn = !!who;
-    // A sign-in waiting for approval in the browser keeps its code and its
-    // "waiting" line; its outcome arrives on "account-changed".
-    if (!signedIn && this.accountCodeBox?.style.display === "block") return;
-    if (this.accountCodeBox && signedIn) this.accountCodeBox.style.display = "none";
-    if (this.accountConnectBtn) {
-      this.accountConnectBtn.disabled = false;
-      this.accountConnectBtn.style.display = signedIn ? "none" : "";
-    }
-    if (this.accountSignOutBtn) {
-      this.accountSignOutBtn.style.display = signedIn ? "" : "none";
-    }
-
-    if (!signedIn) {
-      this.setAccountState(window.i18n?.t?.("settings.account.signedOut", "Not signed in"));
-      this.setSupporter(false);
-      return;
-    }
-    const name = who.displayName || who.display_name || "";
-    let label = window.i18n?.format?.(
-      "settings.account.signedIn",
-      { name },
-      `Signed in as ${name}`
-    );
-    if (who.supporter) {
-      label += " · " + window.i18n?.t?.("settings.account.supporter", "Supporter");
-    }
-    this.setSupporter(who.supporter);
-    this.setAccountState(label);
-  }
-
   setupSettingsPanel() {
     this.settingsPanel = document.querySelector(".settingsPanel");
     this.settingsClose = document.querySelector(".settingsClose");
@@ -2554,8 +2423,6 @@ class DpsApp {
     this.barTextureHint = document.querySelector(".barTextureHint");
     this.textureOffsetCheckbox = document.querySelector(".textureOffsetCheckbox");
     this.partyStatDropdownMenu = document.querySelector(".partyStatDropdownMenu");
-    this.discordStatDropdownBtn = document.querySelector(".discordStatDropdownBtn");
-    this.discordStatDropdownMenu = document.querySelector(".discordStatDropdownMenu");
     this.trainSelectionModeDropdownMenu = document.querySelector(".trainSelectionModeDropdownMenu");
     this.defaultMeterModeDropdownBtn = document.querySelector(".defaultMeterModeDropdownBtn");
     this.defaultMeterModeDropdownMenu = document.querySelector(".defaultMeterModeDropdownMenu");
@@ -2567,13 +2434,9 @@ class DpsApp {
     this.showSuspendBtnCheckbox = document.querySelector(".showSuspendBtnCheckbox");
     this.bossLogsCheckbox = document.querySelector(".bossLogsCheckbox");
     this.debugLoggingCheckbox = document.querySelector(".debugLoggingCheckbox");
-    this.shareBossTimersCheckbox = document.querySelector(".shareBossTimersCheckbox");
-    this.partyPresenceCheckbox = document.querySelector(".partyPresenceCheckbox");
     this.showPingCheckbox = document.querySelector(".showPingCheckbox");
     this.showOdyleCheckbox = document.querySelector(".showOdyleCheckbox");
     this.saveRawPacketsCheckbox = document.querySelector(".saveRawPacketsCheckbox");
-    this.sendLogsBtn = document.querySelector(".sendLogsBtn");
-    this.sendLogsStatus = document.querySelector(".sendLogsStatus");
     this.pinMeToTopCheckbox = document.querySelector(".pinMeToTopCheckbox");
     this.detailsMonitorDropdownBtn = document.querySelector(".detailsMonitorDropdownBtn");
     this.detailsMonitorDropdownMenu = document.querySelector(".detailsMonitorDropdownMenu");
@@ -2581,14 +2444,6 @@ class DpsApp {
     this.meterLayoutDropdownBtn = document.querySelector(".meterLayoutDropdownBtn");
     this.meterLayoutDropdownMenu = document.querySelector(".meterLayoutDropdownMenu");
     this.playerNamesBoldCheckbox = document.querySelector(".playerNamesBoldCheckbox");
-    this.showSupporterColorsCheckbox = document.querySelector(".showSupporterColorsCheckbox");
-    this.autoUploadCheckbox = document.querySelector(".autoUploadCheckbox");
-    this.accountStateEl = document.querySelector(".accountState");
-    this.accountHintEl = document.querySelector(".accountHint");
-    this.accountConnectBtn = document.querySelector(".accountConnectBtn");
-    this.accountSignOutBtn = document.querySelector(".accountSignOutBtn");
-    this.accountCodeBox = document.querySelector(".accountCodeBox");
-    this.accountCodeEl = document.querySelector(".accountCode");
     this.playerDpsBoldCheckbox = document.querySelector(".playerDpsBoldCheckbox");
     this.meterOpacityInput = document.querySelector(".meterOpacityInput");
     this.meterOpacityValue = document.querySelector(".meterOpacityValue");
@@ -2600,18 +2455,6 @@ class DpsApp {
     this.windowOpacityValue = document.querySelector(".windowOpacityValue");
     this.titleOpacityInput = document.querySelector(".titleOpacityInput");
     this.titleOpacityValue = document.querySelector(".titleOpacityValue");
-    this.discordButton = document.querySelector(".discordButton");
-    this.supportWidget = document.querySelector(".supportWidget");
-    this.supportButton = document.querySelector(".supportButton");
-    this.supportModal = document.querySelector("#supportModal");
-    this.supportModalTitle = document.querySelector("#supportModalTitle");
-    this.supportModalClose = document.querySelector(".supportModalClose");
-    this.supportQrImage = document.querySelector(".supportQrImage");
-    this.supportPrimaryButton = document.querySelector(".supportPrimaryButton");
-    this.supportCopyStatus = document.querySelector(".supportCopyStatus");
-    this.supportActionButtons = Array.from(document.querySelectorAll(".supportIconButton"));
-    this.kofiButton = document.querySelector(".kofiButton");
-    this.kofiWidget = document.querySelector(".kofiWidget");
     this.quitButton = document.querySelector(".quitButton");
     this.settingsVersionValue = document.querySelector(".settingsVersionValue");
     this.settingsVersionLink = document.querySelector(".settingsVersionLink");
@@ -2626,7 +2469,6 @@ class DpsApp {
       allTargetsWindowMs: "120000",
       trainSelectionMode: "all",
       partyStat: "combatPower",
-      discordStat: "off",
       barTexture: "none",
     };
 
@@ -2650,10 +2492,6 @@ class DpsApp {
     }
     const storedDebugLogging = this.safeGetSetting(this.storageKeys.debugLogging) === "true";
     const storedPinMeToTop = this.safeGetSetting(this.storageKeys.pinMeToTop) === "true";
-    // Default on: a supporter's gold name is the thing they paid for, so it
-    // should be visible unless a viewer has deliberately turned it off.
-    this.showSupporterColors =
-      this.safeGetSetting(this.storageKeys.showSupporterColors) !== "false";
     const mainPlayerNamesBoldSetting = this.safeGetSetting(this.storageKeys.mainPlayerNamesBold);
     const storedMainPlayerNamesBold = mainPlayerNamesBoldSetting !== "false";
     const mainPlayerDpsBoldSetting = this.safeGetSetting(this.storageKeys.mainPlayerDpsBold);
@@ -2774,12 +2612,10 @@ class DpsApp {
     this.partyStat = pickSettingChoice("partyStat", storedPartyStat);
     this.settingsSelections.partyStat = this.partyStat;
     this.syncPreviewPartyStat();
-    this.settingsSelections.discordStat = pickSettingChoice("discordStat", this.safeGetSetting(this.storageKeys.discordStat));
     this.barTexture = pickSettingChoice("barTexture", this.safeGetSetting(this.storageKeys.barTexture));
     this.settingsSelections.barTexture = this.barTexture;
     this.applyBarTexture(this.barTexture);
     this.setTextureOffset(this.safeGetSetting(this.storageKeys.barTextureOffset) === "true");
-    this.refreshSupporterStatus();
     const selectedMode = pickSettingChoice("trainSelectionMode", storedTrainSelectionMode);
     this.trainSelectionMode = selectedMode;
     this.settingsSelections.trainSelectionMode = selectedMode;
@@ -2795,22 +2631,6 @@ class DpsApp {
         const isChecked = !!event.target?.checked;
         this.safeSetSetting(this.storageKeys.bossLogs, String(isChecked));
         window.javaBridge?.setBossLogsEnabled?.(isChecked);
-      });
-    }
-    // A2Tools users in the party see each other (party_presence.rs): on
-    // unless turned off.
-    if (this.partyPresenceCheckbox) {
-      this.partyPresenceCheckbox.checked = this.safeGetSetting(this.storageKeys.partyPresence) !== "false";
-      this.partyPresenceCheckbox.addEventListener("change", (event) => {
-        this.safeSetSetting(this.storageKeys.partyPresence, event.target?.checked ? "true" : "false");
-      });
-    }
-    // Field boss timers from the player's map, shared through a2tools.app
-    // (boss_report.rs): on unless turned off.
-    if (this.shareBossTimersCheckbox) {
-      this.shareBossTimersCheckbox.checked = this.safeGetSetting(this.storageKeys.shareBossTimers) !== "false";
-      this.shareBossTimersCheckbox.addEventListener("change", (event) => {
-        this.safeSetSetting(this.storageKeys.shareBossTimers, event.target?.checked ? "true" : "false");
       });
     }
     if (this.debugLoggingCheckbox) {
@@ -2991,84 +2811,11 @@ class DpsApp {
       });
       this.syncLoggingLock();
     }
-    this.initSendLogs();
     if (this.pinMeToTopCheckbox) {
       this.pinMeToTopCheckbox.checked = this.pinMeToTop;
       this.pinMeToTopCheckbox.addEventListener("change", (event) => {
         const isChecked = !!event.target?.checked;
         this.setPinMeToTop(isChecked, { persist: true });
-      });
-    }
-    if (this.accountConnectBtn) {
-      this.accountConnectBtn.addEventListener("click", async () => {
-        this.accountConnectBtn.disabled = true;
-        try {
-          const prompt = await window.javaBridge?.accountBeginLink?.();
-          if (prompt?.userCode) {
-            // Shown, not hidden: the browser may have failed to open, and the
-            // code is the only way back into the flow if it did.
-            if (this.accountCodeEl) this.accountCodeEl.textContent = prompt.userCode;
-            if (this.accountCodeBox) this.accountCodeBox.style.display = "block";
-            this.setAccountState(
-              window.i18n?.t?.("settings.account.working", "Waiting for approval…")
-            );
-          }
-        } catch (err) {
-          const msg = typeof err === "string" ? err : err?.message || String(err);
-          this.setAccountState(
-            window.i18n?.format?.("settings.account.failed", { error: msg }, `Sign-in failed: ${msg}`)
-          );
-          this.accountConnectBtn.disabled = false;
-        }
-      });
-    }
-    if (this.accountSignOutBtn) {
-      this.accountSignOutBtn.addEventListener("click", async () => {
-        await window.javaBridge?.accountSignOut?.();
-        this.refreshAccountPanel();
-      });
-    }
-    this.refreshAccountPanel();
-
-    // Off unless turned on: it shows others what you are playing. Offered
-    // only when this build has a Discord application to show it under.
-    const discordCheckbox = document.querySelector(".discordActivityCheckbox");
-    if (discordCheckbox) {
-      discordCheckbox.checked = this.safeGetSetting(this.storageKeys.discordActivity) === "true";
-      discordCheckbox.addEventListener("change", (event) => {
-        this.safeSetSetting(this.storageKeys.discordActivity, String(!!event.target?.checked));
-      });
-    }
-    Promise.resolve(window.javaBridge?.discordActivityAvailable?.())
-      .catch(() => false)
-      .then((ok) => {
-        if (ok) for (const group of document.querySelectorAll(".discordActivityGroup")) group.style.display = "";
-        if (window.A2_VIEW !== "main") return;
-        if (window.a2Build?.online === false) return;   // nothing to offer
-        // At most one offer per launch: the account one waits for a launch
-        // where the Discord one does not open.
-        if (!(ok && this.maybeShowDiscordPromo()) && !this.maybeShowPartyPromo()) this.maybeShowAccountPromo();
-      });
-
-    this.initStreamOverlaySettings();
-
-    if (this.autoUploadCheckbox) {
-      // Off unless turned on: an upload publishes a fight.
-      this.autoUploadCheckbox.checked =
-        this.safeGetSetting(this.storageKeys.autoUpload) === "true";
-      this.autoUploadCheckbox.addEventListener("change", (event) => {
-        this.safeSetSetting(this.storageKeys.autoUpload, String(!!event.target?.checked));
-      });
-    }
-
-    if (this.showSupporterColorsCheckbox) {
-      this.showSupporterColorsCheckbox.checked = this.showSupporterColors;
-      this.showSupporterColorsCheckbox.addEventListener("change", (event) => {
-        this.showSupporterColors = !!event.target?.checked;
-        this.safeSetSetting(
-          this.storageKeys.showSupporterColors,
-          String(this.showSupporterColors)
-        );
       });
     }
     if (this.playerNamesBoldCheckbox) {
@@ -3289,134 +3036,19 @@ class DpsApp {
       this.resetAllSettings();
     });
 
-    this.discordButton?.addEventListener("click", () => {
-      window.javaBridge?.openBrowser?.("https://discord.gg/Aion2Global");
-    });
-
-    this.supportButton?.addEventListener("click", () => {
-      this.openSupportModal();
-    });
-    this.supportModalClose?.addEventListener("click", () => this.closeSupportModal());
-    this.supportModal?.addEventListener("click", (event) => {
-      if (event.target === this.supportModal) {
-        this.closeSupportModal();
-      }
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      if (this.supportModal?.classList.contains("isOpen")) {
-        this.closeSupportModal();
-      }
-    });
-    this.supportActionButtons?.forEach((button) => {
-      button.addEventListener("click", () => this.handleSupportAction(button));
-    });
-    this.supportQrImage?.addEventListener("click", () => {
-      if (this.supportQrUrl) window.javaBridge?.openBrowser?.(this.supportQrUrl);
-    });
-
-    this.kofiButton?.addEventListener("click", () => {
-      window.javaBridge?.openBrowser?.("https://ko-fi.com/W7W51T1YW9");
-    });
 
     // This version's release notes; the list when the version isn't known.
     this.settingsVersionLink?.addEventListener("click", () => {
-      const releases = "https://github.com/taengu/A2Tools-DPS-Meter/releases";
-      const version = /^v\d+\.\d+\.\d+$/.exec(this.settingsVersionValue?.textContent?.trim() || "")?.[0];
-      window.javaBridge?.openBrowser?.(version ? `${releases}/tag/${version}` : releases);
+      window.javaBridge?.openBrowser?.("https://github.com/pbodds/citizen-score/releases");
     });
 
     // Quit is wired in startApp, before anything that can be slow.
 
     this.updateSettingsVersion();
-    this.updateSupportVisibility(currentLanguage);
-    this.updateSupportPrimaryAction(currentLanguage);
-    this.updateSupportQrImage(this.supportPrimaryButton?.dataset.support || "afdian");
   }
 
   isChineseLanguage(lang) {
     return String(lang || "").startsWith("zh");
-  }
-
-  updateSupportVisibility() {
-    if (this.supportWidget) {
-      this.supportWidget.style.display = "flex";
-    }
-    if (this.kofiWidget) {
-      this.kofiWidget.style.display = "none";
-    }
-  }
-
-  getSupportIconSvg(type) {
-    const iconByType = {
-      afdian:
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.5 2 5 13h5l-1.5 9L19 10h-5.5L13.5 2z" fill="currentColor"/></svg>',
-      kofi:
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h12v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V7z" fill="currentColor"/><path d="M16 9h1.5a2.5 2.5 0 0 1 0 5H16V9z" fill="currentColor" opacity="0.75"/><path d="M6 5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>',
-      wechat:
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4c-3.87 0-7 2.69-7 6 0 1.9 1.03 3.59 2.62 4.69L4 19l3.66-1.85A8.4 8.4 0 0 0 9 17c3.87 0 7-2.69 7-6s-3.13-7-7-7z" fill="currentColor"/><path d="M16.5 10.5c3.04 0 5.5 2.01 5.5 4.5 0 1.42-.79 2.69-2.02 3.52L20.5 22l-2.79-1.41c-.39.08-.79.12-1.21.12-3.04 0-5.5-2.01-5.5-4.5s2.46-4.5 5.5-4.5z" fill="currentColor" opacity="0.78"/></svg>',
-      paypal:
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 3.2h7.2c3.2 0 5.3 1.9 4.9 4.7-.42 2.85-2.8 4.58-6.1 4.58h-2.4l-.75 4.35H5.9L7.2 3.2z" fill="currentColor"/><path d="M9.3 5.6h4.05c1.3 0 2.05.74 1.83 1.82-.22 1.13-1.2 1.84-2.49 1.84H8.55L9.3 5.6z" fill="currentColor" opacity="0.55"/><path d="M10.55 9.05h2.52c1.95 0 3.2 1.14 2.93 2.86-.3 1.92-1.95 3.12-4.19 3.12h-2.38l.56-3.18h2.2c.75 0 1.23-.4 1.33-1 .1-.56-.3-.93-1.02-.93h-2.15l.2-.87z" fill="#0b2f63" opacity="0.45"/></svg>',
-    };
-    return iconByType[type] || "";
-  }
-
-  updateSupportPrimaryAction(lang) {
-    if (!this.supportPrimaryButton) return;
-    const isChinese = this.isChineseLanguage(lang);
-    const nextSupport = isChinese ? "afdian" : "kofi";
-    const nextUrl = isChinese
-      ? "https://afdian.com/a/hiddencube"
-      : "https://ko-fi.com/hiddencube";
-    const nextLabel = isChinese ? "爱发电" : "Ko-fi";
-    const nextIcon = this.getSupportIconSvg(isChinese ? "afdian" : "kofi");
-    this.supportPrimaryButton.dataset.support = nextSupport;
-    this.supportPrimaryButton.dataset.url = nextUrl;
-    const label = this.supportPrimaryButton.querySelector(".supportLabel");
-    const icon = this.supportPrimaryButton.querySelector(".supportIcon");
-    if (label) label.textContent = nextLabel;
-    if (icon) icon.innerHTML = nextIcon;
-    this.supportPrimaryButton.setAttribute("aria-label", nextLabel);
-    const i18nLabel = isChinese ? "support.aria.afdian" : "support.aria.kofi";
-    this.supportPrimaryButton.dataset.i18nAriaLabel = i18nLabel;
-  }
-
-  openSupportModal() {
-    if (!this.supportModal) return;
-    this.supportModal.classList.add("isOpen");
-    this.supportModal.setAttribute("aria-hidden", "false");
-    if (this.supportCopyStatus) {
-      this.supportCopyStatus.textContent = "";
-    }
-  }
-
-  closeSupportModal() {
-    if (!this.supportModal) return;
-    this.supportModal.classList.remove("isOpen");
-    this.supportModal.setAttribute("aria-hidden", "true");
-  }
-
-  handleSupportAction(button) {
-    if (!button) return;
-    const supportType = button.dataset.support;
-    const url = button.dataset.url;
-    const copyValue = button.dataset.copy;
-    const qrType = button.dataset.qr || supportType;
-
-    if (qrType && this.supportQrImages?.[qrType]) {
-      this.updateSupportQrImage(qrType);
-    }
-
-    if (url) {
-      const externalOnly = supportType === "paypal" || supportType === "afdian" || supportType === "kofi" || supportType === "patreon";
-      this.openExternalLink(url, { externalOnly });
-    }
-
-    if (copyValue) {
-      const messageKey = `support.copy.${supportType}`;
-      const fallback = `Copied ${supportType?.toUpperCase?.() || "address"}`;
-      this.copySupportValue(copyValue, this.i18n?.t?.(messageKey, fallback) || fallback);
-    }
   }
 
   openExternalLink(url, { externalOnly = false } = {}) {
@@ -3428,70 +3060,6 @@ class DpsApp {
     } catch {
       // ignore
     }
-  }
-
-  copySupportValue(value, message) {
-    if (!value) return;
-    const showStatus = (text) => {
-      if (!this.supportCopyStatus) return;
-      this.supportCopyStatus.textContent = text;
-    };
-    const attemptLegacyCopy = () => {
-      try {
-        const textarea = document.createElement("textarea");
-        textarea.value = value;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const success = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        if (success) showStatus(message);
-      } catch {
-        // ignore
-      }
-    };
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(value)
-        .then(() => showStatus(message))
-        .catch(() => attemptLegacyCopy());
-      return;
-    }
-    attemptLegacyCopy();
-  }
-
-  updateSupportQrImage(type) {
-    if (!this.supportQrImage) return;
-    const src = this.supportQrImages?.[type];
-    if (!src) return;
-    this.supportQrImage.src = src;
-    // Ko-fi's (or Afdian's) code opens its page when clicked; WeChat's has
-    // no page to open.
-    const url = this.supportPrimaryButton?.dataset.support === type ? this.supportPrimaryButton.dataset.url : "";
-    this.supportQrUrl = url || "";
-    this.supportQrImage.classList.toggle("isLink", !!url);
-    if (url) this.supportQrImage.title = url;
-    else this.supportQrImage.removeAttribute("title");
-    this.updateSupportTitle(type);
-    this.supportActionButtons?.forEach((button) => {
-      const match = button.dataset.support === type || button.dataset.qr === type;
-      button.classList.toggle("isActive", match);
-    });
-  }
-
-  updateSupportTitle(type) {
-    if (!this.supportModalTitle) return;
-    const currentLanguage = this.i18n?.getLanguage?.();
-    const isChinese = this.isChineseLanguage(currentLanguage);
-    const isWeChat = type === "wechat";
-    const titleKey = isWeChat ? "support.titleWechat" : "support.title";
-    const fallback = isWeChat
-      ? "Support the author on WeChat"
-      : isChinese
-        ? "Support the author on Afdian"
-        : "Support the author on Ko-fi";
-    this.supportModalTitle.textContent = this.i18n?.t?.(titleKey, fallback) || fallback;
   }
 
   initializeSettingsDropdowns() {
@@ -3658,7 +3226,6 @@ class DpsApp {
       { value: "both", label: this.i18n?.t("settings.partyStat.options.both", "Both") },
       { value: "off", label: this.i18n?.t("settings.partyStat.options.off", "Off") },
     ];
-    const discordStatOptions = partyStatOptions.filter((opt) => SETTING_CHOICES.discordStat.allowed.includes(opt.value));
 
     const trainModeOptions = [
       { value: "all", label: this.i18n?.t("settings.trainingMode.options.all", "All") },
@@ -3762,24 +3329,12 @@ class DpsApp {
     );
 
     setupDropdown(
-      this.discordStatDropdownBtn,
-      this.discordStatDropdownMenu,
-      discordStatOptions,
-      this.settingsSelections.discordStat,
-      (value) => {
-        if (!value) return;
-        this.settingsSelections.discordStat = value;
-        this.safeSetSetting(this.storageKeys.discordStat, value);
-      }
-    );
-
-    setupDropdown(
       this.barTextureDropdownBtn,
       this.barTextureDropdownMenu,
       barTextureOptions,
       this.settingsSelections.barTexture,
       (value) => {
-        if (!value || !this.isSupporter) return;
+        if (!value) return;
         this.settingsSelections.barTexture = value;
         this.applyBarTexture(value);
         this.safeSetSetting(this.storageKeys.barTexture, value);
@@ -3794,7 +3349,6 @@ class DpsApp {
         },
       }
     );
-    this.syncBarTextureControl();
     if (this.textureOffsetCheckbox) {
       this.textureOffsetCheckbox.checked = this.textureOffset;
       this.textureOffsetCheckbox.addEventListener("change", (event) => {
@@ -4725,7 +4279,6 @@ class DpsApp {
   // A reused Settings window is shown again without start(). Re-read the form
   // from stored settings; the controls keep the handlers setupSettingsPanel wired.
   syncSettingsForm() {
-    this.refreshStreamOverlaySettings();
     const get = (name) => this.safeGetSetting(this.storageKeys[name]);
     const isSet = (value) => value !== null && value !== undefined && String(value).trim() !== "";
     const storedName = this.safeGetStorage(this.storageKeys.userName);
@@ -4739,7 +4292,6 @@ class DpsApp {
       [this.autoHideMeterCheckbox, "autoHideMeter", true],
       [this.globalHotkeysCheckbox, "globalHotkeys", !document.documentElement?.classList?.contains?.("linux")],
       [this.saveRawPacketsCheckbox, "saveRawPackets", false],
-      [document.querySelector(".discordActivityCheckbox"), "discordActivity", false],
     ]) {
       if (box) box.checked = defaultOn ? get(name) !== "false" : get(name) === "true";
     }
@@ -5220,13 +4772,12 @@ class DpsApp {
   // their edit handlers would write back or resend backend combat parameters.
   // Combat power or gear score beside each name: the meter rows redraw on
   // their next refresh, an open Details panel redraws its party list now.
-  // The bars' texture: drawn only for a supporter's account (styles.css,
-  // [data-bar-texture]); the choice is kept either way.
+  // The bars' texture (styles.css, [data-bar-texture]).
   applyBarTexture(value) {
     this.barTexture = pickSettingChoice("barTexture", value);
     const data = document.documentElement?.dataset;
     if (!data) return;
-    if (this.isSupporter && this.barTexture !== "none") data.barTexture = this.barTexture;
+    if (this.barTexture !== "none") data.barTexture = this.barTexture;
     else delete data.barTexture;
   }
 
@@ -5245,37 +4796,6 @@ class DpsApp {
     if (!data) return;
     if (this.textureOffset) data.textureOffset = "";
     else delete data.textureOffset;
-  }
-
-  // Settings' texture row: open to a supporter, else greyed out with a note.
-  syncBarTextureControl() {
-    if (this.barTextureDropdownBtn) this.barTextureDropdownBtn.disabled = !this.isSupporter;
-    if (this.textureOffsetCheckbox) this.textureOffsetCheckbox.disabled = !this.isSupporter;
-    if (this.barTextureHint) this.barTextureHint.hidden = this.isSupporter;
-  }
-
-  setSupporter(isSupporter) {
-    // A development build may act as a supporter (build_features devSupporter).
-    this.isSupporter = !!isSupporter || this.devSupporter === true;
-    this.applyBarTexture(this.barTexture);
-    this.syncBarTextureControl();
-  }
-
-  // Whether the signed-in account is a supporter's: the last check's answer
-  // at once, then the server's. Run at start and when the account changes.
-  async refreshSupporterStatus() {
-    if ((await window.a2BuildReady)?.devSupporter) {
-      this.devSupporter = true;
-      this.setSupporter(true);
-    }
-    try {
-      const seen = await window.javaBridge?.accountStatusCached?.();
-      if (seen) this.setSupporter(seen.who?.supporter);
-      const who = await window.javaBridge?.accountStatus?.();
-      this.setSupporter(who?.supporter);
-    } catch {
-      // Offline or signed out: keep what was known.
-    }
   }
 
   // Settings' bar preview shows the same figure beside each name, or none.
@@ -5381,7 +4901,6 @@ class DpsApp {
       allTargetsWindowMs: "allTargetsWindow",
       updateRateMs: "updateRate",
       partyStat: "partyStat",
-      discordStat: "discordStat",
       barTexture: "barTexture",
     };
     for (const [name, control] of Object.entries(choices)) {
@@ -5510,45 +5029,6 @@ class DpsApp {
     if (this.meterTotalDmgEl) {
       this.meterTotalDmgEl.textContent = this.formatAbbreviatedNumber(totalDmg);
     }
-  }
-
-  // "Send logs to dev": the newest packet captures, for a bug report. Packet
-  // logs are raw game traffic, names included, so it asks first, every time.
-  initSendLogs() {
-    const btn = this.sendLogsBtn;
-    const status = this.sendLogsStatus;
-    if (!btn || btn.dataset.wired) return;
-    btn.dataset.wired = "1";
-    const t = (key, fallback, vars) =>
-      vars ? (window.i18n?.format?.(key, vars, fallback) ?? fallback)
-           : (window.i18n?.t?.(key, fallback) ?? fallback);
-    const show = (text) => {
-      if (!status) return;
-      status.removeAttribute("data-i18n");
-      status.textContent = text;
-    };
-    btn.addEventListener("click", async () => {
-      const ok = window.confirm(t("settings.sendLogs.confirm",
-        "Send your 3 most recent packet logs to the A2 Tools developer?\n\n" +
-        "Packet logs are raw game traffic recorded while packet logging was on, " +
-        "including character names. Only the developer can open them, and they " +
-        "are deleted after 30 days."));
-      if (!ok) return;
-      btn.disabled = true;
-      show(t("settings.sendLogs.sending", "Sending..."));
-      try {
-        const result = await window.javaBridge?.sendLogsToDev?.();
-        const code = result?.code || "?";
-        show(t("settings.sendLogs.sent",
-          `Sent. Your report code is ${code}: give it to the developer on Discord.`,
-          { code }));
-      } catch (err) {
-        const msg = String(err?.message || err || "");
-        show(t("settings.sendLogs.failed", `Could not send: ${msg}`, { error: msg }));
-      } finally {
-        btn.disabled = false;
-      }
-    });
   }
 
   setPlayerLimit(value, { persist = false } = {}) {
@@ -6346,32 +5826,12 @@ class DpsApp {
         if (!isOverlay) return;
         this._applyLockBtnVisibility(show);
         window.addEventListener("resize", () => this._sendLockBtnRect());
-        this._watchOverlayCards();
         // Stay locked across restarts, as the player left it.
         if (show && this.safeGetSetting(this.storageKeys.overlayLocked) === "true") {
           requestAnimationFrame(() => this._setOverlayLocked(true));
         }
       })
       .catch(() => {});
-  }
-
-  // A card open in the page (a one-time popup at start, the update prompt,
-  // the support card) takes the mouse though the overlay is locked: locked
-  // from last time, nothing on it could be clicked, and it covers the lock
-  // button. The lock itself stays as it was.
-  _watchOverlayCards() {
-    const cards = [...document.querySelectorAll(".updateModal, .discordPromo, .supportModal")];
-    if (!cards.length || typeof MutationObserver !== "function") return;
-    let wasOpen = false;
-    const sync = () => {
-      const open = cards.some((card) => card.classList.contains("isOpen"));
-      if (open === wasOpen) return;
-      wasOpen = open;
-      window.javaBridge?.setOverlayCardOpen?.(open);
-    };
-    const observer = new MutationObserver(sync);
-    for (const card of cards) observer.observe(card, { attributes: true, attributeFilter: ["class"] });
-    sync();
   }
 
   _applyLockBtnVisibility(show) {
@@ -6438,370 +5898,6 @@ class DpsApp {
       this.suspendBtn.replaceChildren(newIcon);
     }
     window.lucide?.createIcons?.({ root: this.suspendBtn });
-  }
-
-  // A one-time popup offering Discord activity, with the toggle already on.
-  // Done keeps what the toggle says; closing it any other way (×, Escape, a
-  // click outside) leaves it off. Not shown to anyone who has already chosen
-  // either way in Settings, and never again once answered. True if it opens.
-  // Stream overlay: the meter's rows served on the local network for OBS on
-  // another PC. Off unless turned on. The backend owns the server and its key;
-  // this shows what it reports and passes the toggle and port through.
-  initStreamOverlaySettings() {
-    if (this._streamOverlaySettings) return;
-    const group = document.querySelector(".streamOverlayGroup");
-    const bridge = window.javaBridge;
-    if (!group || typeof bridge?.streamOverlayStatus !== "function") return;
-    const checkbox = group.querySelector(".streamOverlayCheckbox");
-    const details = group.querySelector(".streamOverlayDetails");
-    const portInput = group.querySelector(".streamOverlayPortInput");
-    const newKeyBtn = group.querySelector(".streamOverlayNewKeyBtn");
-    const urlsEl = group.querySelector(".streamOverlayUrls");
-    const statusEl = group.querySelector(".streamOverlayStatus");
-    const nameInput = group.querySelector(".streamOverlayNameInput");
-    if (!checkbox || !details || !portInput || !newKeyBtn || !urlsEl || !statusEl) return;
-    const t = (key, fallback) => window.i18n?.t?.(key, fallback) ?? fallback;
-    let lastPort = 18731;
-    let requestSequence = 0;
-    let mutation = Promise.resolve();
-
-    const copy = async (input, button) => {
-      let ok = false;
-      try {
-        await navigator.clipboard.writeText(input.value);
-        ok = true;
-      } catch {
-        input.focus();
-        input.select();
-        try {
-          ok = document.execCommand("copy");
-        } catch {
-          ok = false;
-        }
-      }
-      if (!ok) return;
-      button.textContent = t("settings.streamOverlay.copied", "Copied");
-      clearTimeout(button._copiedTimer);
-      button._copiedTimer = setTimeout(() => {
-        button.textContent = t("settings.streamOverlay.copy", "Copy");
-      }, 1500);
-    };
-
-    const show = (status) => {
-      if (!status) return;
-      const enabled = !!status.enabled;
-      const urls = Array.isArray(status.urls) ? status.urls : [];
-      checkbox.checked = enabled;
-      details.style.display = enabled ? "" : "none";
-      if (Number(status.port) > 0) lastPort = Number(status.port);
-      if (document.activeElement !== portInput) portInput.value = String(lastPort);
-      portInput.classList.remove("isInvalid");
-
-      urlsEl.replaceChildren();
-      for (const url of urls) {
-        const row = document.createElement("div");
-        row.className = "streamOverlayUrlRow";
-        const input = document.createElement("input");
-        input.className = "streamOverlayUrlInput";
-        input.readOnly = true;
-        input.spellcheck = false;
-        input.value = url;
-        input.addEventListener("mousedown", (event) => event.stopPropagation());
-        input.addEventListener("focus", () => input.select());
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "settingsAction";
-        button.dataset.i18n = "settings.streamOverlay.copy";
-        button.textContent = t("settings.streamOverlay.copy", "Copy");
-        button.addEventListener("click", () => copy(input, button));
-        row.append(input, button);
-        urlsEl.appendChild(row);
-      }
-
-      let message = "";
-      if (enabled && status.error) {
-        message =
-          window.i18n?.format?.(
-            "settings.streamOverlay.error",
-            { error: status.error },
-            `The overlay could not start: ${status.error}`
-          ) ?? `The overlay could not start: ${status.error}`;
-      } else if (enabled && urls.length === 0) {
-        message = t(
-          "settings.streamOverlay.noAddress",
-          "No network address found. Is this PC connected to your network?"
-        );
-      }
-      statusEl.textContent = message;
-    };
-    const fail = (err) => {
-      statusEl.textContent = typeof err === "string" ? err : err?.message || String(err);
-    };
-
-    const request = (work, { mutate = false } = {}) => {
-      const sequence = ++requestSequence;
-      // A refresh must see completed changes, and rapid changes keep their order.
-      const pending = mutation.catch(() => {}).then(work);
-      if (mutate) mutation = pending;
-      return pending.then((status) => {
-        if (sequence !== requestSequence) return;
-        group.style.display = "";
-        show(status);
-        if (nameInput && document.activeElement !== nameInput) {
-          nameInput.value = this.safeGetSetting("dpsMeter.streamOverlayName") || "";
-        }
-      }).catch((error) => {
-        if (sequence === requestSequence) fail(error);
-      });
-    };
-    this._streamOverlaySettings = {
-      refresh: () => request(() => bridge.streamOverlayStatus()),
-      invalidate: () => { ++requestSequence; },
-    };
-    if (window.A2_VIEW === "settings") window.addEventListener("settings-hidden", () => {
-      this.invalidateStreamOverlaySettings();
-    });
-
-    const apply = () => {
-      let port = Number.parseInt(portInput.value, 10);
-      const valid = Number.isInteger(port) && port >= 1024 && port <= 65535;
-      if (!valid) {
-        if (checkbox.checked) {
-          ++requestSequence;
-          portInput.classList.add("isInvalid");
-          statusEl.textContent = t(
-            "settings.streamOverlay.portInvalid",
-            "Enter a port between 1024 and 65535."
-          );
-          return;
-        }
-        port = lastPort;
-      }
-      const enabled = checkbox.checked;
-      request(() => bridge.streamOverlayConfigure(enabled, port), { mutate: true });
-    };
-
-    checkbox.addEventListener("change", apply);
-    portInput.addEventListener("change", apply);
-    portInput.addEventListener("mousedown", (event) => event.stopPropagation());
-    portInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") portInput.blur();
-    });
-    // Your name on stream; the overlay reads it live. Blank means your
-    // character name. Other players are never sent by name.
-    if (nameInput) {
-      nameInput.value = this.safeGetSetting("dpsMeter.streamOverlayName") || "";
-      const saveName = () => this.safeSetSetting("dpsMeter.streamOverlayName", nameInput.value.trim());
-      nameInput.addEventListener("change", saveName);
-      nameInput.addEventListener("mousedown", (event) => event.stopPropagation());
-      nameInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") nameInput.blur();
-      });
-    }
-    newKeyBtn.addEventListener("click", () => {
-      request(() => bridge.streamOverlayNewKey(), { mutate: true });
-    });
-
-    this.refreshStreamOverlaySettings();
-  }
-
-  refreshStreamOverlaySettings() {
-    return this._streamOverlaySettings?.refresh();
-  }
-
-  invalidateStreamOverlaySettings() {
-    this._streamOverlaySettings?.invalidate();
-  }
-
-  // A one-time popup about showing A2Tools users in the party to each other,
-  // ticked: shown once to everyone, on a new install and after the update
-  // that brings it. Done keeps the tick's answer; ×, Escape or a click
-  // outside keep it on (it says so, and Settings changes it).
-  maybeShowPartyPromo() {
-    const promo = document.querySelector("#partyPromo");
-    if (!promo) return false;
-    if (this.safeGetSetting(this.storageKeys.partyPromoShown) === "true") return false;
-    const checkbox = promo.querySelector(".partyPromoCheckbox");
-    let answered = false;
-    const onKey = (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        answer(this.safeGetSetting(this.storageKeys.partyPresence) !== "false");
-      }
-    };
-    const answer = (enabled) => {
-      if (answered) return;
-      answered = true;
-      this.safeSetSetting(this.storageKeys.partyPresence, String(enabled));
-      this.safeSetSetting(this.storageKeys.partyPromoShown, "true");
-      const settingsCheckbox = document.querySelector(".partyPresenceCheckbox");
-      if (settingsCheckbox) settingsCheckbox.checked = enabled;
-      promo.classList.remove("isOpen");
-      promo.setAttribute("aria-hidden", "true");
-      document.removeEventListener("keydown", onKey, true);
-    };
-    const kept = () => this.safeGetSetting(this.storageKeys.partyPresence) !== "false";
-    promo.querySelector(".partyPromoDone")?.addEventListener("click", () => answer(!!checkbox?.checked));
-    promo.querySelector(".partyPromoClose")?.addEventListener("click", () => answer(kept()));
-    promo.addEventListener("click", (event) => {
-      if (event.target === promo) answer(kept());
-    });
-    setTimeout(() => {
-      if (answered) return;
-      if (checkbox) checkbox.checked = kept();
-      promo.classList.add("isOpen");
-      promo.setAttribute("aria-hidden", "false");
-      document.addEventListener("keydown", onKey, true);
-    }, 2500);
-    return true;
-  }
-
-  maybeShowDiscordPromo() {
-    const promo = document.querySelector("#discordPromo");
-    if (!promo) return false;
-    if (this.safeGetSetting(this.storageKeys.discordPromoShown) === "true") return false;
-    const current = this.safeGetSetting(this.storageKeys.discordActivity);
-    if (current === "true" || current === "false") return false;
-
-    const checkbox = promo.querySelector(".discordPromoCheckbox");
-    let answered = false;
-    const onKey = (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        answer(false);
-      }
-    };
-    const answer = (enabled) => {
-      if (answered) return;
-      answered = true;
-      this.safeSetSetting(this.storageKeys.discordActivity, String(enabled));
-      this.safeSetSetting(this.storageKeys.discordPromoShown, "true");
-      const settingsCheckbox = document.querySelector(".discordActivityCheckbox");
-      if (settingsCheckbox) settingsCheckbox.checked = enabled;
-      promo.classList.remove("isOpen");
-      promo.setAttribute("aria-hidden", "true");
-      document.removeEventListener("keydown", onKey, true);
-    };
-    promo.querySelector(".discordPromoDone")?.addEventListener("click", () => answer(!!checkbox?.checked));
-    promo.querySelector(".discordPromoClose")?.addEventListener("click", () => answer(false));
-    promo.addEventListener("click", (event) => {
-      if (event.target === promo) answer(false);
-    });
-
-    // A moment after start, so it does not land on top of the first paint.
-    setTimeout(() => {
-      if (answered) return;
-      if (checkbox) checkbox.checked = true;
-      promo.classList.add("isOpen");
-      promo.setAttribute("aria-hidden", "false");
-      document.addEventListener("keydown", onKey, true);
-    }, 2500);
-    return true;
-  }
-
-  // A one-time popup offering an a2tools.app account, with automatic upload
-  // already ticked. Sign in starts the same browser approval as Settings and
-  // keeps the code on the card; the tick is applied only once the account is
-  // connected, so a sign-in abandoned halfway leaves uploads off. Not now, ×,
-  // Escape or a click outside close it for good. Not shown to anyone signed in
-  // or who has already set uploads either way.
-  async maybeShowAccountPromo() {
-    const promo = document.querySelector("#accountPromo");
-    if (!promo) return;
-    if ((await window.a2BuildReady)?.online === false) return;
-    if (this.safeGetSetting(this.storageKeys.accountPromoShown) === "true") return;
-    const current = this.safeGetSetting(this.storageKeys.autoUpload);
-    if (current === "true" || current === "false") return;
-    try {
-      const seen = await window.javaBridge?.accountStatusCached?.();
-      if (seen?.who) return;
-      if (await window.javaBridge?.accountStatus?.()) return;
-    } catch {
-      return; // a token is stored but could not be checked: signed in
-    }
-
-    const checkbox = promo.querySelector(".accountPromoCheckbox");
-    const signInBtn = promo.querySelector(".accountPromoSignIn");
-    const codeBox = promo.querySelector(".accountPromoCodeBox");
-    const codeEl = promo.querySelector(".accountPromoCode");
-    const stateEl = promo.querySelector(".accountPromoState");
-    let open = false;
-    const onKey = (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        close();
-      }
-    };
-    const close = () => {
-      if (!open) return;
-      open = false;
-      this.safeSetSetting(this.storageKeys.accountPromoShown, "true");
-      promo.classList.remove("isOpen");
-      promo.setAttribute("aria-hidden", "true");
-      document.removeEventListener("keydown", onKey, true);
-    };
-
-    // What Sign in chose, applied when the browser approval arrives (on
-    // "account-changed", even after the card was closed).
-    let pendingUpload = null;
-    this.onAccountPromoResult = (result) => {
-      if (pendingUpload === null) return;
-      if (result?.connected) {
-        this.safeSetSetting(this.storageKeys.autoUpload, String(pendingUpload));
-        if (this.autoUploadCheckbox) this.autoUploadCheckbox.checked = pendingUpload;
-        pendingUpload = null;
-        close();
-      } else if (result?.error) {
-        const msg = String(result.error);
-        if (stateEl) {
-          stateEl.textContent = window.i18n?.format?.(
-            "settings.account.failed", { error: msg }, `Sign-in failed: ${msg}`);
-        }
-        if (codeBox) codeBox.style.display = "none";
-        if (signInBtn) signInBtn.disabled = false;
-        pendingUpload = null;
-      }
-    };
-
-    signInBtn?.addEventListener("click", async () => {
-      signInBtn.disabled = true;
-      if (stateEl) stateEl.textContent = "";
-      try {
-        const prompt = await window.javaBridge?.accountBeginLink?.();
-        if (!prompt?.userCode) {
-          signInBtn.disabled = false;
-          return;
-        }
-        pendingUpload = !!checkbox?.checked;
-        this.safeSetSetting(this.storageKeys.accountPromoShown, "true");
-        if (codeEl) codeEl.textContent = prompt.userCode;
-        if (codeBox) codeBox.style.display = "block";
-        if (stateEl) {
-          stateEl.textContent = window.i18n?.t?.("settings.account.working", "Waiting for approval…");
-        }
-      } catch (err) {
-        const msg = typeof err === "string" ? err : err?.message || String(err);
-        if (stateEl) {
-          stateEl.textContent = window.i18n?.format?.(
-            "settings.account.failed", { error: msg }, `Sign-in failed: ${msg}`);
-        }
-        signInBtn.disabled = false;
-      }
-    });
-    promo.querySelector(".accountPromoLater")?.addEventListener("click", close);
-    promo.querySelector(".accountPromoClose")?.addEventListener("click", close);
-    promo.addEventListener("click", (event) => {
-      if (event.target === promo) close();
-    });
-
-    // A moment after start, so it does not land on top of the first paint.
-    setTimeout(() => {
-      if (checkbox) checkbox.checked = true;
-      open = true;
-      promo.classList.add("isOpen");
-      promo.setAttribute("aria-hidden", "false");
-      document.addEventListener("keydown", onKey, true);
-    }, 2500);
   }
 
   _updateSuspendStatusMessage() {
