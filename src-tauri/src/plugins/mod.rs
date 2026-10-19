@@ -256,11 +256,14 @@ fn boss_map_event(map: &crate::capture::boss_map::BossMap) -> Value {
     serde_json::json!({ "map": map.map_id, "bosses": bosses })
 }
 
-/// A2Tools Plus: where the bundled plugins live: next to the game data in
-/// an install, or the checkout's `plugins/` when run from source.
+/// A2Tools Plus: where the bundled plugins live: next to the executable in
+/// an install (/opt/a2plus/plugins), or the checkout's `plugins/` when run
+/// from source.
 fn bundled_plugin_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     let resource = app.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let exe_dir = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf));
     let roots = [
+        exe_dir.map_or_else(|| PathBuf::from("."), |d| d.join("plugins")),
         resource.join("plugins"),
         resource.join("_up_").join("plugins"),
         PathBuf::from("plugins"),

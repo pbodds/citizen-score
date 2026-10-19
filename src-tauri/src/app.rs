@@ -2991,7 +2991,12 @@ pub fn run() {
 
             let resource_dir = app.path().resource_dir()
                 .unwrap_or_else(|_| std::path::PathBuf::from("."));
+            // A2Tools Plus: installed as /opt/a2plus/{a2plus,data,plugins},
+            // the data sits next to the executable.
+            let exe_dir = std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf()))
+                .unwrap_or_else(|| std::path::PathBuf::from("."));
             let candidate_dirs = [
+                exe_dir.join("data"),                             // A2Tools Plus: /opt/a2plus/data
                 resource_dir.join("data"),                        // production: resources/data
                 resource_dir.join("_up_").join("src").join("data"), // production: resources/_up_/src/data (from ../src/data)
                 resource_dir.join("..").join("src").join("data"), // dev: src-tauri/../src/data
