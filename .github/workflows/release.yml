@@ -3,7 +3,7 @@ name: Release
 # Builds Citizen Score's downloads for Windows and Linux, and on a version tag
 # publishes them as a GitHub release:
 #
-#   git tag v2.0.70 && git push origin v2.0.70
+#   git tag v2.0.70-cs.1 && git push origin v2.0.70-cs.1
 #
 # Run by hand (Actions tab, or `gh workflow run release.yml`) to build them
 # without releasing: they are kept as the run's artifacts.
@@ -261,7 +261,12 @@ jobs:
       - name: Tag matches the version
         run: |
           version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
-          [ "${GITHUB_REF_NAME}" = "v$version" ] || { echo "tag $GITHUB_REF_NAME, but Cargo.toml says $version"; exit 1; }
+          # v<version>, or v<version>-cs.<n> for a Citizen Score rebuild of
+          # the same upstream version (upstream's own v<version> tags exist).
+          case "$GITHUB_REF_NAME" in
+            "v$version"|"v$version"-cs.*) ;;
+            *) echo "tag $GITHUB_REF_NAME, but Cargo.toml says $version"; exit 1 ;;
+          esac
       - uses: actions/download-artifact@v8
         with:
           path: dist

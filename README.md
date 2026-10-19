@@ -56,10 +56,10 @@ On Arch, `cd packaging/arch && makepkg -si` builds and installs the package from
 
 ## Releasing
 
-`.github/workflows/release.yml` builds every download above on GitHub's Windows and Linux runners, installs the Linux packages on clean Ubuntu, Debian and Fedora to check them, and publishes a release with checksums when a version tag is pushed. The tag has to match the version in `src-tauri/Cargo.toml`:
+`.github/workflows/release.yml` builds every download above on GitHub's Windows and Linux runners, installs the Linux packages on clean Ubuntu, Debian and Fedora to check them, and publishes a release with checksums when a version tag is pushed. The tag is the version in `src-tauri/Cargo.toml` with a Citizen Score build number, `v<version>-cs.<n>`, because upstream's plain `v<version>` tags are already in the history:
 
 ```
-git tag v2.0.70 && git push origin v2.0.70
+git tag v2.0.70-cs.1 && git push origin v2.0.70-cs.1
 ```
 
 Run it from the Actions tab without a tag to build the files as artifacts without releasing them.
