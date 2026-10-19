@@ -373,9 +373,8 @@ mod tests {
             saved.get("dpsMeter.language").map(String::as_str),
             Some("en")
         );
-        // Exercise the source used by both manual and automatic upload bodies,
-        // without accessing the keyring or sending a log to the service.
-        assert_eq!(crate::share::ui_language(&settings), "ru");
+        // A read sees the accepted change while its write is still pending.
+        assert_eq!(settings.get("dpsMeter.language").as_deref(), Some("ru"));
         release_tx.send(()).unwrap();
         settings.flush().unwrap();
         let _ = std::fs::remove_dir_all(dir);

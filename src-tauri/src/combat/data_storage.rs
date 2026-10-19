@@ -436,9 +436,6 @@ pub enum BossEventKind {
     Killed { at_ms: i64 },
 }
 
-/// Unsent boss events kept at most (the sender drains them every second).
-#[cfg(feature = "online")]
-const MAX_BOSS_EVENTS: usize = 64;
 
 /// A field boss counts as being fought while its HP changed, or it took
 /// damage, this recently.
@@ -465,13 +462,6 @@ pub struct BossHp {
 }
 
 
-#[cfg(feature = "online")]
-fn push_boss_event(inner: &mut Inner, event: BossEvent) {
-    inner.boss_events.push_back(event);
-    while inner.boss_events.len() > MAX_BOSS_EVENTS {
-        inner.boss_events.pop_front();
-    }
-}
 
 pub struct DataStorage {
     inner: RwLock<Inner>,
@@ -1587,14 +1577,6 @@ impl DataStorage {
         }
         // A field boss killed in the open world: its exact time, to share
         // (online builds only: boss_report.rs sends it).
-        #[cfg(feature = "online")]
-        if inner.current_dungeon_id <= 0 && !inner.dead_entity_ids.contains(&entity_id) {
-            if let Some(&code) = inner.mob_storage.get(&entity_id) {
-                if crate::capture::field_bosses::is_field_boss(code) {
-                    push_boss_event(&mut inner, BossEvent { npc: code, kind: BossEventKind::Killed { at_ms: now_ms() } });
-                }
-            }
-        }
         inner.boss_hp_now.remove(&entity_id);
         inner.boss_hp_sent.remove(&entity_id);
         inner.dead_entity_ids.insert(entity_id);
@@ -2104,23 +2086,6 @@ impl DataStorage {
         }
         // A field boss in the open world whose max HP is known from its spawn:
         // its HP now, for the sender's next pass (online builds only, as kills).
-        #[cfg(feature = "online")]
-        if let Some(max) = inner.mob_hp_data.get(&id).copied()
-            && inner.current_dungeon_id <= 0
-            && max > 0
-            && inner.spawn_hp_ids.contains(&id)
-        {
-            if let Some(&code) = inner.mob_storage.get(&id) {
-                if crate::capture::field_bosses::is_field_boss(code) {
-                    let pct = ((hp as i64 * 100) / max as i64).clamp(0, 100) as u8;
-                    let changed = match inner.boss_hp_now.get(&id) {
-                        Some(&(_, before, at)) if before == pct => at,
-                        _ => now_ms(),
-                    };
-                    inner.boss_hp_now.insert(id, (code, pct, changed));
-                }
-            }
-        }
     }
 
     /// Whether `id` behaved as a training dummy does: its HP stopped at 1 and
@@ -3309,54 +3274,7 @@ mod tests {
         assert_eq!(s.current_map_id(), Some(1010));
     }
 
-    /// Bodyguard Teegant (NPC 2100079), a Verteron field boss.
-    #[cfg(feature = "online")]
-    #[test]
-    fn a_field_boss_kill_in_the_open_world_is_queued_with_its_time() {
-        let s = DataStorage::new();
-        s.append_mob(500, 2100079);
-        s.mark_entity_dead(500);
-        s.mark_entity_dead(500); // the same death again: once
-        let events = s.take_boss_events();
-        assert_eq!(events.len(), 1);
-        assert!(matches!(events[0], BossEvent { npc: 2100079, kind: BossEventKind::Killed { .. } }));
-        // Not a field boss, or inside a dungeon: nothing.
-        s.append_mob(501, 2100080);
-        s.mark_entity_dead(501);
-        s.set_current_dungeon(600012);
-        s.append_mob(502, 2100079);
-        s.mark_entity_dead(502);
-        assert!(s.take_boss_events().is_empty());
-    }
 
-    #[cfg(feature = "online")]
-    #[test]
-    fn a_fought_boss_goes_every_pass_and_a_reset_is_marked() {
-        let s = DataStorage::new();
-        s.append_mob(500, 2100079);
-        s.append_mob_hp(500, 1000);
-        s.set_mob_current_hp(500, 950);
-        let t = now_ms();
-        let pct = |v: Vec<BossHp>| v.into_iter().map(|h| (h.percent, h.reset)).collect::<Vec<_>>();
-        assert_eq!(pct(s.take_boss_hp(t)), vec![(95, false)]);
-        // Still being fought but unchanged: not again until a minute has
-        // passed since it went (the site uses a repeat once a minute).
-        assert!(s.take_boss_hp(t + 3_000).is_empty());
-        // Left alone: nothing once the fight has gone quiet.
-        assert!(s.take_boss_hp(t + 60_000).is_empty());
-        s.set_mob_current_hp(500, 400);
-        assert_eq!(pct(s.take_boss_hp(now_ms())), vec![(40, false)]);
-        // Kited away and reset: back at full, marked.
-        s.set_mob_current_hp(500, 1000);
-        assert_eq!(pct(s.take_boss_hp(now_ms())), vec![(100, true)]);
-        // Dead: no more HP for it.
-        s.mark_entity_dead(500);
-        assert!(s.take_boss_hp(now_ms()).is_empty());
-        // Its spawn unseen: its max is a guess, so no percentages.
-        s.append_mob(501, 2100079);
-        s.set_mob_current_hp(501, 800);
-        assert!(s.take_boss_hp(now_ms()).is_empty());
-    }
 
     #[test]
     fn damage_taken_and_party_heal_land_on_the_fight_they_belong_to() {

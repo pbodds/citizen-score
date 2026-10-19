@@ -22,8 +22,6 @@ pub mod rederive;
 pub mod supporters;
 
 // ── desktop only ───────────────────────────────────────────────────────────
-#[cfg(feature = "online")]
-pub mod account;
 #[cfg(feature = "desktop")]
 pub mod config;
 #[cfg(feature = "desktop")]
@@ -34,16 +32,8 @@ pub mod logging;
 pub mod platform;
 #[cfg(feature = "desktop")]
 pub mod plugins;
-#[cfg(feature = "online")]
-mod boss_report;
-#[cfg(feature = "online")]
-mod party_presence;
-#[cfg(feature = "online")]
-mod presence;
 #[cfg(feature = "desktop")]
 pub mod share;
-#[cfg(feature = "online")]
-pub mod stream_overlay;
 #[cfg(feature = "desktop")]
 mod npcap_setup;
 

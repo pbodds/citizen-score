@@ -22,24 +22,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 #   cargo check --no-default-features --target wasm32-unknown-unknown
 #
 # is the check that enforces it.
-default = ["desktop", "online"]
-# Everything that talks to a service outside this computer: the A2 Tools
-# account and uploads, the supporter roster, update checks and the updater,
-# Send Logs to Dev, Discord activity, the OBS stream overlay and the Npcap
-# installer download. A build without it (the private build, see README)
-# links none of that code and none of these crates:
-#
-#   npm run build:offline
-#
-online = [
-    "desktop",
-    "dep:reqwest",
-    "dep:futures-util",
-    "dep:urlencoding",
-    "dep:discord-rich-presence",
-    "dep:ed25519-dalek",
-    "dep:tokio-tungstenite",
-]
+default = ["desktop"]
 desktop = [
     "dep:tauri",
     "dep:tauri-build",
@@ -116,21 +99,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
 chrono = { version = "0.4", features = ["serde"] }
 parking_lot = "0.12"
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"], optional = true }
-# Live field boss updates pushed by a2tools.app (plugins/boss_live.rs), on the
-# same rustls and web PKI roots as reqwest.
-tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "rustls-tls-webpki-roots"], optional = true }
-# Discord activity ("playing AION2 as a level 29 Cleric on Kaisinel"), over the
-# local Discord client's IPC socket. Opt-in; see presence.rs.
-discord-rich-presence = { version = "1.1", optional = true }
-futures-util = { version = "0.3", optional = true }
 # The stream overlay's key (see stream_overlay/) and each Evidence Slice's key.
 # Already in the tree through Tauri; named here for the OS random source it wraps.
 getrandom = { version = "0.3", optional = true }
-urlencoding = { version = "2", optional = true }
 sha2 = "0.11.0"
-# Checks the signature on the reviewed-plugin catalog (src/plugins/catalog.rs).
-ed25519-dalek = { version = "2", default-features = false, features = ["std"], optional = true }
 flate2 = { version = "1.1.10", optional = true }
 # Evidence slices are compressed with zstd (share::compress_slice); the log
 # service reads it with a pure-Rust decoder.
