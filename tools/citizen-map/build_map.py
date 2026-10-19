@@ -7,7 +7,8 @@ The plugin's sources.js (from the game's tables) says which monsters drop each
 soul, but not where they stand. metabot.gg's public soul pages draw those
 spawns on the world map, and embed them as map pixels ("pins": every spawn of
 every monster dropping the soul, per map). Its public Kibelisk lists and zone
-pages place each Kibelisk, and its map tiles are the game's world maps.
+pages place each Kibelisk, its monster pages fill in the monsters a soul page
+leaves out, and its map tiles are the game's world maps.
 robots.txt allows these pages and images (only /api/ is off limits, and this
 never touches it). Requests go one at a time, under a second apart, and are
 cached in ~/.cache/citizen-score/metabot, so a rebuild fetches only what's new.
@@ -16,6 +17,10 @@ Map pixels: every world map is an 8192 x 8192 image, cut into 256 px tiles,
 2^z across at zoom z. A page's view is a window onto those tiles; its dots are
 percentages of the view, so a dot's map pixel is (view origin + pct x view
 span), both read off the tiles' own placement.
+
+Maps metabot has no tiles for (dungeons such as Fire_Temple), and Kibelisks it
+can't place, come from manual.json next to this script, filled by hand from
+screenshots of the in-game map. See manual.example.json and load_manual().
 
 Writes into plugins/plus-souls/:
   maps/<map>.webp   each world map at zoom 3 (2048 px), stitched
@@ -38,6 +43,7 @@ from urllib.parse import quote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PLUGIN = os.path.join(ROOT, "plugins", "plus-souls")
+MANUAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manual.json")
 CACHE = os.path.join(os.path.expanduser("~"), ".cache", "citizen-score", "metabot")
 BASE = "https://metabot.gg"
 UA = "Mozilla/5.0 (X11; Linux x86_64) citizen-score-map-builder (personal, cached)"
@@ -113,6 +119,28 @@ def view_of(p):
     return folder, lambda px, py: (ox + px / 100 * sx, oy + py / 100 * sy)
 
 
+BLOCK_RE = re.compile(r'\["\$","div","([A-Za-z0-9_]+)",\{"className":"[A-Za-z0-9]+_spawnBlock"')
+
+
+def monster_spawns(name):
+    """{map id: [[x, y], ...]} from a monster's own page, one spawn map per block."""
+    page = fetch(f"/en/aion-2/monsters/{slug(name)}")
+    if not page:
+        return {}
+    p = flight(page)
+    starts = list(BLOCK_RE.finditer(p))
+    out = {}
+    for i, m in enumerate(starts):
+        block = p[m.start():starts[i + 1].start() if i + 1 < len(starts) else len(p)]
+        view = view_of(block)
+        if not view:
+            continue
+        dots = [[round(c) for c in view[1](float(x), float(y))] for kind, x, y in DOT_RE.findall(block) if kind == "monster"]
+        if dots:
+            out[m.group(1)] = dots
+    return out
+
+
 def slug(text):
     s = re.sub(r"['’]", "", str(text).lower())
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
@@ -129,6 +157,24 @@ def load_sources():
 def map_id(key):
     m = re.match(r"String_STR_Map_(.+)_body$", key or "")
     return m.group(1) if m else None
+
+
+def image_size(path):
+    out = subprocess.run(["magick", "identify", "-format", "%w %h", path + "[0]"], check=True, capture_output=True, text=True)
+    w, h = out.stdout.split()
+    return int(w), int(h)
+
+
+def load_manual():
+    """manual.json: {map id: {"image": path, "spawns": {monster: [[x, y], ...]},
+    "kibelisks": [{"name": .., "x": .., "y": ..}]}}, in pixels of that image.
+    Without "image", pixels of the plugin's own maps/<map>.webp. Monsters and
+    Kibelisks are matched by English name or by key."""
+    if not os.path.exists(MANUAL):
+        return {}
+    with open(MANUAL, encoding="utf-8") as f:
+        data = json.load(f)
+    return {k: v for k, v in data.items() if not k.startswith("_")}
 
 
 def medoid(pts):
@@ -183,6 +229,20 @@ def main():
                 out.append([mid, npc, dots])
         if out:
             spawns[pid] = out
+    print(file=sys.stderr)
+
+    # Soul pages pin only some of a soul's monsters: the rest come from each
+    # monster's own page, which plots every spawn it has.
+    gaps = [(pid, d) for pid, v in ps.items() for d in v.get("drops", [])
+            if not any(r[0] == map_id(d["map"]) and r[1] == d["npc"] for r in spawns.get(pid, []))]
+    by_npc = {}
+    for n, (pid, d) in enumerate(gaps, 1):
+        print(f"\r monsters {n}/{len(gaps)}", end="", file=sys.stderr)
+        if d["npc"] not in by_npc:
+            by_npc[d["npc"]] = monster_spawns(en(d["npc"]))
+        dots = by_npc[d["npc"]].get(map_id(d["map"]))
+        if dots:
+            spawns.setdefault(pid, []).append([map_id(d["map"]), d["npc"], dots])
     print(file=sys.stderr)
 
     # A map's tile folder is its id, lower-cased, wherever a page showed it.
@@ -308,14 +368,62 @@ def main():
         fits.sort()
         print(f"Kibelisks placed by distance: {len(fits)}/{len(refs)}, median error {fits[len(fits) // 2]:.1%}", file=sys.stderr)
 
+    # ---- by hand, from manual.json ----
+    os.makedirs(os.path.join(PLUGIN, "maps"), exist_ok=True)
+    own_image = set()
+    for mid, m in load_manual().items():
+        folder = folders.setdefault(mid, mid.lower())
+        out = os.path.join(PLUGIN, "maps", f"{folder}.webp")
+        if m.get("image"):
+            # Padded to a square and scaled to the stitched size, so its
+            # pixels map onto the 8192 world like a tiled map's do.
+            src = os.path.expanduser(m["image"])
+            if not os.path.exists(src):
+                print(f" manual.json: {mid}: no image at {src}, skipped", file=sys.stderr)
+                continue
+            w, h = image_size(src)
+            side = max(w, h)
+            subprocess.run(["magick", src + "[0]", "-background", "black", "-gravity", "center",
+                            "-extent", f"{side}x{side}", "-resize", f"{256 * 2 ** STITCH_ZOOM}x",
+                            "-quality", "82", out], check=True)
+            own_image.add(mid)
+            ox, oy, k = (side - w) / 2, (side - h) / 2, WORLD / side
+        elif os.path.exists(out):
+            ox, oy, k = 0, 0, WORLD / image_size(out)[0]
+        else:
+            print(f" manual.json: {mid} has no image yet: give it one", file=sys.stderr)
+            continue
+        px = lambda p: [round((p[0] + ox) * k), round((p[1] + oy) * k)]
+        # The Pet Map's template leaves every point at [0, 0] until filled.
+        for who, pts in (m.get("spawns") or {}).items():
+            pts = [p for p in pts if list(p) != [0, 0]]
+            if not pts:
+                continue
+            hit = False
+            for pid, v in ps.items():
+                for d in v.get("drops", []):
+                    if map_id(d["map"]) == mid and who.lower() in (d["npc"].lower(), en(d["npc"]).lower()):
+                        rows = [r for r in spawns.get(pid, []) if not (r[0] == mid and r[1] == d["npc"])]
+                        spawns[pid] = rows + [[mid, d["npc"], [px(p) for p in pts]]]
+                        hit = True
+            if not hit:
+                print(f" manual.json: no soul drops from {who!r} on {mid}", file=sys.stderr)
+        for kib in m.get("kibelisks") or []:
+            if (kib.get("x"), kib.get("y")) == (0, 0):
+                continue
+            name = kib["name"]
+            key, number = next(((k2, t) for (m2, n2), (k2, t) in teleports.items()
+                                if m2 == mid and name.lower() in (n2, k2.lower())), (name, kib.get("teleport")))
+            ks = [k2 for k2 in kibs.get(mid, []) if k2["n"] != key]
+            kibs[mid] = ks + [{"n": key, "t": number, "x": px((kib["x"], kib["y"]))[0], "y": px((kib["x"], kib["y"]))[1]}]
+
     # ---- the map images ----
     maps = {}
-    os.makedirs(os.path.join(PLUGIN, "maps"), exist_ok=True)
     for mid, folder in sorted(folders.items()):
         if mid not in kibs and not any(s[0] == mid for v in spawns.values() for s in v):
             continue
         out = os.path.join(PLUGIN, "maps", f"{folder}.webp")
-        if not args.no_tiles:
+        if not args.no_tiles and mid not in own_image:
             n = 2 ** STITCH_ZOOM
             with tempfile.TemporaryDirectory() as tmp:
                 files = []

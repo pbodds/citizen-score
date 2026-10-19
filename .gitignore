@@ -68,3 +68,5 @@ settings.properties
 
 # Never commit a signing key.
 *.pem
+tools/citizen-map/manual.json
+__pycache__/

@@ -1,0 +1,18 @@
+{
+  "_how": "Copy to manual.json. Keys are map ids (the Pet Map's 'To add' box lists the ones missing). Points are [x, y] pixels on \"image\", or, without one, on plugins/plus-souls/maps/<id in lower case>.webp (2048 across). Monsters and Kibelisks go by English name. Points left at [0, 0] are skipped. Then run: python3 -I tools/citizen-map/build_map.py --offline",
+  "Fire_Temple": {
+    "image": "~/Pictures/Citizen Score/Fire_Temple.png",
+    "spawns": {
+      "Black Smoke Murute": [[640, 410], [655, 430]],
+      "Red Spark Ignus": [[0, 0]],
+      "Silver Blade Rotan": [[0, 0]]
+    },
+    "kibelisks": [{ "name": "Fire Temple Entrance", "x": 0, "y": 0 }]
+  },
+  "Abyss_Reshanta_A": {
+    "kibelisks": [
+      { "name": "Latesran Western Root", "x": 0, "y": 0 },
+      { "name": "Latesran Eastern Root", "x": 0, "y": 0 }
+    ]
+  }
+}

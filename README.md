@@ -28,3 +28,5 @@ python3 -I tools/citizen-map/build_map.py --offline # rebuild from the cache onl
 ```
 
 It reads which monsters drop each soul from `sources.js`, then takes their spawn points, the Kibelisks and the map tiles from metabot.gg's public pages, one request at a time. It never uses metabot's `/api/`, which robots.txt disallows. Rerun it after a game patch adds pets. Maps without an image, such as dungeons, are drawn as a schematic: areas grouped by their nearest Kibelisk, not to scale.
+
+Soul pages pin only some of a soul's monsters, so the builder also reads each missing monster's own page. What still has no data (dungeon maps metabot has no tiles for, a few monsters, the Abyss Kibelisks) is listed in the Map tab's **To add** box, with a `manual.json` template. Fill it from screenshots of the in-game map: copy `tools/citizen-map/manual.example.json` to `tools/citizen-map/manual.json`, put pixel positions in place of each `[0, 0]`, and rerun the builder with `--offline`. Points are pixels on the entry's `image`, or, for maps that already have one, on `plugins/plus-souls/maps/<map>.webp` (2048 across).

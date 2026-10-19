@@ -35,6 +35,7 @@ const mapEls = {
   canvas: document.querySelector(".mapCanvas"),
   tip: document.querySelector(".mapTip"),
   note: document.querySelector(".mapNote"),
+  todo: document.querySelector(".mapTodo"),
 };
 const mapState = {
   map: null, // map id shown
@@ -110,6 +111,87 @@ function renderMapControls() {
     mapEls.focus.hidden = true;
   }
   mapEls.kibToggle.checked = prefs.mapKibelisks !== false;
+  renderMapTodo();
+}
+
+// ---- what the map data still lacks ----------------------------------------
+
+// Per map: no image (so a schematic), monsters with no spawn points, and the
+// Kibelisks drops name that aren't placed. English names, as manual.json
+// matches them.
+function mapGaps() {
+  const en = (k) => SOURCE_TEXT[k]?.en ?? String(k ?? "");
+  const placed = new Set();
+  for (const rows of Object.values(MAP.spawns)) for (const [mid, npc] of rows) placed.add(`${mid}|${npc}`);
+  const gaps = new Map();
+  const gap = (mid) => {
+    if (!gaps.has(mid)) gaps.set(mid, { mid, name: en(`String_STR_Map_${mid}_body`), image: !!MAP.maps[mid], monsters: new Set(), kibelisks: new Set(), pets: new Set() });
+    return gaps.get(mid);
+  };
+  for (const [pet, src] of Object.entries(PET_SOURCES)) {
+    for (const d of src.drops || []) {
+      const mid = mapIdOf(d.map);
+      if (!mid) continue;
+      if (!MAP.maps[mid] || !placed.has(`${mid}|${d.npc}`)) {
+        gap(mid).monsters.add(en(d.npc));
+        gap(mid).pets.add(pet);
+      }
+      const kibs = MAP.kibelisks[mid] || [];
+      for (const k of [d.kibelisk, ...Object.values(d.bySide || {})]) {
+        if (k && !kibs.some((p) => p.n === k.name)) gap(mid).kibelisks.add(en(k.name));
+      }
+    }
+  }
+  return [...gaps.values()].sort((a, b) => a.image - b.image || b.monsters.size - a.monsters.size);
+}
+
+// A manual.json skeleton for every gap, points left at 0 for you to fill.
+function manualTemplate(gaps) {
+  const out = {};
+  for (const g of gaps) {
+    const m = {};
+    if (!g.image) m.image = `~/Pictures/Citizen Score/${g.mid}.png`;
+    if (g.monsters.size) m.spawns = Object.fromEntries([...g.monsters].map((n) => [n, [[0, 0]]]));
+    if (g.kibelisks.size) m.kibelisks = [...g.kibelisks].map((name) => ({ name, x: 0, y: 0 }));
+    out[g.mid] = m;
+  }
+  return JSON.stringify(out, null, 2).replace(/\[\n\s*(-?\d+),\n\s*(-?\d+)\n\s*\]/g, "[$1, $2]");
+}
+
+function renderMapTodo() {
+  const gaps = mapGaps();
+  const el = mapEls.todo;
+  el.hidden = !gaps.length;
+  if (!gaps.length) return;
+  const h = (tag, cls, txt) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  };
+  el.querySelector(".mapTodoBtn").textContent = `ⓘ To add · ${gaps.length}`;
+  const box = el.querySelector(".mapTodoBox");
+  const rows = gaps.map((g) => {
+    const row = h("div", "mapTodoMap");
+    const head = h("div", "mapTodoHead");
+    head.append(h("code", null, g.mid), ` ${g.name}`);
+    head.append(h("span", "mapTodoTag", g.image ? `${g.pets.size} pet${g.pets.size === 1 ? "" : "s"}` : `no image · ${g.pets.size} pet${g.pets.size === 1 ? "" : "s"}`));
+    row.append(head);
+    if (g.monsters.size) row.append(h("div", "mapTodoList", `Spawns: ${[...g.monsters].join(", ")}`));
+    if (g.kibelisks.size) row.append(h("div", "mapTodoList", `Kibelisks: ${[...g.kibelisks].join(", ")}`));
+    return row;
+  });
+  const how = h("ol", "mapTodoHow");
+  for (const step of [
+    "Open the in-game map (M) on that area and screenshot it. Maps with an image here can use plugins/plus-souls/maps/<key in lower case>.webp instead.",
+    "Copy tools/citizen-map/manual.example.json to manual.json, or paste the template below into it.",
+    "Open the image in any viewer that shows pixel positions and replace each [0, 0] with where that monster stands, one [x, y] per spawn; the same for each Kibelisk. Leave out \"image\" for maps that already have one: their pixels are those of the .webp, 2048 across.",
+    "Run  python3 -I tools/citizen-map/build_map.py --offline  in ~/Work/citizen-score, then reopen the Pet Map.",
+  ]) how.append(h("li", null, step));
+  const pre = h("pre", "mapTodoTemplate", manualTemplate(gaps));
+  pre.title = "Click to select";
+  pre.addEventListener("click", () => getSelection().selectAllChildren(pre));
+  box.replaceChildren(h("strong", null, "Map data still to add"), ...rows, h("strong", null, "How to add it"), how, h("div", "mapTodoSub", "manual.json template (click to select):"), pre);
 }
 
 // ---- drawing --------------------------------------------------------------
