@@ -18,7 +18,12 @@ use x11_dl::xlib;
 /// the resize "glitched all over" (2026-10-17). KWin already resized the
 /// meter's other windows this way.
 pub fn compositor_resize_supported(window: &tauri::WebviewWindow) -> bool {
-    if !super::process::is_gnome() && !super::process::is_kde() {
+    // Citizen Score: Hyprland honours the same xdg_toplevel resize request.
+    // Without it the meter fell back to growing the window to the whole space
+    // right of and below it for the drag, then shrinking back: two big jumps
+    // and a size that only followed the pointer inside the page.
+    let hyprland = std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some();
+    if !super::process::is_gnome() && !super::process::is_kde() && !hyprland {
         return false;
     }
     use gtk::prelude::*;
