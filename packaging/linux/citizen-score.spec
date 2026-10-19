@@ -21,7 +21,7 @@ Version:        %{pkgversion}
 Release:        1
 Summary:        Citizen Score - real-time DPS meter for AION 2
 License:        GPL-3.0-only
-URL:            https://github.com/__REPO__
+URL:            https://github.com/pbodds/citizen-score
 ExclusiveArch:  x86_64
 
 # libpcap is loaded at runtime, so rpmbuild cannot find it among the binary's

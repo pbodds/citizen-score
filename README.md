@@ -8,7 +8,7 @@ An AION 2 combat meter for Windows and Linux, with a Pet Map and World Timers do
 
 ## Download
 
-Get the latest build from [Releases](https://github.com/__REPO__/releases/latest):
+Get the latest build from [Releases](https://github.com/pbodds/citizen-score/releases/latest):
 
 | System | File |
 |---|---|

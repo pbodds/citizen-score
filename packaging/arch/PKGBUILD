@@ -16,7 +16,7 @@ pkgver=0
 pkgrel=1
 pkgdesc="Citizen Score: real-time DPS meter, Pet Map and World Timers for AION 2 (Linux/Proton)"
 arch=('x86_64')
-url="https://github.com/__REPO__"
+url="https://github.com/pbodds/citizen-score"
 license=('GPL-3.0-only')
 # gst-plugins-base and -good: WebKitGTK plays sound (World Timers' alerts)
 # through GStreamer's audioconvert and autoaudiosink, which webkit2gtk-4.1 only

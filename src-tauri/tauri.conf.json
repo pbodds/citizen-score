@@ -59,7 +59,7 @@
       "msi"
     ],
     "publisher": "Citizen Score",
-    "homepage": "https://github.com/__REPO__",
+    "homepage": "https://github.com/pbodds/citizen-score",
     "category": "Game",
     "shortDescription": "Real-time DPS meter for AION 2",
     "longDescription": "Citizen Score: a real-time DPS meter for AION 2, with a Pet Map and World Timers, for Windows and Linux (Proton).",
