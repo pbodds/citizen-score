@@ -12,6 +12,9 @@
 // Kibelisk, sized by what you still need there. It says so, as it isn't to
 // scale.
 //
+// The search above it finds a pet, a monster, a map, an area or a Kibelisk by
+// name, in English or the meter's language, and takes the map there.
+//
 // Plain globals from plugin.js and areas.js are used as they are: state,
 // prefs, savePrefs, key, language, text, petName, render, whereOf,
 // hiddenRegions, regionOf, sideOf, PET_SOURCES, needs, mapKeyOf, zoneMap,
@@ -36,10 +39,14 @@ const mapEls = {
   tip: document.querySelector(".mapTip"),
   note: document.querySelector(".mapNote"),
   todo: document.querySelector(".mapTodo"),
+  find: document.querySelector(".mapFind"),
+  hits: document.querySelector(".mapHits"),
 };
 const mapState = {
   map: null, // map id shown
   focus: null, // pet id, or null for every pet still needing souls
+  npc: null, // monster key: only its spawns, for every pet it drops
+  flash: null, // a Kibelisk the search picked, drawn lit
   view: null, // { x, y, scale }: map pixel at the stage's top left, CSS px per map pixel
   images: new Map(),
   heat: null, // { canvas, points } for the map and focus drawn
@@ -47,20 +54,28 @@ const mapState = {
   hover: null,
 };
 
+// The pets the map is about: the one in focus, every pet a focused monster
+// drops, or every pet still needing souls.
+const focused = () => !!(mapState.focus || mapState.npc);
+function focusIds() {
+  if (mapState.focus) return [mapState.focus];
+  if (mapState.npc) return Object.keys(PET_SOURCES).filter((pet) => PET_SOURCES[pet].drops?.some((d) => d.npc === mapState.npc));
+  return [...needs().keys()];
+}
+const ofNpc = (npc) => !mapState.npc || npc === mapState.npc;
+
 // Every spawn point that counts, with its weight and who it is for.
 function heatPoints(mapId) {
   const hidden = new Set(hiddenRegions());
-  const want = needs();
-  const ids = mapState.focus ? [mapState.focus] : [...want.keys()];
   const points = [];
-  for (const pet of ids) {
+  for (const pet of focusIds()) {
     const src = PET_SOURCES[pet];
     for (const [mid, npc, dots] of MAP.spawns[pet] || []) {
-      if (mid !== mapId) continue;
+      if (mid !== mapId || !ofNpc(npc)) continue;
       const drop = src?.drops.find((d) => d.npc === npc && mapIdOf(d.map) === mid);
-      if (drop && hidden.has(regionOf(drop)) && !mapState.focus) continue;
+      if (drop && hidden.has(regionOf(drop)) && !focused()) continue;
       const chance = parseFloat(String(drop?.chance || "100").replace("%", "")) / 100 || 0.01;
-      for (const [x, y] of dots) points.push({ x, y, w: mapState.focus ? 1 : chance, pet, npc, drop });
+      for (const [x, y] of dots) points.push({ x, y, w: focused() ? 1 : chance, pet, npc, drop });
     }
   }
   return points;
@@ -69,11 +84,10 @@ function heatPoints(mapId) {
 // The maps worth listing: those with an image, then any other where a pet you
 // need drops (schematic), the busiest first.
 function mapChoices() {
-  const want = needs();
   const count = new Map();
-  const ids = mapState.focus ? [mapState.focus] : [...want.keys()];
-  for (const pet of ids) {
+  for (const pet of focusIds()) {
     for (const d of PET_SOURCES[pet]?.drops || []) {
+      if (!ofNpc(d.npc)) continue;
       const mid = mapIdOf(d.map);
       if (mid) count.set(mid, (count.get(mid) || 0) + 1);
     }
@@ -104,9 +118,9 @@ function renderMapControls() {
     return b;
   });
   mapEls.maps.replaceChildren(...chips);
-  if (mapState.focus) {
+  if (focused()) {
     mapEls.focus.hidden = false;
-    mapEls.focus.querySelector(".mapFocusName").textContent = petName(mapState.focus);
+    mapEls.focus.querySelector(".mapFocusName").textContent = mapState.focus ? petName(mapState.focus) : text(mapState.npc);
   } else {
     mapEls.focus.hidden = true;
   }
@@ -337,10 +351,10 @@ function drawMap() {
       g.fill();
     }
   }
-  if (prefs.mapKibelisks !== false) drawKibelisks(g, mid, v, w, h);
+  drawKibelisks(g, mid, v, w, h);
   mapEls.note.textContent = points.length
     ? `${points.length.toLocaleString(language)} spawns${mapState.focus ? "" : ` · ${new Set(points.map((p) => p.pet)).size} pets`}`
-    : mapState.focus ? `${petName(mapState.focus)} has no spawns on this map.` : "Nothing left to farm on this map. 🎉";
+    : focused() ? `${mapState.focus ? petName(mapState.focus) : text(mapState.npc)} has no spawns on this map.` : "Nothing left to farm on this map. 🎉";
 }
 
 function crystal(g, x, y, s, fill, stroke) {
@@ -357,14 +371,25 @@ function crystal(g, x, y, s, fill, stroke) {
   g.stroke();
 }
 
+// All of them while the toggle is on; one the search found always, ringed.
 function drawKibelisks(g, mid, v, w, h) {
   const label = v.scale > 0.12;
+  const all = prefs.mapKibelisks !== false;
   g.font = "600 10px system-ui, sans-serif";
   g.textBaseline = "middle";
   for (const k of kibelisksOf(mid)) {
+    const flash = mapState.flash === k;
+    if (!all && !flash) continue;
     const x = (k.x - v.x) * v.scale, y = (k.y - v.y) * v.scale;
     if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
-    const hot = mapState.hover?.kib === k;
+    const hot = flash || mapState.hover?.kib === k;
+    if (flash) {
+      g.beginPath();
+      g.arc(x, y, 13, 0, Math.PI * 2);
+      g.lineWidth = 2;
+      g.strokeStyle = "rgba(191, 244, 255, 0.8)";
+      g.stroke();
+    }
     crystal(g, x, y, hot ? 6 : 5, hot ? "#bff4ff" : "#4fd6f0", "rgba(6, 8, 12, 0.9)");
     if (label && k.t) {
       const t = `#${k.t}`;
@@ -380,13 +405,11 @@ function drawKibelisks(g, mid, v, w, h) {
 // Not to scale: areas around their Kibelisks, on a circle by teleport number.
 function drawSchematic(g, w, h) {
   const mid = mapState.map;
-  const want = needs();
   const hidden = new Set(hiddenRegions());
   const byKib = new Map();
-  const ids = mapState.focus ? [mapState.focus] : [...want.keys()];
-  for (const pet of ids) {
+  for (const pet of focusIds()) {
     for (const d of PET_SOURCES[pet]?.drops || []) {
-      if (mapIdOf(d.map) !== mid || (!mapState.focus && hidden.has(regionOf(d)))) continue;
+      if (mapIdOf(d.map) !== mid || !ofNpc(d.npc) || (!focused() && hidden.has(regionOf(d)))) continue;
       const k = d.bySide?.[sideOf(key)] || d.kibelisk || { name: "?", m: 0 };
       const e = byKib.get(k.name) || { k, zones: new Map() };
       const zone = (d.zones || [])[0] || d.map;
@@ -539,12 +562,14 @@ mapEls.maps?.addEventListener("click", (e) => {
   if (!b) return;
   mapState.map = b.dataset.map;
   mapState.view = null;
+  mapState.flash = null;
   prefs.mapId = mapState.map;
   savePrefs();
   renderMap();
 });
 mapEls.focus?.querySelector(".mapFocusClear")?.addEventListener("click", () => {
   mapState.focus = null;
+  mapState.npc = null;
   mapState.view = null;
   renderMap();
 });
@@ -567,18 +592,219 @@ function renderMap() {
 // Opens the map on one pet: the map where it has the most spawns.
 function showPetOnMap(pet) {
   mapState.focus = String(pet);
+  mapState.npc = null;
+  showFocusOnMap();
+}
+
+// Opens the map on one monster, for every pet it drops.
+function showNpcOnMap(npc) {
+  mapState.focus = null;
+  mapState.npc = npc;
+  showFocusOnMap();
+}
+
+// The map with the most spawns of what is in focus, drawn from the top.
+function showFocusOnMap() {
   const counts = new Map();
-  for (const [mid, , dots] of MAP.spawns[pet] || []) counts.set(mid, (counts.get(mid) || 0) + dots.length);
-  for (const d of PET_SOURCES[pet]?.drops || []) {
-    const mid = mapIdOf(d.map);
-    if (mid && !counts.has(mid)) counts.set(mid, 0);
+  for (const pet of focusIds()) {
+    for (const [mid, npc, dots] of MAP.spawns[pet] || []) if (ofNpc(npc)) counts.set(mid, (counts.get(mid) || 0) + dots.length);
+    for (const d of PET_SOURCES[pet]?.drops || []) {
+      const mid = mapIdOf(d.map);
+      if (mid && ofNpc(d.npc) && !counts.has(mid)) counts.set(mid, 0);
+    }
   }
   mapState.map = [...counts.entries()].sort((a, b) => !!MAP.maps[b[0]] - !!MAP.maps[a[0]] || b[1] - a[1])[0]?.[0] || mapState.map;
   mapState.view = null;
+  mapState.flash = null;
   showView("map");
   savePrefs();
   renderAll();
 }
+
+// ---- search ------------------------------------------------------------------
+
+// Everything the search can find, built once per language: each with the
+// lowercase names it matches (English and the meter's) and what picking it does.
+let findIndex = null;
+function findEntries() {
+  if (findIndex?.language === language) return findIndex.entries;
+  const en = (k) => SOURCE_TEXT[k]?.en;
+  const names = (...keys) => [...new Set(keys.flatMap((k) => [text(k), en(k)]).filter(Boolean).map((t) => t.toLocaleLowerCase()))];
+  const mapName = (mid) => text(MAP.maps[mid]?.key || `String_STR_Map_${mid}_body`);
+  const entries = [];
+  const npcs = new Map(), zones = new Map(), maps = new Set(Object.keys(MAP.maps));
+  for (const [pet, src] of Object.entries(PET_SOURCES)) {
+    if (PET_GENUS[pet] === "special" || src.unreleased || !src.drops?.length) continue;
+    entries.push({
+      kind: "Pet", pet, label: petName(pet),
+      words: [petName(pet), PET_NAMES[pet]?.en, pet].filter(Boolean).map((t) => t.toLocaleLowerCase()),
+      pick: () => showPetOnMap(pet),
+    });
+    for (const d of src.drops) {
+      const mid = mapIdOf(d.map);
+      if (!mid) continue;
+      maps.add(mid);
+      const n = npcs.get(d.npc) || { maps: new Set(), pets: new Set() };
+      n.maps.add(mid);
+      n.pets.add(pet);
+      npcs.set(d.npc, n);
+      for (const zone of d.zones || []) {
+        const z = zones.get(`${mid}|${zone}`) || { mid, zone, npcs: new Set() };
+        z.npcs.add(d.npc);
+        zones.set(`${mid}|${zone}`, z);
+      }
+    }
+  }
+  for (const [npc, n] of npcs) {
+    entries.push({
+      kind: "Monster", label: text(npc), sub: `${[...n.maps].map(mapName).join(", ")} · ${n.pets.size} pet${n.pets.size === 1 ? "" : "s"}`,
+      words: names(npc), pick: () => showNpcOnMap(npc),
+    });
+  }
+  for (const mid of maps) {
+    entries.push({
+      kind: "Map", label: mapName(mid), sub: MAP.maps[mid] ? "" : "schematic",
+      words: [...names(MAP.maps[mid]?.key || `String_STR_Map_${mid}_body`), mid.toLowerCase()], pick: () => goTo(mid),
+    });
+  }
+  for (const z of zones.values()) {
+    entries.push({
+      kind: "Area", label: text(z.zone), sub: mapName(z.mid), words: names(z.zone),
+      pick: () => goTo(z.mid, (mid, npc) => mid === z.mid && z.npcs.has(npc)),
+    });
+  }
+  for (const [mid, list] of Object.entries(MAP.kibelisks)) {
+    for (const k of list) {
+      entries.push({
+        kind: "Kibelisk", label: text(k.n), sub: `${k.t ? `#${k.t} · ` : ""}${mapName(mid)}`,
+        words: [...names(k.n), ...(k.t ? [`#${k.t}`] : []), "kibelisk"], pick: () => goTo(mid, null, k),
+      });
+    }
+  }
+  findIndex = { language, entries };
+  return entries;
+}
+
+// To a map, framed on the spawns `which` picks (an area) or on one Kibelisk.
+// A focus with nothing on that map is let go.
+function goTo(mid, which, kib) {
+  mapState.map = mid;
+  mapState.flash = kib || null;
+  if (!mapChoices().some((c) => c.mid === mid && c.n)) mapState.focus = mapState.npc = null;
+  prefs.mapId = mid;
+  showView("map");
+  savePrefs();
+  renderMap();
+  mapState.view = null;
+  if (kib) {
+    const { clientWidth: w, clientHeight: h } = mapEls.stage;
+    const scale = 0.6;
+    mapState.view = { scale, x: kib.x - w / 2 / scale, y: kib.y - h / 2 / scale };
+  } else if (which) {
+    const dots = [];
+    for (const rows of Object.values(MAP.spawns)) {
+      for (const [m, npc, list] of rows) if (which(m, npc)) for (const [x, y] of list) dots.push({ x, y });
+    }
+    if (dots.length) fitView(dots);
+  }
+  drawMap();
+}
+
+// Best first: names that start with what you typed, then words that do, then
+// any match; pets before monsters before places.
+const FIND_ORDER = ["Pet", "Monster", "Map", "Area", "Kibelisk"];
+const find = { hits: [], at: 0 };
+function findHits(query) {
+  const q = query.trim().toLocaleLowerCase();
+  if (!q) return [];
+  const scored = [];
+  for (const e of findEntries()) {
+    const score = e.label.toLocaleLowerCase().startsWith(q) ? 0 : e.words.some((w) => w.startsWith(q)) ? 1 : e.words.some((w) => w.includes(q)) ? 2 : -1;
+    if (score >= 0) scored.push([score, e]);
+  }
+  return scored
+    .sort((a, b) => a[0] - b[0] || FIND_ORDER.indexOf(a[1].kind) - FIND_ORDER.indexOf(b[1].kind) || a[1].label.localeCompare(b[1].label))
+    .slice(0, 12)
+    .map(([, e]) => e);
+}
+
+function renderHits() {
+  const list = mapEls.hits;
+  list.hidden = !mapEls.find.value.trim() || document.activeElement !== mapEls.find;
+  if (list.hidden) return;
+  const want = needs();
+  list.replaceChildren(...(find.hits.length ? find.hits : [null]).map((e, i) => {
+    const li = document.createElement("li");
+    if (!e) {
+      li.className = "mapHitNone";
+      li.textContent = "Nothing by that name.";
+      return li;
+    }
+    li.role = "option";
+    li.dataset.i = i;
+    li.setAttribute("aria-selected", String(i === find.at));
+    const kind = document.createElement("span");
+    kind.className = `mapHitKind kind${e.kind}`;
+    kind.textContent = e.kind;
+    const label = document.createElement("span");
+    label.className = "mapHitLabel";
+    label.textContent = e.label;
+    li.append(kind, label);
+    const sub = e.pet ? (want.get(e.pet) ? `${want.get(e.pet)} to Lv 3` : "") : e.sub;
+    if (sub) {
+      const s = document.createElement("span");
+      s.className = "mapHitSub";
+      s.textContent = sub;
+      li.append(s);
+    }
+    return li;
+  }));
+}
+
+function pickHit(i) {
+  const e = find.hits[i];
+  if (!e) return;
+  mapEls.find.value = e.label;
+  mapEls.find.blur();
+  e.pick();
+}
+
+mapEls.find?.addEventListener("input", () => {
+  find.hits = findHits(mapEls.find.value);
+  find.at = 0;
+  renderHits();
+});
+mapEls.find?.addEventListener("focus", () => {
+  mapEls.find.select();
+  find.hits = findHits(mapEls.find.value);
+  find.at = 0;
+  renderHits();
+});
+mapEls.find?.addEventListener("blur", () => {
+  mapEls.hits.hidden = true;
+});
+mapEls.find?.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    if (!find.hits.length) return;
+    find.at = (find.at + (e.key === "ArrowDown" ? 1 : -1) + find.hits.length) % find.hits.length;
+    renderHits();
+    mapEls.hits.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    pickHit(find.at);
+  } else if (e.key === "Escape") {
+    mapEls.find.value = "";
+    find.hits = [];
+    renderHits();
+  }
+});
+// On mousedown, so the box keeps its focus until the pick.
+mapEls.hits?.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  const li = e.target.closest("li[data-i]");
+  if (li) pickHit(Number(li.dataset.i));
+});
 
 // A pet's sources end with "Show on map".
 {
@@ -608,6 +834,7 @@ function renderAll() {
   const listsRender = render;
   render = function () {
     listsRender();
+    findIndex = null; // names follow renames and syncs
     if (prefs.view === "map") {
       mapState.heatKey = "";
       renderMap();
@@ -615,7 +842,7 @@ function renderAll() {
   };
 }
 a2.on("zone", () => {
-  if (prefs.view === "map" && !mapState.focus) {
+  if (prefs.view === "map" && !focused()) {
     const here = mapIdOf(mapKeyOf(zoneMap));
     if (here && here !== mapState.map && mapChoices().some((c) => c.mid === here)) {
       mapState.map = here;

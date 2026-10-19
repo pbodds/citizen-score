@@ -383,3 +383,29 @@ body.viewMap .foot { display: none; }
   border: 1px solid rgba(255, 170, 60, 0.35); border-radius: 6px;
 }
 .showOnMap:hover { background: rgba(255, 170, 60, 0.22); }
+
+/* Citizen Score: the Map's search. */
+.mapSearch { position: relative; }
+.mapSearch .search { margin: 0; }
+.mapHits {
+  position: absolute; left: 0; right: 0; top: calc(100% + 3px); z-index: 6;
+  margin: 0; padding: 3px; list-style: none; max-height: min(60vh, 340px); overflow: auto;
+  font-size: 12px; background: rgba(10, 14, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.mapHits[hidden] { display: none; }
+.mapHits li { display: flex; align-items: baseline; gap: 7px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.mapHits li[aria-selected="true"], .mapHits li[data-i]:hover { background: rgba(143, 194, 255, 0.14); }
+.mapHits .mapHitNone { cursor: default; color: rgba(255, 255, 255, 0.5); }
+.mapHitKind {
+  flex: none; width: 56px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+.mapHitKind.kindPet { color: #ffd9a8; }
+.mapHitKind.kindMonster { color: #ff9f7a; }
+.mapHitKind.kindMap, .mapHitKind.kindArea { color: #8fc2ff; }
+.mapHitKind.kindKibelisk { color: #4fd6f0; }
+.mapHitLabel { color: rgba(255, 255, 255, 0.92); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mapHitSub { margin-left: auto; padding-left: 6px; font-size: 11px; color: rgba(255, 255, 255, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
