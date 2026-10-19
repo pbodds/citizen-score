@@ -600,6 +600,10 @@ struct Inner {
     /// Field boss kills and HP milestones in the open world, not yet sent
     /// (`boss_report.rs`).
     boss_events: VecDeque<BossEvent>,
+    /// A2Tools Plus: the same kills, numbered, for the local timers
+    /// (`local_kills_since`); every build, online or not.
+    local_kills: VecDeque<(u64, BossEvent)>,
+    local_kill_seq: u64,
     /// Party members who also run A2Tools, by name (`party_presence.rs`).
     a2tools_users: HashSet<String>,
     /// Each party member's last HP (`1b 92`): falling to 0 from above is a
@@ -756,6 +760,8 @@ impl DataStorage {
                 boss_hp_now: HashMap::new(),
                 boss_hp_sent: HashMap::new(),
                 boss_events: VecDeque::new(),
+                local_kills: VecDeque::new(),
+                local_kill_seq: 0,
                 a2tools_users: HashSet::new(),
                 last_hp: HashMap::new(),
                 despawned_summon_ids: HashSet::new(),
@@ -1544,6 +1550,20 @@ impl DataStorage {
         out
     }
 
+    /// A2Tools Plus: the field boss kills numbered after `seq`, and the
+    /// number to ask with next time. Unlike `take_boss_events` nothing is
+    /// drained, so any number of readers can follow along.
+    pub fn local_kills_since(&self, seq: u64) -> (u64, Vec<BossEvent>) {
+        let inner = self.inner.read();
+        let kills = inner.local_kills.iter().filter(|(n, _)| *n > seq).map(|(_, e)| e.clone()).collect();
+        (inner.local_kill_seq, kills)
+    }
+
+    /// A2Tools Plus: the map the player is on, once a zone load named it.
+    pub fn current_map_id(&self) -> Option<i32> {
+        self.inner.read().current_map_id
+    }
+
     /// The field boss kills seen since the last call.
     pub fn take_boss_events(&self) -> Vec<BossEvent> {
         self.inner.write().boss_events.drain(..).collect()
@@ -1551,6 +1571,20 @@ impl DataStorage {
 
     pub fn mark_entity_dead(&self, entity_id: i32) {
         let mut inner = self.inner.write();
+        // A2Tools Plus: every field boss kill in the open world, for the
+        // local timers, whether or not the build shares them.
+        if inner.current_dungeon_id <= 0 && !inner.dead_entity_ids.contains(&entity_id) {
+            if let Some(&code) = inner.mob_storage.get(&entity_id) {
+                if crate::capture::field_bosses::is_field_boss(code) {
+                    inner.local_kill_seq += 1;
+                    let seq = inner.local_kill_seq;
+                    inner.local_kills.push_back((seq, BossEvent { npc: code, kind: BossEventKind::Killed { at_ms: now_ms() } }));
+                    while inner.local_kills.len() > 64 {
+                        inner.local_kills.pop_front();
+                    }
+                }
+            }
+        }
         // A field boss killed in the open world: its exact time, to share
         // (online builds only: boss_report.rs sends it).
         #[cfg(feature = "online")]
@@ -3255,6 +3289,24 @@ mod tests {
 
     fn dealt(s: &DataStorage, target: i32, actor: i32) -> i64 {
         s.get_combat_snapshot().get(&target).and_then(|t| t.actors.get(&actor)).map_or(0, |a| a.total_damage)
+    }
+
+    /// A2Tools Plus: kills stay readable by any number of followers, each
+    /// with its own count, and a dead boss dying again is one kill.
+    #[test]
+    fn local_kills_are_numbered_and_never_drained() {
+        let s = DataStorage::new();
+        s.append_mob(500, 2100079);
+        s.append_mob(501, 1);
+        s.mark_entity_dead(500);
+        s.mark_entity_dead(500);
+        s.mark_entity_dead(501); // not a field boss
+        let (seq, kills) = s.local_kills_since(0);
+        assert_eq!((seq, kills.len(), kills[0].npc), (1, 1, 2100079));
+        assert_eq!(s.local_kills_since(0).1.len(), 1);
+        assert!(s.local_kills_since(seq).1.is_empty());
+        s.note_map_load(1010);
+        assert_eq!(s.current_map_id(), Some(1010));
     }
 
     /// Bodyguard Teegant (NPC 2100079), a Verteron field boss.

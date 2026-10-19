@@ -256,6 +256,86 @@ fn boss_map_event(map: &crate::capture::boss_map::BossMap) -> Value {
     serde_json::json!({ "map": map.map_id, "bosses": bosses })
 }
 
+/// A2Tools Plus: where the bundled plugins live: next to the game data in
+/// an install, or the checkout's `plugins/` when run from source.
+fn bundled_plugin_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
+    let resource = app.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let roots = [
+        resource.join("plugins"),
+        resource.join("_up_").join("plugins"),
+        PathBuf::from("plugins"),
+        PathBuf::from("../plugins"),
+    ];
+    let Some(root) = roots.into_iter().find(|r| r.is_dir()) else { return Vec::new() };
+    let mut dirs: Vec<PathBuf> = std::fs::read_dir(root)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.join("manifest.json").is_file())
+        .collect();
+    dirs.sort();
+    dirs
+}
+
+/// A2Tools Plus: a field boss kill, as a2.on("bossKill") hands it on.
+fn kill_event(kill: &crate::combat::data_storage::BossEvent) -> Value {
+    let crate::combat::data_storage::BossEventKind::Killed { at_ms } = kill.kind;
+    serde_json::json!({
+        "boss": crate::capture::field_bosses::world_map_id(kill.npc),
+        "npc": kill.npc,
+        "diedAt": at_ms / 1000,
+    })
+}
+
+/// A2Tools Plus: the map the player is on, as a2.on("zone") hands it on.
+fn zone_event(map: Option<i32>) -> Value {
+    serde_json::json!({
+        "map": map,
+        "openWorld": map.is_some_and(crate::combat::data_storage::is_open_world_map),
+    })
+}
+
+/// A2Tools Plus: what the meter knows of the world now, for a plugin with
+/// `events:zone` that opens after it happened: the map, and the field boss
+/// kills seen this run (the last 64).
+#[tauri::command]
+pub fn plugin_local_world(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Value, String> {
+    let id = window_plugin(&window)?;
+    require(&app, &id, "events:zone")?;
+    let state = app.try_state::<AppState>().ok_or("no app state")?;
+    let (_, kills) = state.data_storage.local_kills_since(0);
+    let mut out = zone_event(state.data_storage.current_map_id());
+    out["kills"] = Value::Array(kills.iter().map(kill_event).collect());
+    Ok(out)
+}
+
+/// A2Tools Plus: an alert as a desktop notification (`notify-send`), which
+/// shows over the game where the plugin's own window may not. At most one a
+/// second per plugin, the text cut to 300 characters.
+#[tauri::command]
+pub fn plugin_desktop_notify(app: tauri::AppHandle, window: tauri::WebviewWindow, title: String, body: String) -> Result<(), String> {
+    static LAST: std::sync::OnceLock<Mutex<HashMap<String, Instant>>> = std::sync::OnceLock::new();
+    let id = window_plugin(&window)?;
+    require(&app, &id, "notify")?;
+    {
+        let mut last = LAST.get_or_init(Mutex::default).lock().unwrap_or_else(|p| p.into_inner());
+        if last.get(&id).is_some_and(|at| at.elapsed() < Duration::from_secs(1)) {
+            return Ok(());
+        }
+        last.insert(id, Instant::now());
+    }
+    let cut = |s: &str| s.chars().take(300).collect::<String>();
+    std::process::Command::new("notify-send")
+        .args(["-a", "A2Tools Plus", "-i", "a2tools-dps-meter", "--", &cut(&title), &cut(&body)])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("notify-send: {e}"))
+}
+
 /// Who is playing, as plugins with `events:character` see it.
 fn character(app: &tauri::AppHandle) -> Option<Value> {
     app.try_state::<AppState>().map(|s| {
@@ -367,6 +447,16 @@ impl PluginHost {
                 Err(e) => tracing::warn!("Plugins: installed {} does not load: {e}", dir.display()),
             }
         }
+        // A2Tools Plus: the plugins built into this fork, trusted like a
+        // reviewed install. A developer folder or an installed copy of the
+        // same id goes first.
+        for dir in bundled_plugin_dirs(app) {
+            match load_folder(&dir) {
+                Ok(l) if loaded.iter().any(|x: &Loaded| x.manifest.id == l.manifest.id) => {}
+                Ok(l) => loaded.push(Loaded { reviewed: true, ..l }),
+                Err(e) => tracing::warn!("Plugins: bundled {} does not load: {e}", dir.display()),
+            }
+        }
         let any_decoders = loaded.iter().any(|l| !l.decoders.is_empty());
         tracing::info!("Plugins: {} loaded (developer mode {})", loaded.len(), if dev { "on" } else { "off" });
         *self.loaded.write().unwrap_or_else(|p| p.into_inner()) = loaded;
@@ -382,6 +472,8 @@ impl PluginHost {
                 let mut game = crate::platform::window_detector::find_aion2_window();
                 let mut game_checked = Instant::now();
                 let mut map_seq = 0u64;
+                let mut kill_seq = 0u64;
+                let mut zone: Option<i32> = None;
                 loop {
                     // Woken by each queued event; the timeout lets settling
                     // events go once their wait is over.
@@ -412,6 +504,20 @@ impl PluginHost {
                             if let Some(map) = maps.iter().filter(|m| m.header == 0).max_by_key(|m| m.seen_ms) {
                                 host.tell_permitted(&app, "feed:boss-timers", "bossMap", boss_map_event(map));
                             }
+                        }
+                    }
+                    // A2Tools Plus: field boss kills seen by this meter, and
+                    // the map the player is on, to plugins with events:zone.
+                    if let Some(state) = app.try_state::<AppState>() {
+                        let (next, kills) = state.data_storage.local_kills_since(kill_seq);
+                        kill_seq = next;
+                        for kill in kills {
+                            host.tell_permitted(&app, "events:zone", "bossKill", kill_event(&kill));
+                        }
+                        let map = state.data_storage.current_map_id();
+                        if map != zone {
+                            zone = map;
+                            host.tell_permitted(&app, "events:zone", "zone", zone_event(map));
                         }
                     }
                     // Whether AION2 is open, looked at every few seconds.
@@ -825,6 +931,7 @@ fn describe_permission(t: &PromptTexts, permission: &str) -> String {
         "window" => t.perm_window.clone(),
         "widgets" => t.perm_widgets.clone(),
         "events:character" => t.perm_character.clone(),
+        "events:zone" => "Know which map you are on and the field bosses you see killed".to_string(),
         p => match p.strip_prefix("decoder:") {
             Some(name) => t.perm_decoder.replace("{name}", name),
             None => p.to_string(),

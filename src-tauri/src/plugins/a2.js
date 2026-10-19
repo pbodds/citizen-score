@@ -14,6 +14,13 @@
 //   a2.on("bossMap", ({ map, bosses }) => ...) a map the player just opened, its field bosses as
 //                                              a2.bossTimers gives them (permission
 //                                              "feed:boss-timers", meter 2.0.65 on)
+//   A2Tools Plus (permission "events:zone"):
+//   a2.on("zone", ({ map, openWorld }) => ...) the map you are on, at each zone load
+//   a2.on("bossKill", ({ boss, npc, diedAt }) => ...)  a field boss this meter saw die
+//                                              (boss: world-map id, diedAt: unix seconds)
+//   a2.desktopNotify(title, body)              a desktop notification (permission "notify")
+//   await a2.localWorld()                      { map, openWorld, kills: [...] }: the same, for a
+//                                              window opened after it happened
 //   a2.on("game", ({ running }) => ...)        whether AION2 is open, at start and on change
 //                                              (meter 2.0.65 on)
 //   a2.on("language", (code) => ...)           the meter's language ("en", "ko", "zh-Hans", ...), at start and on change
@@ -106,6 +113,8 @@
       set: (key, value) => call("storage.set", [key, JSON.stringify(value)]),
     }),
     notify: (text) => call("notify", [String(text)]),
+    localWorld: () => call("localWorld", []),
+    desktopNotify: (title, body) => call("desktopNotify", [title, body]),
     bossTimers: (server) => call("bossTimers", [Number(server)]),
     followBosses: (server, bosses) => call("bossTimers.follow", [Number(server), (bosses || []).map(String)]),
     window: Object.freeze({

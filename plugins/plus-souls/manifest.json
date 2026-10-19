@@ -1,0 +1,102 @@
+{
+  "id": "plus-souls",
+  "name": "Pet Souls+",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "author": "A2Tools Plus (from A2 Tools' Pet Soul Tracker)",
+  "description": "Souls still needed to raise each pet, where each pet's souls drop, and an Areas view ranking where to farm next, with the map you're on first.",
+  "permissions": [
+    "storage",
+    "events:character",
+    "decoder:pet-list",
+    "decoder:soul-gained",
+    "decoder:level-up",
+    "events:zone"
+  ],
+  "decoders": [
+    {
+      "name": "pet-list",
+      "opcode": "00 90",
+      "fields": [
+        {
+          "type": "skip:4"
+        },
+        {
+          "name": "levels",
+          "type": "list",
+          "count": "varint",
+          "fields": [
+            {
+              "name": "pet",
+              "type": "u32"
+            },
+            {
+              "type": "skip:4"
+            },
+            {
+              "name": "level",
+              "type": "u32"
+            }
+          ]
+        },
+        {
+          "name": "points",
+          "type": "list",
+          "count": "varint",
+          "fields": [
+            {
+              "name": "pet",
+              "type": "u32"
+            },
+            {
+              "name": "points",
+              "type": "u32"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "soul-gained",
+      "opcode": "0D 90",
+      "immediate": true,
+      "fields": [
+        {
+          "type": "skip:1"
+        },
+        {
+          "name": "pet",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "level-up",
+      "opcode": "14 90",
+      "immediate": true,
+      "fields": [
+        {
+          "type": "skip:2"
+        },
+        {
+          "name": "pet",
+          "type": "u32"
+        },
+        {
+          "name": "level",
+          "type": "u32"
+        }
+      ]
+    }
+  ],
+  "ui": {
+    "panel": {
+      "width": 380,
+      "height": 600
+    }
+  }
+}

@@ -3561,6 +3561,8 @@ pub fn run() {
             meter_shown,
             crate::plugins::plugin_storage_get,
             crate::plugins::plugin_boss_timers,
+            crate::plugins::plugin_local_world,
+            crate::plugins::plugin_desktop_notify,
             crate::plugins::plugin_storage_set,
             get_dps_snapshot,
             get_skill_details,

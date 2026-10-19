@@ -95,7 +95,9 @@ fn manager() -> Option<Manager> {
 
 /// Only a meter a package manager installed updates itself.
 pub fn supported() -> bool {
-    manager().is_some()
+    // A2Tools Plus updates from its own checkout (a2plus sync), never from
+    // upstream's packages, which would replace the pacman-installed meter.
+    false
 }
 
 /// The manifest's package for the package manager that installed this meter.

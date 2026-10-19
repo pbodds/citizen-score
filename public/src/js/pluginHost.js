@@ -71,6 +71,12 @@
       if (!allowed("feed:boss-timers")) throw new Error('the plugin lacks the "feed:boss-timers" permission');
       return invoke("plugin_boss_follow", { server: Number(server), bosses: (Array.isArray(bosses) ? bosses : []).map(String) });
     },
+    // A2Tools Plus: the map you are on and the field bosses seen killed
+    // this run (permission "events:zone").
+    localWorld: () => {
+      if (!allowed("events:zone")) throw new Error('the plugin lacks the "events:zone" permission');
+      return invoke("plugin_local_world");
+    },
     "storage.set": ([key, value]) => invoke("plugin_storage_set", { key: String(key), value: String(value) }),
     "window.show": () => {
       if (!allowed("window")) throw new Error('the plugin lacks the "window" permission');
@@ -115,6 +121,11 @@
       if (!allowed("notify")) throw new Error('the plugin lacks the "notify" permission');
       showToast(String(text));
       return true;
+    },
+    // A2Tools Plus: the alert as a desktop notification too, over the game.
+    desktopNotify: ([title, body]) => {
+      if (!allowed("notify")) throw new Error('the plugin lacks the "notify" permission');
+      return invoke("plugin_desktop_notify", { title: String(title), body: String(body ?? "") });
     },
     // A link clicked in the plugin's page (the SDK passes on https ones): its
     // frame may not open windows, so the browser opens it. Only plain https

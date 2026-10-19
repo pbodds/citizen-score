@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# A2Tools Plus: launcher and upkeep for the fork in ~/Work/a2plus.
+# Usage: a2plus [start]   start detached (or do nothing if already running)
+#        a2plus stop | restart
+#        a2plus build     build the checkout
+#        a2plus install   install the build to /opt/a2plus (asks via polkit)
+#        a2plus sync      pull upstream's latest, rebase the fork on it, build, install
+#        a2plus log       follow the log
+repo="$HOME/Work/a2plus"
+bin=/opt/a2plus/a2plus
+log="${XDG_STATE_HOME:-$HOME/.local/state}/a2plus.log"
+mkdir -p "$(dirname "$log")"
+
+running() { pgrep -x a2plus >/dev/null; }
+
+build() {
+  cd "$repo" || exit 1
+  mkdir -p public/i18n public/data public/src/data
+  cp -r src/data/i18n/* public/i18n/
+  cp src/data/skill_icons.json src/data/dot_skill_ids.json public/data/
+  cp src/data/skill_icons.json src/data/dot_skill_ids.json public/src/data/
+  npm ci --silent &&
+    mise exec rust -- npx tauri build --no-bundle &&
+    mise exec rust -- cargo build --release --manifest-path src-tauri/Cargo.toml --bin a2tools-hotkeys
+}
+
+install_build() {
+  pkexec "$repo/plus/install-root.sh" "$repo"
+}
+
+case "${1:-start}" in
+  stop)    pkill -x a2plus; exit 0 ;;
+  restart) "$0" stop; sleep 1; exec "$0" start ;;
+  build)   build ;;
+  install) install_build ;;
+  sync)
+    cd "$repo" || exit 1
+    git fetch upstream || exit 1
+    if ! git rebase upstream/main; then
+      echo "Rebase hit a conflict: fix it in $repo (git status), then 'git rebase --continue' and 'a2plus build && a2plus install'."
+      exit 1
+    fi
+    build && install_build && echo "Synced to upstream $(git rev-parse --short upstream/main). Restart with: a2plus restart" ;;
+  log)     exec tail -f "$log" ;;
+  start)
+    if running; then echo "A2Tools Plus already running."; exit 0; fi
+    [ -x "$bin" ] || { echo "Not installed: a2plus build && a2plus install"; exit 1; }
+    if ! getcap "$bin" | grep -q cap_net_raw=ep; then
+      notify-send "A2Tools Plus" "Packet capture permission missing: reinstalling to grant it"
+      install_build >>"$log" 2>&1 ||
+        notify-send -u critical "A2Tools Plus" "Packet capture not granted; the meter won't see combat"
+    fi
+    if command -v uwsm-app >/dev/null; then
+      setsid -f uwsm-app -- "$bin" >>"$log" 2>&1 </dev/null
+    else
+      setsid -f "$bin" >>"$log" 2>&1 </dev/null
+    fi
+    echo "A2Tools Plus started (log: $log). Safe to close this terminal." ;;
+  *) sed -n '2,9p' "$0"; exit 1 ;;
+esac
