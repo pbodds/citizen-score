@@ -19,7 +19,7 @@
 
 const PIN_UI = {
   en: { keep: "Keep the icon on screen", keepAll: "Keep icons on screen", more: "More options", open: "Open", killed: "Killed",
-    name: "Name on the icon", effect: "Icon when due", shake: "Shake", glow: "Glow", nothing: "Nothing", style: "Show alerts as", icons: "Icons", window: "This window",
+    name: "Name on the icon", effect: "Icon when due", shake: "Shake", glow: "Glow", nothing: "Nothing", style: "Show alerts as", icons: "Icons", window: "Banner (bottom right)",
     deflt: "Default", shown: "Shown", hiddenName: "Hidden", sound: "Sound", repeat: "Repeat",
     lock: "Lock the icons", lockNote: "Locked icons let clicks through to the game and can't be moved. Double-click an unlocked icon to open this window. Right-click an icon to stop its sound.",
     fought: "When it's being fought", alertMe: "Alert me", noRemind: "Don't remind", fighting: "Fighting", foughtMsg: (name, hp) => `${name} is being fought (${hp}%), go join!`,
@@ -107,9 +107,10 @@ const FOUGHT_FRESH_MS = 3 * 60_000;
 const foughtAt = new Map();
 const foughtAlerted = new Set();
 const canPin = () => !!(a2.widgets && typeof a2.widgets.open === "function");
-// Icons are the alerts, unless the player chose the window (or the meter has
-// no widgets).
-const iconStyle = () => canPin() && prefs.alertStyle !== "window";
+// Icons are the alerts only when the player chose them (Citizen Score): by
+// default an alert is a banner in the bottom-right corner (plus.js), not an
+// icon in the middle of the screen.
+const iconStyle = () => canPin() && prefs.alertStyle === "icons";
 const overrides = () => (prefs.overrides ||= {});
 // A widget's name: lowercase letters, digits and "-" ("field:101006" is
 // "field-101006").

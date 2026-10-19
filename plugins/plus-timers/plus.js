@@ -109,11 +109,45 @@ a2.on("zone", (z) => {
 
 a2.on("character", () => applyKills());
 
+// Alerts come as a banner in its own window, which a Hyprland rule puts in
+// the bottom-right corner of the game's monitor without focus
+// (~/.config/hypr/hyprland.lua), instead of opening this panel in the meter.
+// The panel still lists them; the banner goes when they are dismissed, here
+// or by clicking it, or after BANNER_MS.
+const BANNER_SIZE = { width: 380, height: 200 };
+const canBanner = () => !!(a2.widgets && typeof a2.widgets.open === "function");
+let bannerWidgetTimer = 0;
+function closeBannerWidget() {
+  clearTimeout(bannerWidgetTimer);
+  if (canBanner()) a2.widgets.close("banner").catch(() => {});
+}
+function showBannerWidget() {
+  a2.widgets.open("banner", BANNER_SIZE)
+    .then(() => a2.widgets.send("banner", { banner: true, lines: [...lines] }))
+    .catch(() => {});
+  clearTimeout(bannerWidgetTimer);
+  bannerWidgetTimer = setTimeout(closeBannerWidget, BANNER_MS);
+}
+els.dismiss.addEventListener("click", closeBannerWidget);
+a2.on("widget-message", (msg) => {
+  if (msg?.name !== "banner" || !msg?.data?.dismiss) return;
+  clearBanner();
+  closeBannerWidget();
+});
+
 // Alerts reach the desktop too.
 {
   const inWindow = alertBanner;
   alertBanner = function (message, opts = {}) {
-    inWindow(message, opts);
+    if (canBanner()) {
+      // Listed in the panel, without the panel popping up for it.
+      const pop = prefs.pop;
+      prefs.pop = false;
+      try { inWindow(message, opts); } finally { prefs.pop = pop; }
+      showBannerWidget();
+    } else {
+      inWindow(message, opts);
+    }
     if (prefs.desktop !== false && typeof a2.desktopNotify === "function") {
       a2.desktopNotify("AION 2", message).catch(() => {});
     }

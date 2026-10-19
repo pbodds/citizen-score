@@ -19,8 +19,28 @@ const initials = (name) => {
   return letters.toUpperCase();
 };
 
+const banner = document.querySelector(".banner");
+const bannerLines = document.querySelector(".bannerLines");
+
 a2.on("widget", (d) => {
   if (!d) return;
+  // The alert banner (plus.js): its lines, newest last, and no icon.
+  if (d.banner) {
+    document.body.classList.add("isBanner");
+    pin.hidden = true;
+    banner.hidden = false;
+    bannerLines.replaceChildren(...(d.lines || []).map((line) => {
+      const div = document.createElement("div");
+      div.className = "bannerLine";
+      div.textContent = line;
+      return div;
+    }));
+    banner.classList.remove("pulse");
+    void banner.offsetWidth;
+    banner.classList.add("pulse");
+    reportArea();
+    return;
+  }
   // The game's icon when there is one, else the initials. Taken from the
   // page's own copy (widget.html), which on Linux is the image itself.
   const src = (d.icon && document.querySelector(`.icons img[data-icon="${d.icon}"]`)?.getAttribute("src")) || "";
@@ -52,7 +72,7 @@ a2.on("widget", (d) => {
 // The icon's drawn parts: only they take the mouse, so icons set close
 // together don't catch each other's drags (meter 2.0.70 on, Linux; elsewhere
 // a press beside them just does nothing).
-const SHOWN = ".badge, .time, .sub, .name";
+const SHOWN = ".badge, .time, .sub, .name, .banner";
 let lastArea = "";
 function reportArea() {
   if (typeof a2.widget.area !== "function") return;
@@ -91,8 +111,13 @@ const DRAG_PX = 4;
 const DOUBLE_MS = 400;
 let press = null;
 let lastClick = 0;
+// The banner stays in its corner: a click dismisses it.
+banner.addEventListener("click", () => {
+  if (!locked) a2.widget.post({ dismiss: true }).catch(() => {});
+});
 document.addEventListener("mousedown", (e) => {
   if (e.button !== 0 || locked || !(e.target instanceof Element) || !e.target.closest(SHOWN)) return;
+  if (e.target.closest(".banner")) return;
   e.preventDefault();
   press = { x: e.screenX, y: e.screenY };
 });
