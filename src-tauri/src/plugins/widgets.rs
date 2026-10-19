@@ -83,6 +83,9 @@ fn areas() -> &'static Mutex<HashMap<String, Area>> {
 /// `platform::window::hide_in_place`), so a widget is locked again once its
 /// page has loaded (`plugin_widget_hello`) and each time it is shown again.
 fn apply_lock(window: &tauri::WebviewWindow, locked: bool) {
+    // Citizen Score: World Timers' alert banner always takes clicks (its close
+    // button), locked or not; the rest of its window still lets them through.
+    let locked = locked && window.label() != label("plus-timers", "banner");
     let area = areas().lock().unwrap_or_else(|p| p.into_inner()).get(window.label()).copied();
     let applied = match (locked, area) {
         (true, _) => crate::platform::window::click_through_except(window, true, None),

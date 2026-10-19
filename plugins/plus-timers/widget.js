@@ -111,9 +111,10 @@ const DRAG_PX = 4;
 const DOUBLE_MS = 400;
 let press = null;
 let lastClick = 0;
-// The banner stays in its corner: a click dismisses it.
+// The banner stays in its corner: a click, on its × or anywhere on it,
+// dismisses it. It takes clicks even while the pins are locked.
 banner.addEventListener("click", () => {
-  if (!locked) a2.widget.post({ dismiss: true }).catch(() => {});
+  a2.widget.post({ dismiss: true }).catch(() => {});
 });
 document.addEventListener("mousedown", (e) => {
   if (e.button !== 0 || locked || !(e.target instanceof Element) || !e.target.closest(SHOWN)) return;

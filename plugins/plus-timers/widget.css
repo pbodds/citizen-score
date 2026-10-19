@@ -107,14 +107,29 @@ body.isBanner {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
   cursor: pointer;
 }
-body.locked .banner { cursor: default; }
 .bannerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #8fc4ff;
   margin-bottom: 4px;
 }
+.bannerClose {
+  width: 24px;
+  height: 24px;
+  margin: -6px -8px -6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cfe3ff;
+  font: 18px/24px system-ui, sans-serif;
+  padding: 0;
+  cursor: pointer;
+}
+.bannerClose:hover { background: rgba(255, 90, 90, 0.85); color: #fff; }
 .bannerLine { font-size: 13px; line-height: 1.35; }
 .bannerLine + .bannerLine { margin-top: 2px; opacity: 0.85; }
 .banner.pulse { animation: bannerIn 0.35s ease-out; }
