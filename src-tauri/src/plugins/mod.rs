@@ -303,8 +303,8 @@ fn zone_event(map: Option<i32>) -> Value {
 /// `events:zone` that opens after it happened: the map, and the field boss
 /// kills seen this run (the last 64).
 #[tauri::command]
-pub fn plugin_local_world(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Value, String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_local_world(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>) -> Result<Value, String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "events:zone")?;
     let state = app.try_state::<AppState>().ok_or("no app state")?;
     let (_, kills) = state.data_storage.local_kills_since(0);
@@ -317,9 +317,9 @@ pub fn plugin_local_world(app: tauri::AppHandle, window: tauri::WebviewWindow) -
 /// shows over the game where the plugin's own window may not. At most one a
 /// second per plugin, the text cut to 300 characters.
 #[tauri::command]
-pub fn plugin_desktop_notify(app: tauri::AppHandle, window: tauri::WebviewWindow, title: String, body: String) -> Result<(), String> {
+pub fn plugin_desktop_notify(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, title: String, body: String) -> Result<(), String> {
     static LAST: std::sync::OnceLock<Mutex<HashMap<String, Instant>>> = std::sync::OnceLock::new();
-    let id = window_plugin(&window)?;
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "notify")?;
     {
         let mut last = LAST.get_or_init(Mutex::default).lock().unwrap_or_else(|p| p.into_inner());
@@ -693,7 +693,13 @@ fn info(l: &Loaded) -> PluginInfo {
 }
 
 /// The plugin a `plugin-<id>` window belongs to.
-fn window_plugin(window: &tauri::WebviewWindow) -> Result<String, String> {
+/// The plugin a call comes from: its own window's, or (A2Tools Plus) one
+/// docked in the meter's main window, which names it with `plugin`. Only the
+/// main page can name one: a plugin's frame can't call the meter at all.
+pub(crate) fn window_plugin(window: &tauri::WebviewWindow, plugin: Option<&str>) -> Result<String, String> {
+    if window.label() == "main" {
+        return plugin.filter(|id| valid_id(id)).map(str::to_string).ok_or_else(|| "no plugin named".to_string());
+    }
     window
         .label()
         .strip_prefix("plugin-")
@@ -1294,7 +1300,19 @@ pub fn note_resized(app: &tauri::AppHandle, window: &tauri::Window, size: tauri:
 
 /// Build (or show) a plugin's window; `visible: false` builds it hidden, for a
 /// plugin restored at start that was watching in the background.
+/// A2Tools Plus: the plugins shown inside the meter's main window (dock.js)
+/// rather than in windows of their own.
+pub const DOCKED: [&str; 2] = ["plus-souls", "plus-timers"];
+
 fn open_window(app: &tauri::AppHandle, id: &str, visible: bool) -> Result<(), String> {
+    // A2Tools Plus: a docked plugin runs in the main window; opening it
+    // opens its panel there.
+    if DOCKED.contains(&id) {
+        if visible {
+            let _ = app.emit_to("main", "dock-open", id);
+        }
+        return Ok(());
+    }
     let host = host(app)?;
     let (name, width, height) = host
         .with(id, |l| {
@@ -1383,6 +1401,10 @@ pub fn restore_windows(app: &tauri::AppHandle) {
     let off = disabled(app);
     let closed = host.closed.lock().unwrap_or_else(|e| e.into_inner()).clone();
     for p in host.list() {
+        // A2Tools Plus: docked plugins start with the main window, not here.
+        if DOCKED.contains(&p.id.as_str()) {
+            continue;
+        }
         if !should_start(&p, &off, &closed, app.get_webview_window(&format!("plugin-{}", p.id)).is_some()) {
             continue;
         }
@@ -1397,8 +1419,8 @@ pub fn restore_windows(app: &tauri::AppHandle) {
 /// watches in the background and appears only when it has something to say.
 /// Shown on top without taking focus from the game.
 #[tauri::command]
-pub fn plugin_window(app: tauri::AppHandle, window: tauri::WebviewWindow, visible: bool) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_window(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, visible: bool) -> Result<(), String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "window")?;
     // Hidden in place where the window manager would place it anew on
     // showing (Linux), so it comes back where it was left.
@@ -1424,9 +1446,9 @@ pub fn plugin_window(app: tauri::AppHandle, window: tauri::WebviewWindow, visibl
 /// its title bar meanwhile (pluginHost.js), so the window is the content
 /// alone. The size before the first fit is kept until the restore.
 #[tauri::command]
-pub fn plugin_window_fit(app: tauri::AppHandle, window: tauri::WebviewWindow, height: Option<f64>) -> Result<(), String> {
+pub fn plugin_window_fit(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, height: Option<f64>) -> Result<(), String> {
     static BEFORE: std::sync::OnceLock<Mutex<HashMap<String, tauri::PhysicalSize<u32>>>> = std::sync::OnceLock::new();
-    let id = window_plugin(&window)?;
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "window")?;
     let before = BEFORE.get_or_init(Mutex::default);
     match height {
@@ -1451,11 +1473,11 @@ pub fn plugin_window_fit(app: tauri::AppHandle, window: tauri::WebviewWindow, he
 
 /// The window's × button: hide it (see below).
 #[tauri::command]
-pub fn plugin_close(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
+pub fn plugin_close(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>) -> Result<(), String> {
     // Hidden, not stopped: a plugin that is on keeps running (its widgets,
     // its alerts) until it is turned off in Settings; Open shows it again.
     // Closing it stopped everything it did, which players did not expect.
-    let id = window_plugin(&window)?;
+    let id = window_plugin(&window, plugin.as_deref())?;
     crate::platform::window::hide_in_place(&window);
     remember_window(&app, &id, Some("hidden"));
     crate::app::keep_something_on_screen(&app, window.label());
@@ -1468,8 +1490,8 @@ pub fn plugin_close(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Resu
 /// events so far (the page delivers those it has not yet), and the character
 /// (for `events:character`).
 #[tauri::command]
-pub fn plugin_hello(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Value, String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_hello(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>) -> Result<Value, String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     let host = host(&app)?;
     let manifest = host.with(&id, |l| l.manifest.clone()).ok_or("plugin not loaded")?;
     let replay: Vec<Value> =
@@ -1509,7 +1531,8 @@ pub fn plugin_debug_frame(app: tauri::AppHandle, hex: String) -> Result<(), Stri
 /// meter's language when the user changes it.
 pub fn broadcast(app: &tauri::AppHandle, event: &str, data: Value) {
     for (label, window) in app.webview_windows() {
-        if label.starts_with("plugin-") {
+        // A2Tools Plus: and the main window, which hosts the docked plugins.
+        if label.starts_with("plugin-") || label == "main" {
             let _ = window.emit("plugin-event", serde_json::json!({ "event": event, "data": data }));
         }
     }
@@ -1525,8 +1548,8 @@ fn require(app: &tauri::AppHandle, id: &str, permission: &str) -> Result<(), Str
 /// `feed:boss-timers`: the published file as it is, or None when the server
 /// has none yet. Kept a minute, so plugins asking often fetch it once.
 #[tauri::command]
-pub async fn plugin_boss_timers(app: tauri::AppHandle, window: tauri::WebviewWindow, server: u32) -> Result<Option<Value>, String> {
-    let id = window_plugin(&window)?;
+pub async fn plugin_boss_timers(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, server: u32) -> Result<Option<Value>, String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "feed:boss-timers")?;
     if !(1000..10000).contains(&server) {
         return Err("not a server id".into());
@@ -1564,15 +1587,15 @@ async fn boss_timers(_app: &tauri::AppHandle, _server: u32) -> Result<Option<Val
 }
 
 #[tauri::command]
-pub fn plugin_storage_get(app: tauri::AppHandle, window: tauri::WebviewWindow, key: String) -> Result<Option<String>, String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_storage_get(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, key: String) -> Result<Option<String>, String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "storage")?;
     Ok(std::fs::read_to_string(data_file(&app, &id, &key)?).ok())
 }
 
 #[tauri::command]
-pub fn plugin_storage_set(app: tauri::AppHandle, window: tauri::WebviewWindow, key: String, value: String) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_storage_set(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, key: String, value: String) -> Result<(), String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "storage")?;
     if value.len() > MAX_STORED {
         return Err("value larger than 1 MB".into());

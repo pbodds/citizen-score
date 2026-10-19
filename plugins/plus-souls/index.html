@@ -2,13 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Pet Souls+</title>
+    <title>Pet Map</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="viewTabs" role="tablist">
-      <button type="button" class="viewTab" data-view="pets" role="tab" aria-selected="true">Pets</button>
-      <button type="button" class="viewTab" data-view="areas" role="tab" aria-selected="false">Areas</button>
+      <button type="button" class="viewTab" data-view="pets" role="tab" aria-selected="true">All pets</button>
+      <button type="button" class="viewTab" data-view="areas" role="tab" aria-selected="false">Best areas</button>
+    </div>
+    <div class="searchRow">
+      <input type="search" class="search" placeholder="Search pets, monsters or zones" aria-label="Search pets" spellcheck="false" />
+      <button type="button" class="filtersBtn" aria-pressed="false" title="Filters">Filters</button>
     </div>
     <div class="controls">
       <div class="status"></div>
@@ -16,9 +20,8 @@
       <div class="chips genus" role="group" aria-label="Genus"></div>
       <div class="chips levels" role="group" aria-label="Level"></div>
       <div class="chips regions" role="group" aria-label="Regions" title="Regions: the pets whose souls drop in the ones turned on, and their spawns there. Click to turn one off or on"></div>
-      <label class="option"><input type="checkbox" class="hideMax" checked /> Hide pets at level 3</label>
+      <label class="option"><input type="checkbox" class="hideMax" /> Hide pets at level 3</label>
       <label class="option sizeRow"><span class="scaleLabel">Text size</span> <select class="scaleSelect"></select></label>
-      <input type="search" class="search" placeholder="Search pets" aria-label="Search pets" spellcheck="false" />
     </div>
     <div class="head" role="row">
       <button type="button" data-sort="level">Lv</button>

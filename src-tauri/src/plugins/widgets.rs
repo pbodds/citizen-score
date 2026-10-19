@@ -105,12 +105,12 @@ fn saved_place(app: &tauri::AppHandle, id: &str, name: &str) -> Option<(i32, i32
 #[tauri::command]
 pub async fn plugin_widget_open(
     app: tauri::AppHandle,
-    window: tauri::WebviewWindow,
+    window: tauri::WebviewWindow, plugin: Option<String>,
     name: String,
     width: f64,
     height: f64,
 ) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "widgets")?;
     if !valid_name(&name) {
         return Err("a widget name is 1 to 32 lowercase letters, digits and '-'".into());
@@ -196,8 +196,8 @@ pub fn plugin_widget_area(app: tauri::AppHandle, window: tauri::WebviewWindow, x
 
 /// Close widget `name` of the calling plugin.
 #[tauri::command]
-pub fn plugin_widget_close(app: tauri::AppHandle, window: tauri::WebviewWindow, name: String) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_widget_close(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, name: String) -> Result<(), String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "widgets")?;
     if let Some(widget) = app.get_webview_window(&label(&id, &name)) {
         areas().lock().unwrap_or_else(|p| p.into_inner()).remove(widget.label());
@@ -208,8 +208,8 @@ pub fn plugin_widget_close(app: tauri::AppHandle, window: tauri::WebviewWindow, 
 
 /// Hand widget `name` data from its plugin: it hears it as a "widget" event.
 #[tauri::command]
-pub fn plugin_widget_send(app: tauri::AppHandle, window: tauri::WebviewWindow, name: String, data: Value) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_widget_send(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, name: String, data: Value) -> Result<(), String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "widgets")?;
     if data.to_string().len() > MAX_MESSAGE {
         return Err("message too large".into());
@@ -221,8 +221,8 @@ pub fn plugin_widget_send(app: tauri::AppHandle, window: tauri::WebviewWindow, n
 /// Lock (clicks go through, no moving) or unlock all the calling plugin's
 /// widgets. Kept across restarts.
 #[tauri::command]
-pub fn plugin_widgets_lock(app: tauri::AppHandle, window: tauri::WebviewWindow, locked: bool) -> Result<(), String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_widgets_lock(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>, locked: bool) -> Result<(), String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "widgets")?;
     if let Some(state) = app.try_state::<AppState>() {
         state.settings.set(&locked_key(&id), if locked { "true" } else { "false" });
@@ -237,8 +237,8 @@ pub fn plugin_widgets_lock(app: tauri::AppHandle, window: tauri::WebviewWindow, 
 
 /// Whether the calling plugin's widgets are locked.
 #[tauri::command]
-pub fn plugin_widgets_locked(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<bool, String> {
-    let id = window_plugin(&window)?;
+pub fn plugin_widgets_locked(app: tauri::AppHandle, window: tauri::WebviewWindow, plugin: Option<String>) -> Result<bool, String> {
+    let id = window_plugin(&window, plugin.as_deref())?;
     require(&app, &id, "widgets")?;
     Ok(is_locked(&app, &id))
 }

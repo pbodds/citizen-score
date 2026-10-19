@@ -1,0 +1,49 @@
+/* A2Tools Plus: a lighter meter, and the docked Pet Map / World Timers panels. */
+
+/* The header keeps three icons: Pet map, World timers, Settings. The rest
+   (screenshot, lock, suspend, history, reset) stay reachable by their keybinds. */
+.meter .header .bossIcon,
+.meter .header .headerBtns .lockBtn,
+.meter .header .headerBtns .suspendBtn,
+.meter .header .headerBtns .historyBtn,
+.meter .header .headerBtns .resetBtn {
+  display: none !important;
+}
+.meter .header { padding: 4px 8px 3px; gap: 6px; }
+.meter .header .headerBtns { gap: 9px; }
+.meter .header .headerBtns .headerBtn.isActive { color: #8fc2ff; }
+.meter .header .bossNames .bossName { font-size: calc(var(--boss-name-size) - 2px); }
+.meter .meterFooter { height: 20px; padding: 0 18px 0 8px; }
+.meter .list.hasRows { padding: 4px 6px; }
+
+/* The panel opens under the meter; the window grows to it. */
+.dockPanel {
+  height: 470px;
+  border-top: 1px solid var(--hud-hairline, rgba(255, 255, 255, 0.08));
+  background: rgba(10, 14, 22, calc(var(--window-opacity, 0.85) * 0.6));
+  border-radius: 0 0 var(--rounded, 6px) var(--rounded, 6px);
+  overflow: hidden;
+}
+.dockPanel[hidden], .dockStage[hidden] { display: none; }
+.dockStage { position: relative; height: 100%; }
+.dockStage iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color-scheme: dark;
+}
+.meter.hasDock .meterFooter { border-radius: 0; }
+.dockToast {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #0a0e16;
+  background: #8fc2ff;
+}
+.dockToast[hidden] { display: none; }

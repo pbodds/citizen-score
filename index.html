@@ -11,6 +11,7 @@
       href="/src/styles.css"
       rel="stylesheet"
       type="text/css" />
+    <link href="/src/plus.css" rel="stylesheet" type="text/css" />
     <!--
       Webfonts, bundled (public/vendor/fonts), loaded without blocking
       first paint: the media="print" swap applies them once they load, so
@@ -59,7 +60,9 @@
             <div class="headerBtn suspendBtn" style="display:none"><i data-lucide="power"></i></div>
             <div class="headerBtn historyBtn" role="button" tabindex="0" aria-label="Fight history" data-i18n-aria-label="history.title"><i data-lucide="scroll-text"></i></div>
             <div class="headerBtn resetBtn"><i data-lucide="rotate-ccw"></i></div>
-            <div class="headerBtn settingsBtn"><i data-lucide="settings"></i></div>
+            <div class="headerBtn petMapBtn" role="button" tabindex="0" aria-pressed="false" aria-label="Pet map" title="Pet map: where every pet's souls drop"><i data-lucide="paw-print"></i></div>
+            <div class="headerBtn timersBtn" role="button" tabindex="0" aria-pressed="false" aria-label="World timers (Nemon)" title="World timers · Nemon"><i data-lucide="timer"></i></div>
+            <div class="headerBtn settingsBtn" title="Settings"><i data-lucide="settings"></i></div>
           </div>
         </div>
         <div class="bossHpBar" style="display:none">
@@ -1547,5 +1550,6 @@
     <script src="/src/js/i18n.js"></script>
     <script src="/src/js/core.js?v=2018a"></script>
     <script src="/src/js/pluginSettings.js"></script>
+    <script src="/src/js/dock.js"></script>
   </body>
 </html>

@@ -37,7 +37,7 @@ let language = "en";
 let openId = null; // the pet whose sources are shown
 // How the list is sorted, and whether maxed pets show; kept across restarts.
 // hiddenRegions: null until the user picks; until then the other side's maps hide.
-let prefs = { sort: "left", desc: false, hideMax: true, genus: "", level: "", pinned: [], hiddenRegions: null, scale: 1 };
+let prefs = { sort: "left", desc: false, hideMax: false, genus: "", level: "", pinned: [], hiddenRegions: null, scale: 1 };
 // Text size: the whole page scaled, spacing and controls with the text. 100%
 // is BASE_ZOOM, a little larger than the stylesheet's own sizes.
 const SCALES = [0.9, 1, 1.1, 1.25, 1.5];
@@ -152,8 +152,24 @@ const SORTS = {
   left: (a, b) => a.rank - b.rank,
 };
 
+// A2Tools Plus: a pet's monsters, zones and maps as one lowercase string, in
+// English and the meter's language, so a search finds pets by where they drop.
+const placeCache = new Map();
+function placesOf(id) {
+  const k = `${language}:${id}`;
+  if (!placeCache.has(k)) {
+    const keys = [];
+    for (const d of PET_SOURCES[id]?.drops || []) keys.push(d.npc, d.map, ...(d.zones || []));
+    const words = keys.flatMap((key) => [SOURCE_TEXT[key]?.en, SOURCE_TEXT[key]?.[language]]).filter(Boolean);
+    placeCache.set(k, words.join(" | ").toLocaleLowerCase());
+  }
+  return placeCache.get(k);
+}
+
 function render() {
-  const ids = new Set([...Object.keys(state.levels), ...Object.keys(state.points)]);
+  // A2Tools Plus: every pet whose souls the game says drop somewhere, synced
+  // or not, so the map finds any pet.
+  const ids = new Set([...Object.keys(state.levels), ...Object.keys(state.points), ...Object.keys(PET_SOURCES)]);
   // Special pets come at their highest level and take no souls, so they are
   // left out, as are pets only found on maps not open yet (the game lists
   // them anyway). A pet missing from PET_GENUS (newer than this plugin) stays in.
@@ -189,7 +205,8 @@ function render() {
     !query ||
     p.name.toLocaleLowerCase().includes(query) ||
     (PET_NAMES[p.id]?.en || "").toLowerCase().includes(query) ||
-    p.id === query;
+    p.id === query ||
+    placesOf(p.id).includes(query);
   const sort = SORTS[prefs.sort] || SORTS.left;
   const dir = prefs.desc ? -1 : 1;
   // Picking level 3 shows those pets even while they are otherwise hidden.

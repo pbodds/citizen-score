@@ -281,3 +281,19 @@ body.viewAreas .foot { display: none; }
 .areaStats { font-size: 11px; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
 .area .where { margin: 4px 0 2px 8px; }
 .areaNone { padding: 8px 6px; color: rgba(255, 255, 255, 0.55); }
+
+/* A2Tools Plus: search on top, filters folded away. */
+.searchRow { display: flex; gap: 6px; margin-bottom: 8px; }
+.searchRow .search { flex: 1; margin: 0; }
+.filtersBtn {
+  flex: none; padding: 0 9px; font: inherit; font-size: 11px; cursor: pointer;
+  color: rgba(255, 255, 255, 0.65); background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
+}
+.filtersBtn[aria-pressed="true"] { color: #0a0e16; background: #8fc2ff; border-color: #8fc2ff; }
+body:not(.showFilters) .controls > .genus,
+body:not(.showFilters) .controls > .levels,
+body:not(.showFilters) .controls > .option,
+body:not(.showFilters):not(.viewAreas) .controls > .regions { display: none; }
+body.viewAreas .searchRow { display: none; }
+.foot { display: none; }

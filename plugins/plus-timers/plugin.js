@@ -1454,6 +1454,8 @@ a2.on("compact", (on) => document.body.classList.toggle("compact", !!on));
 (async () => {
   prefs = { ...prefs, ...((await a2.storage.get("prefs").catch(() => null)) || {}) };
   prefs.closedLeads = prefs.closedLeads || {};
+  // A2Tools Plus: Nemon (NA East, Asmodian) until a login says otherwise.
+  if (!(Number(prefs.lastServer) >= 1000)) prefs.lastServer = 2109;
   // The old single "timers" tab is the events one now.
   if (!els.views[prefs.tab]) prefs.tab = "events";
   applyScale();

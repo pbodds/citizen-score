@@ -182,3 +182,24 @@ a2.on("decoded:soul-gained", ({ pet }) => {
   showView(prefs.view);
   renderAreas();
 })();
+
+// A2Tools Plus: the filters (genus, level, regions, level 3, text size) fold
+// away behind one button, so the map opens to its search and list.
+{
+  const btn = document.querySelector(".filtersBtn");
+  const apply = () => {
+    document.body.classList.toggle("showFilters", !!prefs.showFilters);
+    btn?.setAttribute("aria-pressed", String(!!prefs.showFilters));
+  };
+  btn?.addEventListener("click", () => {
+    prefs.showFilters = !prefs.showFilters;
+    savePrefs();
+    apply();
+  });
+  const petsRender = render;
+  render = function () {
+    petsRender();
+    apply();
+  };
+  apply();
+}
