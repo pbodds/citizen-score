@@ -1,7 +1,7 @@
 {
   "id": "plus-players",
   "name": "Players",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 2,
   "author": "Citizen Score",
   "description": "Look up any AION 2 character on the Global servers: combat power, item level, stats, gear and Arcana, skills and stigmas, and every Daevanion board node by node. Asks NCSOFT's own character site, only when you search.",

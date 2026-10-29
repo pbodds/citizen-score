@@ -50,6 +50,7 @@ const els = {
   optsBtn: document.querySelector(".optsBtn"),
   options: document.querySelector(".options"),
   region: document.querySelector(".region"),
+  scale: document.querySelector(".scaleSelect"),
   remind: document.querySelector(".remind"),
   desktop: document.querySelector(".desktop"),
   overlay: document.querySelector(".overlay"),
@@ -65,7 +66,7 @@ let tasks = DEFAULT_TASKS.map((t) => ({ ...t }));
 // Per character: { name, server, done: { taskId: n }, daily, weekly (the
 // resets their counts belong to, ms), odyle: { basic, charged, at } }.
 let chars = {};
-let prefs = { region: "global", remind: 60, desktop: false, overlay: false, reminded: {} };
+let prefs = { region: "global", remind: 60, desktop: false, overlay: false, reminded: {}, scale: 1 };
 let current = null; // the character logged in
 let shown = null; // the character the panel shows
 let editing = false;
@@ -76,6 +77,31 @@ const saveAll = () => {
   save("chars", chars);
   save("prefs", prefs);
 };
+
+// ===== Text size =====
+// Text size: the whole page scaled, spacing and controls with the text. The
+// page is laid out at its width divided by the zoom, so the zoom is held down
+// to keep that at MIN_LAYOUT_PX or more (the meter's own scale comes on top),
+// and checked again whenever the panel is resized.
+const SCALES = [0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+const MIN_LAYOUT_PX = 280;
+const MIN_ZOOM = 0.75;
+const textScale = () => (SCALES.includes(Number(prefs.scale)) ? Number(prefs.scale) : 1);
+function applyScale() {
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const value = String(Math.round(Math.max(MIN_ZOOM, Math.min(textScale(), fit)) * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
+}
+window.addEventListener("resize", () => applyScale());
+function renderScale() {
+  els.scale.replaceChildren(...SCALES.map((x) => {
+    const o = document.createElement("option");
+    o.value = String(x);
+    o.textContent = `${Math.round(x * 100)}%`;
+    return o;
+  }));
+  els.scale.value = String(textScale());
+}
 
 // ===== Resets =====
 
@@ -293,6 +319,11 @@ els.region.addEventListener("change", () => {
   save("prefs", prefs);
   render();
 });
+els.scale.addEventListener("change", () => {
+  prefs.scale = Number(els.scale.value);
+  save("prefs", prefs);
+  applyScale();
+});
 els.remind.addEventListener("change", () => {
   prefs.remind = Number(els.remind.value) || 0;
   save("prefs", prefs);
@@ -418,6 +449,8 @@ a2.on("compact", (on) => document.body.classList.toggle("compact", !!on));
   prefs.reminded = prefs.reminded || {};
   els.region.value = prefs.region;
   els.remind.value = String(prefs.remind);
+  renderScale();
+  applyScale();
   els.desktop.checked = !!prefs.desktop;
   els.overlay.checked = !!prefs.overlay;
   els.lockOverlay.checked = !!(await a2.widgets.locked().catch(() => false));

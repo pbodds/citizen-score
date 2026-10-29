@@ -23,6 +23,7 @@ body.locked .bar { cursor: default; }
 }
 .tools button:disabled { opacity: 0.35; cursor: default; }
 .tools .closeBtn:hover { color: #0a0e16; background: #ff8a7a; }
+.tools .textBtn { width: 28px; font-size: 11px; font-weight: 600; }
 
 .build.grid {
   flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 12px 14px;

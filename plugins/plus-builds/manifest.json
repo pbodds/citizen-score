@@ -1,7 +1,7 @@
 {
   "id": "plus-builds",
   "name": "Builds",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "apiVersion": 2,
   "author": "Citizen Score",
   "description": "A PvE and a PvP build for every class (stigmas and swaps, all six Daevanion boards with a points planner, skills, gear passives, stats, Arcana, rotation) from top players' pick rates, plus a searchable game guide that opens on advice for your own character (read from NCSOFT's character site: gear, enhancement, Manastones, Theostones, Arcana, Daevanion, Stigmas, titles, wings): daily and weekly routine, item level and Odyle, dungeons, gear, enhancement, stones, Arcana, Daevanion, Stigmas, Combat Power, collections, Abyss and PvP, endgame, exploration, crafting, Kinah, tier list and settings. Opens on your own class; pops out into its own window.",

@@ -29,12 +29,37 @@ const els = {
   region: document.querySelector(".region"),
   race: document.querySelector(".race"),
   out: document.querySelector(".out"),
+  scale: document.querySelector(".scaleSelect"),
 };
 
-let prefs = { region: "nae", race: "", recent: [], open: {} };
+let prefs = { region: "nae", race: "", recent: [], open: {}, scale: 1 };
 let me = null; // { name, serverId } from the meter
 let token = 0; // the latest request; older answers are dropped
 const save = () => a2.storage.set("prefs", prefs).catch(() => {});
+
+// Text size: the whole page scaled, spacing and controls with the text. The
+// page is laid out at its width divided by the zoom, so the zoom is held down
+// to keep that at MIN_LAYOUT_PX or more (the meter's own scale comes on top),
+// and checked again whenever the panel is resized.
+const SCALES = [0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+const MIN_LAYOUT_PX = 300;
+const MIN_ZOOM = 0.75;
+const textScale = () => (SCALES.includes(Number(prefs.scale)) ? Number(prefs.scale) : 1);
+function applyScale() {
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const value = String(Math.round(Math.max(MIN_ZOOM, Math.min(textScale(), fit)) * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
+}
+window.addEventListener("resize", () => applyScale());
+function renderScale() {
+  els.scale.replaceChildren(...SCALES.map((x) => {
+    const o = document.createElement("option");
+    o.value = String(x);
+    o.textContent = `${Math.round(x * 100)}%`;
+    return o;
+  }));
+  els.scale.value = String(textScale());
+}
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -372,6 +397,11 @@ els.region.addEventListener("change", () => {
   save();
   if (els.q.value.trim()) search(els.q.value);
 });
+els.scale.addEventListener("change", () => {
+  prefs.scale = Number(els.scale.value);
+  save();
+  applyScale();
+});
 els.race.addEventListener("change", () => {
   prefs.race = els.race.value;
   save();
@@ -406,6 +436,8 @@ a2.on("character", (c) => {
   } catch {}
   els.region.value = prefs.region;
   els.race.value = prefs.race;
+  renderScale();
+  applyScale();
   showHome();
   a2.ready();
 })();

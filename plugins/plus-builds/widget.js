@@ -8,13 +8,29 @@ const tabs = [...document.querySelectorAll(".tabs button")];
 const chips = document.querySelector(".classes");
 const modes = [...document.querySelectorAll(".modes button")];
 const CLASS_ORDER = ["gladiator", "templar", "assassin", "ranger", "sorcerer", "spiritmaster", "cleric", "chanter"];
-let state = { tab: "build", cls: "gladiator", mode: "compare", detected: null, size: 1, sizes: 4, pts: null, ar: null, az: null };
+let state = { tab: "build", cls: "gladiator", mode: "compare", detected: null, size: 1, sizes: 4, pts: null, ar: null, az: null, scale: 1 };
 let view = null;
 let locked = false;
 let drawn = "";
 let guideView = null;
 
+// Text size, from the panel (A− / A+ here ask it to change). Held down so the
+// page still lays out at MIN_LAYOUT_PX or more, as in the panel.
+const TEXT_SCALES = [0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+const MIN_LAYOUT_PX = 520;
+function applyScale() {
+  const scale = TEXT_SCALES.includes(Number(state.scale)) ? Number(state.scale) : 1;
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const value = String(Math.round(Math.max(0.75, Math.min(scale, fit)) * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
+  for (const b of document.querySelectorAll(".textBtn")) {
+    b.disabled = Number(b.dataset.text) < 0 ? scale <= TEXT_SCALES[0] : scale >= TEXT_SCALES[TEXT_SCALES.length - 1];
+  }
+}
+window.addEventListener("resize", () => applyScale());
+
 function draw() {
+  applyScale();
   const onGuide = state.tab === "guide";
   for (const b of tabs) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
   document.body.classList.toggle("onGuide", onGuide);
@@ -113,6 +129,8 @@ document.addEventListener("click", (e) => {
     draw();
     return post({ cls });
   }
+  const text = t.closest(".textBtn");
+  if (text) return post({ text: Number(text.dataset.text) });
   const size = t.closest(".sizeBtn");
   if (size) return post({ step: Number(size.dataset.step) });
   if (t.closest(".closeBtn")) post({ close: true });

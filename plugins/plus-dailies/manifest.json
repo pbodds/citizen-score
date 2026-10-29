@@ -1,7 +1,7 @@
 {
   "id": "plus-dailies",
   "name": "Dailies",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 2,
   "author": "Citizen Score",
   "description": "Dailies and weeklies for each of your characters, cleared at the game's resets, with Odyle Energy read from the game, a reminder before a reset finds things undone, and a checklist over the game.",

@@ -28,11 +28,13 @@ const els = {
   classes: document.querySelector(".classes"),
   build: document.querySelector(".build"),
   guide: document.querySelector(".guide"),
+  scale: document.querySelector(".scaleSelect"),
 };
 
 // pts/ar/az: the planner's shared, Ariel and Azphel points (null: the top players').
 // tab: "build" or "guide"; gOpen: the guide's open chapters; gq: its search.
-let prefs = { cls: null, mode: "pve", popMode: "compare", popSize: 1, popOpen: false, open: {}, pts: null, ar: null, az: null, tab: "build", gOpen: {}, gq: "" };
+// scale: the Text size, here and in the pop-out.
+let prefs = { cls: null, mode: "pve", popMode: "compare", popSize: 1, popOpen: false, open: {}, pts: null, ar: null, az: null, tab: "build", gOpen: {}, gq: "", scale: 1 };
 let detected = null;
 let view = null;
 const save = () => a2.storage.set("prefs", prefs).catch(() => {});
@@ -50,6 +52,40 @@ function popSize() {
   const maxH = Math.max(400, (window.screen?.availHeight || 1080) - 40);
   return { width: s.width, height: Math.min(s.height, maxH) };
 }
+
+// Text size: the whole page scaled, spacing and controls with the text. The
+// page is laid out at its width divided by the zoom, so the zoom is held down
+// to keep that at MIN_LAYOUT_PX or more (the meter's own scale comes on top),
+// and checked again whenever the panel is resized. The pop-out gets the same
+// size (TEXT_SCALES is shared with widget.js through sendPop).
+const TEXT_SCALES = [0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
+const MIN_LAYOUT_PX = 300;
+const MIN_ZOOM = 0.75;
+const textScale = () => (TEXT_SCALES.includes(Number(prefs.scale)) ? Number(prefs.scale) : 1);
+function applyScale() {
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const value = String(Math.round(Math.max(MIN_ZOOM, Math.min(textScale(), fit)) * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
+}
+window.addEventListener("resize", () => applyScale());
+function renderScale() {
+  els.scale.replaceChildren(...TEXT_SCALES.map((x) => {
+    const o = document.createElement("option");
+    o.value = String(x);
+    o.textContent = `${Math.round(x * 100)}%`;
+    return o;
+  }));
+  els.scale.value = String(textScale());
+}
+function setScale(x) {
+  if (!TEXT_SCALES.includes(x)) return;
+  prefs.scale = x;
+  save();
+  els.scale.value = String(x);
+  applyScale();
+  sendPop();
+}
+els.scale.addEventListener("change", () => setScale(Number(els.scale.value)));
 
 function renderChips(root, current) {
   root.replaceChildren(...CLASS_ORDER.map((id) => {
@@ -191,7 +227,7 @@ function render() {
 // --- The pop-out -------------------------------------------------------------
 function sendPop() {
   if (!prefs.popOpen) return;
-  a2.widgets.send("pop", { tab: prefs.tab, cls: classId(), mode: prefs.popMode, detected, size: prefs.popSize, sizes: POP_SIZES.length, pts: prefs.pts, ar: prefs.ar, az: prefs.az }).catch(() => {});
+  a2.widgets.send("pop", { tab: prefs.tab, cls: classId(), mode: prefs.popMode, detected, size: prefs.popSize, sizes: POP_SIZES.length, pts: prefs.pts, ar: prefs.ar, az: prefs.az, scale: textScale() }).catch(() => {});
 }
 function openPop() {
   prefs.popOpen = true;
@@ -237,6 +273,11 @@ a2.on("widget-message", ({ name, data }) => {
     if (typeof data.az === "number") prefs.az = data.az;
     saveSoon();
     view?.setPts({ pts: prefs.pts, ar: prefs.ar, az: prefs.az });
+  }
+  // The pop-out's A− / A+.
+  if (typeof data.text === "number") {
+    const i = TEXT_SCALES.indexOf(textScale()) + Math.sign(data.text);
+    if (i >= 0 && i < TEXT_SCALES.length) setScale(TEXT_SCALES[i]);
   }
   if (typeof data.step === "number") {
     const next = Math.max(0, Math.min(POP_SIZES.length - 1, prefs.popSize + Math.sign(data.step)));
@@ -321,6 +362,8 @@ a2.on("compact", (on) => document.body.classList.toggle("compact", !!on));
   prefs.gOpen = prefs.gOpen || {};
   meState = await a2.storage.get("me").catch(() => null);
   if (!meState?.info?.profile || !meState.ref) meState = null;
+  renderScale();
+  applyScale();
   await a2.ready();
   render();
   if (prefs.popOpen) openPop();
