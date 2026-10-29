@@ -134,6 +134,16 @@
       area: (r) => call("widget.area", [r || {}]),
       post: (data) => call("widget.post", [data]),
     }),
+    // Citizen Score: AION 2 characters from NCSOFT's site (permission
+    // "net:players"): search, then a character's info, equipment and boards.
+    players: Object.freeze({
+      search: (args) => call("players", ["search", args || {}]),
+      info: (args) => call("players", ["info", args || {}]),
+      equipment: (args) => call("players", ["equipment", args || {}]),
+      daevanion: (args) => call("players", ["daevanion", args || {}]),
+      item: (args) => call("players", ["item", args || {}]),
+      image: (url) => call("players", ["image", { url: String(url) }]),
+    }),
     ready: () => call("ready", []),
   });
   // The frame may not open windows or leave its page: links go to the browser.

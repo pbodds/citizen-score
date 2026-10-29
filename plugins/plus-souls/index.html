@@ -10,6 +10,9 @@
       <button type="button" class="viewTab" data-view="pets" role="tab" aria-selected="true">All pets</button>
       <button type="button" class="viewTab" data-view="areas" role="tab" aria-selected="false">Best areas</button>
       <button type="button" class="viewTab" data-view="map" role="tab" aria-selected="false">Map</button>
+      <button type="button" class="viewTab" data-view="guide" role="tab" aria-selected="false">Guide</button>
+      <button type="button" class="radarBtn" aria-pressed="false" title="Pet radar over the game: the monsters around you that drop souls you still need">◎ Radar</button>
+      <button type="button" class="radarLock" aria-pressed="false" title="Lock the radar: clicks go through it to the game" hidden>🔓</button>
     </div>
     <div class="searchRow">
       <input type="search" class="search" placeholder="Search pets, monsters or zones" aria-label="Search pets" spellcheck="false" />
@@ -50,14 +53,27 @@
       </div>
       <div class="mapBar mapBar2">
         <span class="mapFocus" hidden>Only <strong class="mapFocusName"></strong> <button type="button" class="mapFocusClear" title="Show every pet">×</button></span>
+        <label class="option mapKib"><input type="checkbox" class="mapRouteToggle" /> Route</label>
         <label class="option mapKib"><input type="checkbox" class="mapKibToggle" checked /> <span class="kibIcon" aria-hidden="true"></span> Kibelisks</label>
         <span class="mapLegend" aria-label="Heat: fewer to more souls per kill"><span>fewer</span><i></i><span>more souls / kill</span></span>
       </div>
       <div class="mapStage">
         <canvas class="mapCanvas"></canvas>
         <div class="mapTip" hidden></div>
+        <!-- The map images as page <img>s: on Linux the meter inlines these, while
+             an image map.js loads itself is refused in the plugin's sandbox. -->
+        <div class="mapImages" hidden>
+          <img src="maps/world_d_a.webp" alt="" data-image="maps/world_d_a.webp" />
+          <img src="maps/world_l_a.webp" alt="" data-image="maps/world_l_a.webp" />
+          <img src="maps/abyss_reshanta_a.webp" alt="" data-image="maps/abyss_reshanta_a.webp" />
+          <img src="maps/abyss_reshanta_c.webp" alt="" data-image="maps/abyss_reshanta_c.webp" />
+        </div>
       </div>
       <p class="mapNote"></p>
+    </section>
+    <section class="guideView">
+      <details class="guidePart" open><summary>Farming route</summary><div class="guideRoute"></div></details>
+      <details class="guidePart" open><summary>Genus: what to farm first</summary><div class="guideGenus"></div></details>
     </section>
     <p class="foot">Click a pet to see where its souls drop. ☆ pins a pet to the top, and the pet you last picked up a soul for shows first for 30 minutes. Double-click a name to rename it. Souls per level are 5, 25 and 75 (the first is inferred).</p>
     <script src="/_sdk/a2.js"></script>
@@ -67,5 +83,8 @@
     <script src="areas.js"></script>
     <script src="mapdata.js"></script>
     <script src="map.js"></script>
+    <script src="guide.js"></script>
+    <script src="npcids.js"></script>
+    <script src="radar.js"></script>
   </body>
 </html>

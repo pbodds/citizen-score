@@ -101,7 +101,16 @@ function renderAreas() {
     const kib = a.kib ? (a.kib.teleport ? `Kibelisk #${a.kib.teleport} (${a.kib.m.toLocaleString(language)} m)` : `${text(a.kib.name)} (${a.kib.m.toLocaleString(language)} m)`) : "";
     stats.textContent = [`${a.pets.size} pet${a.pets.size === 1 ? "" : "s"}`, `${a.souls} souls`, a.kills ? `~${a.kills.toLocaleString(language)} kills` : "", lv, kib]
       .filter(Boolean).join(" · ");
-    li.append(title, stats);
+    // ★ Star N: every pet this area still gives (guide.js's stars).
+    const stars = typeof starButton === "function";
+    if (stars) {
+      const head = document.createElement("div");
+      head.className = "areaHead";
+      head.append(title, starButton([...a.pets.values()].map((p) => p.pet), "area", a.key, `★ Star ${a.pets.size}`));
+      li.append(head, stats);
+    } else {
+      li.append(title, stats);
+    }
     if (openArea === a.key) {
       const box = document.createElement("div");
       box.className = "where";
@@ -110,6 +119,7 @@ function renderAreas() {
         const who = document.createElement("div");
         who.className = "who";
         who.textContent = `${petName(p.pet)} · ${p.left} to Lv 3`;
+        if (stars) who.append(starButton([p.pet], "stop", `area:${a.key}:${p.pet}`, "☆"));
         const at = document.createElement("div");
         at.className = "at";
         at.textContent = listOf(p.drops.map((d) => [text(d.npc), d.level && `Lv ${d.level}`, d.chance, d.spawns && `${d.spawns} spawns`].filter(Boolean).join(" ")));
@@ -129,9 +139,10 @@ function renderAreas() {
 }
 
 function showView(view) {
-  prefs.view = ["areas", "map"].includes(view) ? view : "pets";
+  prefs.view = ["areas", "map", "guide"].includes(view) ? view : "pets";
   document.body.classList.toggle("viewAreas", prefs.view === "areas");
   document.body.classList.toggle("viewMap", prefs.view === "map");
+  document.body.classList.toggle("viewGuide", prefs.view === "guide");
   for (const t of areaEls.tabs) t.setAttribute("aria-selected", String(t.dataset.view === prefs.view));
 }
 
@@ -143,6 +154,7 @@ for (const t of areaEls.tabs) {
   });
 }
 areaEls.list?.addEventListener("click", (e) => {
+  if (typeof starClick === "function" && starClick(e)) return;
   const li = e.target.closest("li[data-area]");
   if (!li) return;
   openArea = openArea === li.dataset.area ? null : li.dataset.area;

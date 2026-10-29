@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dailies</title>
+    <link rel="stylesheet" href="widget.css" />
+  </head>
+  <body>
+    <!-- The reminder (plugin.js): its own window in a corner of another
+         monitor, which never takes focus or the mouse. -->
+    <div class="banner" hidden>
+      <div class="bannerHead">Dailies</div>
+      <div class="bannerLines"></div>
+    </div>
+    <!-- The checklist over the game. -->
+    <div class="list" hidden>
+      <div class="listHead"><span class="who"></span><span class="odyle"></span></div>
+      <div class="part daily"><div class="partHead">Daily <span class="in"></span></div><ol class="left"></ol></div>
+      <div class="part weekly"><div class="partHead">Weekly <span class="in"></span></div><ol class="left"></ol></div>
+    </div>
+    <script src="/_sdk/a2.js"></script>
+    <script src="widget.js"></script>
+  </body>
+</html>

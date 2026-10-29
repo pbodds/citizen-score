@@ -11,7 +11,7 @@ use serde_json::Value;
 use std::process::Command;
 use tauri::Manager;
 
-fn hyprland() -> bool {
+pub fn hyprland() -> bool {
     std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some()
 }
 
@@ -130,15 +130,16 @@ pub fn citizen_window(app: tauri::AppHandle, op: String, args: Value) -> Result<
             Ok(())
         }
         "prop" => {
-            let prop = match args["name"].as_str() {
-                Some("blur") => "no_blur",
-                Some("shadow") => "no_shadow",
-                Some("border") => "no_border",
-                Some("anim") => "no_anim",
+            let on = args["value"].as_bool().unwrap_or(true);
+            let (prop, value) = match args["name"].as_str() {
+                Some("blur") => ("no_blur", if on { "0" } else { "1" }.to_string()),
+                Some("shadow") => ("no_shadow", if on { "0" } else { "1" }.to_string()),
+                // Hyprland 0.56 has no no_border: the border is its width.
+                Some("border") => ("border_size", if on { config_border_size() } else { 0 }.to_string()),
+                Some("anim") => ("no_anim", if on { "0" } else { "1" }.to_string()),
                 _ => return Err("unknown prop".into()),
             };
-            let off = if args["value"].as_bool().unwrap_or(true) { "0" } else { "1" };
-            dispatch(&format!(r#"hl.dsp.window.set_prop({{ prop = "{prop}", value = "{off}", window = "{target}" }})"#))
+            dispatch(&format!(r#"hl.dsp.window.set_prop({{ prop = "{prop}", value = "{value}", window = "{target}" }})"#))
         }
         "snap" => {
             let corner = args["corner"].as_str().unwrap_or("free");
@@ -165,11 +166,79 @@ pub fn citizen_window(app: tauri::AppHandle, op: String, args: Value) -> Result<
     }
 }
 
+/// This process's mapped Hyprland window titled `title`, once it is listed
+/// (a window takes its title only after Hyprland has mapped it, so a window
+/// rule can't match it). Polls for up to 2 s: call it off the UI thread.
+fn mapped_client(title: &str) -> Option<Value> {
+    let pid = std::process::id() as u64;
+    for _ in 0..40 {
+        let client = hyprctl_json("clients").and_then(|list| {
+            list.as_array()?
+                .iter()
+                .find(|c| c["pid"].as_u64() == Some(pid) && c["title"].as_str() == Some(title) && c["mapped"].as_bool() == Some(true))
+                .cloned()
+        });
+        if client.is_some() {
+            return client;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    None
+}
+
+/// Without blur, shadow or border: a widget's window is transparent around
+/// its card, so Hyprland's decorations would outline the empty window.
+/// (Hyprland 0.56 has no `no_border` prop: the border goes with a width of 0.)
+fn undecorate(target: &str) {
+    for (prop, value) in [("no_blur", 1), ("no_shadow", 1), ("border_size", 0)] {
+        let _ = dispatch(&format!(r#"hl.dsp.window.set_prop({{ prop = "{prop}", value = "{value}", window = "{target}" }})"#));
+    }
+}
+
+/// The border width windows get from the config (`general:border_size`).
+fn config_border_size() -> i64 {
+    let out = Command::new("hyprctl").args(["getoption", "general:border_size", "-j"]).output().ok();
+    out.and_then(|o| serde_json::from_slice::<Value>(&o.stdout).ok())
+        .and_then(|v| v["int"].as_i64())
+        .unwrap_or(2)
+}
+
+/// A plugin widget (the pet radar, say) on Hyprland: no decorations, and
+/// back where it was left (`place`, Hyprland's layout pixels, from
+/// `hypr_position`). Other desktops draw none on its undecorated,
+/// transparent window, and place it themselves.
+pub fn undecorate_widget(window: &tauri::WebviewWindow, place: Option<(i32, i32)>) {
+    if !hyprland() {
+        return;
+    }
+    let Ok(title) = window.title() else { return };
+    std::thread::spawn(move || {
+        let Some(address) = mapped_client(&title).and_then(|c| c["address"].as_str().map(str::to_string)) else { return };
+        let target = format!("address:{address}");
+        undecorate(&target);
+        if let Some((x, y)) = place {
+            let _ = dispatch(&format!(r#"hl.dsp.window.move({{ x = {x}, y = {y}, window = "{target}" }})"#));
+        }
+    });
+}
+
+/// Where Hyprland has this process's window titled `title`, in its layout
+/// pixels. Wayland tells a window nothing of where it is (Tauri's position
+/// is always 0,0 there), so this is how a widget's place is known.
+pub fn hypr_position(title: &str) -> Option<(i32, i32)> {
+    if !hyprland() {
+        return None;
+    }
+    let pid = std::process::id() as u64;
+    let clients = hyprctl_json("clients")?;
+    let client = clients.as_array()?.iter().find(|c| c["pid"].as_u64() == Some(pid) && c["title"].as_str() == Some(title))?;
+    let at = client["at"].as_array()?;
+    Some((i32::try_from(at.first()?.as_i64()?).ok()?, i32::try_from(at.get(1)?.as_i64()?).ok()?))
+}
+
 /// World Timers' alert banner (a plugin widget): pinned, without blur, shadow
 /// or border, in the bottom-right corner of a monitor other than the focused
-/// one (where the game is), else the focused one. A window rule can't do this:
-/// the window takes its title only after Hyprland has mapped it. Waits for the
-/// window to be listed, off the caller's thread.
+/// one (where the game is), else the focused one. Off the caller's thread.
 pub fn place_banner(window: &tauri::WebviewWindow) {
     if !hyprland() {
         place_banner_portable(window);
@@ -177,35 +246,33 @@ pub fn place_banner(window: &tauri::WebviewWindow) {
     }
     let Ok(title) = window.title() else { return };
     std::thread::spawn(move || {
-        let pid = std::process::id() as u64;
-        let mut client = None;
-        for _ in 0..40 {
-            client = hyprctl_json("clients").and_then(|list| {
-                list.as_array()?
-                    .iter()
-                    .find(|c| c["pid"].as_u64() == Some(pid) && c["title"].as_str() == Some(title.as_str()) && c["mapped"].as_bool() == Some(true))
-                    .cloned()
-            });
-            if client.is_some() {
-                break;
-            }
-            std::thread::sleep(std::time::Duration::from_millis(50));
-        }
-        let Some(client) = client else { return };
+        let Some(client) = mapped_client(&title) else { return };
         let Some(address) = client["address"].as_str() else { return };
         let target = format!("address:{address}");
-        for prop in ["no_blur", "no_shadow", "no_border"] {
-            let _ = dispatch(&format!(r#"hl.dsp.window.set_prop({{ prop = "{prop}", value = "1", window = "{target}" }})"#));
-        }
+        undecorate(&target);
         if client["pinned"].as_bool() != Some(true) {
             let _ = dispatch(&format!(r#"hl.dsp.window.pin({{ window = "{target}" }})"#));
         }
         let Some(monitors) = hyprctl_json("monitors") else { return };
         let Some(list) = monitors.as_array() else { return };
+        // Never the game's monitor, whether or not it has focus (the player
+        // may be on another screen with the game still up); then not the
+        // focused one either, so it never lands under the cursor.
+        let game = hyprctl_json("clients").and_then(|clients| {
+            clients.as_array()?.iter().find(|c| {
+                let title = c["title"].as_str().unwrap_or("");
+                let class = c["class"].as_str().unwrap_or("").to_ascii_lowercase();
+                title.starts_with("AION2") || class.contains("aion2")
+            })?["monitor"].as_i64()
+        });
+        let away = |m: &&Value| game.is_none_or(|g| m["id"].as_i64() != Some(g));
+        let x = |m: &&Value| m["x"].as_i64().unwrap_or(0);
         let monitor = list
             .iter()
+            .filter(away)
             .filter(|m| m["focused"].as_bool() != Some(true))
-            .max_by_key(|m| m["x"].as_i64().unwrap_or(0))
+            .max_by_key(x)
+            .or_else(|| list.iter().filter(away).max_by_key(x))
             .or_else(|| list.first());
         let Some((x, y)) = monitor.and_then(|m| snap_target(m, pair(&client["size"]), "bottom-right", 24)) else { return };
         let _ = dispatch(&format!(r#"hl.dsp.window.move({{ x = {x}, y = {y}, window = "{target}" }})"#));

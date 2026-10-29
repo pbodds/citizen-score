@@ -2786,6 +2786,7 @@ pub fn run() {
             crate::plugins::plugin_storage_get,
             crate::plugins::plugin_boss_timers,
             crate::plugins::plugin_local_world,
+            crate::plugins::players::plugin_players,
             crate::plugins::plugin_desktop_notify,
             crate::plugins::plugin_storage_set,
             get_dps_snapshot,

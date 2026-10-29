@@ -39,13 +39,29 @@ let openId = null; // the pet whose sources are shown
 // hiddenRegions: null until the user picks; until then the other side's maps hide.
 let prefs = { sort: "left", desc: false, hideMax: false, genus: "", level: "", pinned: [], hiddenRegions: null, scale: 1 };
 // Text size: the whole page scaled, spacing and controls with the text. 100%
-// is BASE_ZOOM, a little larger than the stylesheet's own sizes.
+// is BASE_ZOOM, a little larger than the stylesheet's own sizes. The page is
+// laid out at its width divided by the zoom, so the zoom is held down to keep
+// that at MIN_LAYOUT_PX or more: in the meter, whose own scale (Settings →
+// Window) comes on top, a large text size used to squeeze the layout to
+// ~240 px and break it. It's checked again whenever the panel is resized.
 const SCALES = [0.9, 1, 1.1, 1.25, 1.5];
 const BASE_ZOOM = 1.1;
+const MIN_LAYOUT_PX = 370;
+const MIN_ZOOM = 0.75;
+// The zoom in use, for code that turns page sizes into pixels (map.js).
+const pageZoom = () => Number(document.documentElement.style.zoom) || 1;
 function applyScale() {
   const scale = SCALES.includes(Number(prefs.scale)) ? Number(prefs.scale) : 1;
-  document.documentElement.style.zoom = String(Math.round(BASE_ZOOM * scale * 1000) / 1000);
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const zoom = Math.max(MIN_ZOOM, Math.min(BASE_ZOOM * scale, fit));
+  const value = String(Math.round(zoom * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
 }
+window.addEventListener("resize", () => {
+  const before = pageZoom();
+  applyScale();
+  if (pageZoom() !== before && typeof drawMap === "function") drawMap();
+});
 function renderScale() {
   els.scaleLabel.textContent = ui().textSize;
   els.scale.replaceChildren(...SCALES.map((x) => {
@@ -617,6 +633,8 @@ els.head.addEventListener("click", (e) => {
   applyScale();
   renderScale();
   await a2.ready();
+  // The radar widget, on again if it was (radar.js).
+  restoreRadar();
   // The "farming" mark wears off without an event to redraw it.
   setInterval(() => { if (state.lastGain) render(); }, 60_000);
   // Without a character from the meter, show the last one tracked.

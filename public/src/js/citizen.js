@@ -53,9 +53,25 @@
       const radius = Math.max(0, Math.min(18, Number(get("radius")) || 0));
       root.setProperty("--rounded", `${radius}px`);
       root.setProperty("--rounded-lg", `${radius + 2}px`);
-      root.setProperty("--cs-dock-height", `${Math.max(320, Math.min(760, Number(get("dockHeight")) || 470))}px`);
+      root.setProperty("--cs-dock-height", `${dockHeight()}px`);
     }
   };
+
+  // The docked panel's height in page px, held down so the meter and panel
+  // fit the screen at the meter's scale: the scale multiplies every page px,
+  // and the screen reports real ones, so at 150% a tall panel ran the window
+  // off the bottom of a 1080p screen.
+  function dockHeight() {
+    const wanted = Math.max(320, Math.min(760, Number(get("dockHeight")) || 470));
+    const zoom = Math.max(0.5, (Number(get("scale")) || 100) / 100);
+    const screenH = window.screen?.availHeight || 0;
+    const meter = document.querySelector(".meter");
+    const dock = document.querySelector(".dockPanel");
+    if (!screenH || !meter) return wanted;
+    const rest = meter.offsetHeight - (dock && !dock.hidden ? dock.offsetHeight : 0);
+    const room = Math.floor(screenH / zoom - rest - 48);
+    return Math.max(200, Math.min(wanted, room));
+  }
 
   // ---- the main window: placement and the compositor ---------------------
   let snapTimer = 0;
@@ -87,6 +103,11 @@
       if (size !== lastSize) {
         lastSize = size;
         snap();
+      }
+      // The room below may have changed (another monitor, more players).
+      const h = `${dockHeight()}px`;
+      if (document.documentElement.style.getPropertyValue("--cs-dock-height") !== h) {
+        document.documentElement.style.setProperty("--cs-dock-height", h);
       }
     }).observe(document.documentElement);
   }

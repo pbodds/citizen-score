@@ -255,9 +255,13 @@ body.compact .foot {
 }
 
 /* Citizen Score: Pets / Areas views. */
-.viewTabs { display: flex; gap: 4px; margin-bottom: 8px; }
+/* Labels never wrap inside a button: when the row runs out of room the
+   buttons wrap instead (Radar and its lock first, being last), and each row
+   fills the width. */
+.viewTabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.viewTabs > button { white-space: nowrap; min-height: 24px; }
 .viewTab {
-  flex: 1; padding: 3px 0; font: inherit; font-size: 12px; cursor: pointer;
+  flex: 1 0 auto; padding: 3px 6px; font: inherit; font-size: 12px; cursor: pointer;
   color: rgba(255, 255, 255, 0.65); background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
 }
@@ -291,6 +295,18 @@ body.viewAreas .foot { display: none; }
   border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
 }
 .filtersBtn[aria-pressed="true"] { color: #0a0e16; background: #8fc2ff; border-color: #8fc2ff; }
+/* Citizen Score: the radar widget's switch, at the end of the tabs. */
+.radarBtn {
+  flex: none; margin-left: auto; padding: 0 8px; font: inherit; font-size: 11px; cursor: pointer;
+  color: rgba(255, 255, 255, 0.65); background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
+}
+.radarBtn[aria-pressed="true"] { color: #0a0e16; background: #ff9b6a; border-color: #ff9b6a; }
+.radarLock {
+  flex: none; padding: 0 5px; font: inherit; font-size: 11px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px;
+}
+.radarLock[hidden] { display: none; }
 body:not(.showFilters) .controls > .genus,
 body:not(.showFilters) .controls > .levels,
 body:not(.showFilters) .controls > .option,
@@ -409,3 +425,55 @@ body.viewMap .foot { display: none; }
 .mapHitKind.kindKibelisk { color: #4fd6f0; }
 .mapHitLabel { color: rgba(255, 255, 255, 0.92); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mapHitSub { margin-left: auto; padding-left: 6px; font-size: 11px; color: rgba(255, 255, 255, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+
+/* Citizen Score: the Guide view. */
+body:not(.viewGuide) .guideView { display: none; }
+body.viewGuide :is(.controls, .searchRow, .head, .pets, .empty, .foot) { display: none; }
+.guideView { display: flex; flex-direction: column; gap: 6px; }
+.guidePart { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 4px 8px; }
+.guidePart > summary { cursor: pointer; padding: 3px 0; color: rgba(255, 255, 255, 0.92); font-weight: 600; }
+.guidePart[open] > summary { margin-bottom: 4px; }
+.guideNote { margin: 0 0 6px; font-size: 11px; color: rgba(255, 255, 255, 0.55); }
+.guideRow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.guideRow .guideNote { margin: 0; }
+.guideMaps { margin: 0 0 6px; }
+.guideMaps button[aria-pressed="true"] { color: #0a0e16; background: #8fc2ff; border-color: #8fc2ff; }
+.routeList { list-style: none; margin: 0; padding: 0; }
+.routeStop { padding: 5px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); border-radius: 4px; cursor: pointer; }
+.routeStop:hover { background: rgba(255, 255, 255, 0.05); }
+.routeTitle { color: rgba(255, 255, 255, 0.92); display: flex; align-items: center; gap: 6px; }
+.routeN {
+  display: inline-grid; place-items: center; min-width: 18px; height: 18px; border-radius: 9px;
+  background: #8fc2ff; color: #0a0e16; font-size: 11px; font-weight: 700;
+}
+.routeSub { font-size: 11px; color: rgba(255, 255, 255, 0.55); margin: 1px 0 2px 24px; }
+.routePet { font-size: 11px; color: rgba(255, 255, 255, 0.72); margin-left: 24px; font-variant-numeric: tabular-nums; }
+.routePet strong { color: rgba(255, 255, 255, 0.9); font-weight: 600; }
+.genusRow { padding: 5px 6px; border-radius: 4px; cursor: pointer; }
+.genusRow:hover { background: rgba(255, 255, 255, 0.05); }
+.genusHead { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.genusHead .guideNote { margin: 0; }
+.genusRank { color: #8fc2ff; font-weight: 700; }
+/* Citizen Score: the Guide's star buttons (guide.js starButton). */
+.starSet {
+  padding: 1px 8px; font: inherit; font-size: 11px; cursor: pointer;
+  color: #ffe08a; background: rgba(255, 213, 74, 0.1);
+  border: 1px solid rgba(255, 213, 74, 0.35); border-radius: 6px;
+}
+.starSet:hover { background: rgba(255, 213, 74, 0.2); }
+.starSet[aria-pressed="true"] { color: rgba(255, 255, 255, 0.6); background: transparent; border-color: rgba(255, 255, 255, 0.18); }
+.genusHead .starSet { margin-left: auto; }
+.starStop { margin-left: auto; padding: 0 6px; color: rgba(255, 255, 255, 0.45); background: transparent; border-color: rgba(255, 255, 255, 0.15); }
+.starStop[aria-pressed="true"] { color: #ffd54a; border-color: rgba(255, 213, 74, 0.45); }
+.guideRow .starSet { margin-top: 6px; }
+.genusBar { height: 4px; margin: 3px 0; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.genusBar i { display: block; height: 100%; background: #6ee07a; }
+.genusText { font-size: 11px; color: rgba(255, 255, 255, 0.65); }
+.guideClassPick { margin-bottom: 6px; }
+.guideView a { color: #8fc2ff; }
+/* Best areas: ★ Star N beside each area's name, ☆ beside each of its pets. */
+.areaHead { display: flex; align-items: center; gap: 8px; }
+.areaHead .areaTitle { flex: 1; min-width: 0; }
+.areaHead .starSet { flex: none; padding: 0 7px; }
+.where .who { display: flex; align-items: center; gap: 6px; }
+.where .who .starStop { padding: 0 5px; font-size: 10px; }

@@ -215,6 +215,13 @@ function image(mid) {
   if (!info) return null;
   let img = mapState.images.get(mid);
   if (!img) {
+    // The page's own copy first (see index.html), then a load of our own.
+    img = [...document.querySelectorAll(".mapImages img")].find((i) => i.dataset.image === info.image);
+    if (img) {
+      if (!img.complete) img.addEventListener("load", () => drawMap(), { once: true });
+      mapState.images.set(mid, img);
+      return img.complete && img.naturalWidth ? img : null;
+    }
     img = new Image();
     img.onload = () => drawMap();
     img.src = info.image;
@@ -241,7 +248,7 @@ const KERNEL = (() => {
   return k;
 })();
 function heatLayer(mid, points) {
-  const k = `${mid}|${mapState.focus}|${points.length}|${points.reduce((n, p) => n + p.w, 0).toFixed(3)}`;
+  const k = `${mid}|${mapState.focus}|${mapState.npc}|${points.length}|${points.reduce((n, p) => n + p.w, 0).toFixed(3)}`;
   if (mapState.heat && mapState.heatKey === k) return mapState.heat;
   const size = MAP.world / HEAT_RES;
   const grid = new Float32Array(size * size);
@@ -301,12 +308,25 @@ function fitView(points) {
   mapState.view = { scale, x: (minX + maxX) / 2 - w / 2 / scale, y: (minY + maxY) / 2 - h / 2 / scale };
 }
 
+// The page's zoom (Text size, plugin.js) on top of the screen's: the stage
+// is laid out w x h page px but shown `k` times that, so the canvas is drawn
+// at the size it is shown, and pointer positions (shown px) are divided by
+// k. Without it the map was blurry and hover, drag and zoom landed off by
+// the zoom (2026-10-27).
+function stageZoom() {
+  const w = mapEls.stage.clientWidth;
+  const r = mapEls.stage.getBoundingClientRect();
+  return w && r.width ? r.width / w : 1;
+}
+mapState.px = window.devicePixelRatio || 1;
+
 function drawMap() {
   if (prefs.view !== "map" || !mapState.map) return;
   const cv = mapEls.canvas;
-  const dpr = window.devicePixelRatio || 1;
   const w = mapEls.stage.clientWidth, h = mapEls.stage.clientHeight;
   if (!w || !h) return;
+  const dpr = (window.devicePixelRatio || 1) * stageZoom();
+  mapState.px = dpr;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
@@ -460,7 +480,9 @@ function drawSchematic(g, w, h) {
 function toMap(e) {
   const r = mapEls.stage.getBoundingClientRect();
   const v = mapState.view;
-  return { sx: e.clientX - r.left, sy: e.clientY - r.top, x: v.x + (e.clientX - r.left) / v.scale, y: v.y + (e.clientY - r.top) / v.scale };
+  const k = stageZoom();
+  const sx = (e.clientX - r.left) / k, sy = (e.clientY - r.top) / k;
+  return { sx, sy, x: v.x + sx / v.scale, y: v.y + sy / v.scale };
 }
 
 function hoverAt(e) {
@@ -517,15 +539,15 @@ function hoverAt(e) {
   const stage = mapEls.stage;
   stage?.addEventListener("pointerdown", (e) => {
     if (!mapState.view) return;
-    drag = { x: e.clientX, y: e.clientY, vx: mapState.view.x, vy: mapState.view.y };
+    drag = { x: e.clientX, y: e.clientY, vx: mapState.view.x, vy: mapState.view.y, k: stageZoom() };
     stage.setPointerCapture(e.pointerId);
     stage.classList.add("dragging");
   });
   stage?.addEventListener("pointermove", (e) => {
     if (drag) {
       const v = mapState.view;
-      v.x = drag.vx - (e.clientX - drag.x) / v.scale;
-      v.y = drag.vy - (e.clientY - drag.y) / v.scale;
+      v.x = drag.vx - (e.clientX - drag.x) / drag.k / v.scale;
+      v.y = drag.vy - (e.clientY - drag.y) / drag.k / v.scale;
       mapEls.tip.hidden = true;
       drawMap();
     } else hoverAt(e);

@@ -595,10 +595,18 @@ function applyColor() {
   els.colorSelect.style.color = hex;
 }
 
+// The page lays out at its width divided by the zoom: the zoom is held down
+// so that stays MIN_LAYOUT_PX or more (the meter's own scale comes on top),
+// and checked again on every resize.
+const MIN_LAYOUT_PX = 290;
+const MIN_ZOOM = 0.75;
 function applyScale() {
   const scale = SCALES.includes(Number(prefs.scale)) ? Number(prefs.scale) : 1;
-  document.documentElement.style.zoom = String(Math.round(BASE_ZOOM * scale * 1000) / 1000);
+  const fit = window.innerWidth > 0 ? window.innerWidth / MIN_LAYOUT_PX : Infinity;
+  const value = String(Math.round(Math.max(MIN_ZOOM, Math.min(BASE_ZOOM * scale, fit)) * 1000) / 1000);
+  if (document.documentElement.style.zoom !== value) document.documentElement.style.zoom = value;
 }
+window.addEventListener("resize", () => applyScale());
 
 function renderTabs() {
   for (const tab of els.tabs) tab.setAttribute("aria-selected", String(tab.dataset.tab === prefs.tab));
@@ -1118,9 +1126,11 @@ const canFit = () => !!(a2.window && typeof a2.window.fit === "function");
 function fitToAlert() {
   if (!alertOnly || !canFit()) return;
   requestAnimationFrame(() => {
+    // offsetHeight is in page px in every engine (a rect is already zoomed
+    // in WebKit 2.54, so zooming it again made the window too tall).
     const zoom = Number(document.documentElement.style.zoom) || 1;
     const pad = parseFloat(getComputedStyle(document.body).paddingTop) + parseFloat(getComputedStyle(document.body).paddingBottom);
-    const height = Math.ceil((els.alertBox.getBoundingClientRect().height + pad) * zoom) + 2;
+    const height = Math.ceil((els.alertBox.offsetHeight + pad) * zoom) + 2;
     a2.window.fit(height).catch(() => {});
   });
 }

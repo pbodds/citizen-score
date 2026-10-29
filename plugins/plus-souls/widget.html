@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pet Radar</title>
+    <link rel="stylesheet" href="widget.css" />
+  </head>
+  <body>
+    <div class="card">
+      <div class="head"><span class="title">Pet Radar</span><span class="lockTag">🔒 locked</span><span class="state"></span></div>
+      <div class="scopeWrap" title="Click to zoom in or out">
+        <canvas class="scope" width="190" height="190"></canvas>
+        <div class="sweep"></div>
+      </div>
+      <p class="boss" hidden></p>
+      <div class="legend">
+        <span><i class="live"></i>need</span><span><i class="spawn"></i>spawn</span><span><i class="pin"></i>pinned</span>
+      </div>
+      <div class="legend layers">
+        <button data-layer="mobs"><i class="mob"></i>monsters <b></b></button>
+        <button data-layer="bosses"><i class="bossDot"></i>bosses <b></b></button>
+        <button data-layer="npcs"><i class="npc"></i>NPCs <b></b></button>
+      </div>
+      <ol class="rows"></ol>
+      <p class="empty" hidden></p>
+      <div class="grip" title="Drag to resize · double-click for the normal size"></div>
+    </div>
+    <script src="/_sdk/a2.js"></script>
+    <script src="widget.js"></script>
+  </body>
+</html>

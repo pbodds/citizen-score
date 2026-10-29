@@ -266,6 +266,8 @@ impl StreamProcessor {
 
         // Buffs, debuffs and stats, recorded alongside (see `capture::abnormal`).
         self.data_storage.note_abnormal_packet(packet);
+        // Citizen Score: monsters around you and where you are (Pet Map radar).
+        crate::capture::radar::feed(packet, self.data_storage.local_player_id(), crate::clock::now_ms());
 
         let parsed_damage = self.parsing_damage(packet, true, false);
         let parsed_ownership = self.parse_summon_ownership_packet(packet);

@@ -67,6 +67,19 @@ struct BpfProgram {
 }
 
 const PCAP_IF_LOOPBACK: c_uint = 0x00000001;
+const PCAP_IF_UP: c_uint = 0x00000002;
+const PCAP_IF_RUNNING: c_uint = 0x00000004;
+const PCAP_IF_CONNECTION_STATUS: c_uint = 0x00000030;
+const PCAP_IF_CONNECTION_STATUS_DISCONNECTED: c_uint = 0x00000020;
+
+/// An adapter with no link (a network port with no cable, Wi-Fi not joined)
+/// carries nothing, so it gets no capture thread until it comes up (the
+/// device watcher looks again every DEVICE_SCAN_MS). libpcap before 1.9 sets
+/// none of these flags, so on it every device counts as connected.
+fn is_disconnected(flags: c_uint) -> bool {
+    flags & PCAP_IF_CONNECTION_STATUS == PCAP_IF_CONNECTION_STATUS_DISCONNECTED
+        || flags & PCAP_IF_UP != 0 && flags & PCAP_IF_RUNNING == 0
+}
 /// `PCAP_NETMASK_UNKNOWN`: only broadcast tests need the netmask, and the
 /// filters here have none.
 const PCAP_NETMASK_UNKNOWN: u32 = 0xffff_ffff;
@@ -79,6 +92,7 @@ struct DeviceInfo {
     description: String,
     has_addresses: bool,
     is_loopback: bool,
+    disconnected: bool,
 }
 
 impl DeviceInfo {
@@ -123,6 +137,9 @@ struct FilterFns {
     freecode: unsafe extern "C" fn(*mut BpfProgram),
     geterr: unsafe extern "C" fn(PcapT) -> *const c_char,
     setnonblock: unsafe extern "C" fn(PcapT, c_int, *mut c_char) -> c_int,
+    /// A descriptor to wait on for packets (`poll`), so a quiet device's
+    /// thread sleeps until one comes. Not in Npcap, which needs no waiting.
+    selectable_fd: Option<unsafe extern "C" fn(PcapT) -> c_int>,
     /// libpcap's filter compiler was not thread-safe before 1.8, and every
     /// device has its own thread.
     compiling: Mutex<()>,
@@ -175,6 +192,7 @@ impl PcapLib {
                     freecode: *lib.get(b"pcap_freecode").ok()?,
                     geterr: *lib.get(b"pcap_geterr").ok()?,
                     setnonblock: *lib.get(b"pcap_setnonblock").ok()?,
+                    selectable_fd: lib.get(b"pcap_get_selectable_fd").ok().map(|f| *f),
                     compiling: Mutex::new(()),
                 })
             })();
@@ -235,6 +253,7 @@ impl PcapLib {
                 description,
                 has_addresses,
                 is_loopback,
+                disconnected: !is_loopback && is_disconnected(d.flags),
             });
             dev = d.next;
         }
@@ -390,6 +409,32 @@ const DEVICE_SCAN_MS: u64 = 15_000;
 /// read straight through.
 const IDLE_WAIT_MS: u64 = 20;
 
+/// With a descriptor to wait on: the longest wait for a packet before the
+/// thread looks at its filter and whether to stop. A packet ends the wait at
+/// once. (Sleeping IDLE_WAIT_MS instead woke every capture thread some 70
+/// times a second, quiet devices included, and read up to 20 ms late.)
+const POLL_WAIT_MS: c_int = 250;
+
+/// Wait until `fd` has something to read, at most `ms`. False if waiting
+/// isn't possible here (the caller sleeps instead).
+#[cfg(unix)]
+fn wait_readable(fd: c_int, ms: c_int) -> bool {
+    let mut p = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
+    // SAFETY: one valid pollfd for the duration of the call.
+    let r = unsafe { libc::poll(&mut p, 1, ms) };
+    // An error on the descriptor would wake every wait at once: sleep instead,
+    // and let the next read report it.
+    if r > 0 && p.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
+        return false;
+    }
+    r >= 0 || std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
+}
+
+#[cfg(not(unix))]
+fn wait_readable(_fd: c_int, _ms: c_int) -> bool {
+    false
+}
+
 impl PcapCapturer {
     pub fn new(sender: mpsc::Sender<CapturedPayload>, port_detector: Arc<CombatPortDetector>) -> Self {
         Self {
@@ -434,6 +479,10 @@ impl PcapCapturer {
             .into_iter()
             .filter(|d| d.has_addresses && !crate::platform::pcap::skip_device(&d.name))
             .collect();
+        for d in devices.iter().filter(|d| d.disconnected) {
+            info!("Not capturing on {} for now: it has no link", d.label());
+        }
+        let devices: Vec<_> = devices.into_iter().filter(|d| !d.disconnected).collect();
 
         if devices.is_empty() {
             error!("No capture devices found with addresses");
@@ -527,7 +576,7 @@ impl PcapCapturer {
                 }
                 let Ok(devices) = pcap.find_all_devs() else { continue };
                 for device in devices {
-                    if !device.has_addresses || crate::platform::pcap::skip_device(&device.name) {
+                    if !device.has_addresses || device.disconnected || crate::platform::pcap::skip_device(&device.name) {
                         continue;
                     }
                     if shared.failed.lock().unwrap_or_else(|p| p.into_inner()).contains(&device.name) {
@@ -609,6 +658,11 @@ fn start_capture_thread(
             // SAFETY: a live handle and an error buffer of libpcap's size.
             nonblocking = unsafe { (f.setnonblock)(handle, 1, errbuf.as_mut_ptr() as *mut c_char) } == 0;
         }
+        // SAFETY: a live handle; -1 means there is none.
+        let wait_fd = match (nonblocking, pcap.filter.as_ref().and_then(|f| f.selectable_fd)) {
+            (true, Some(get)) => Some(unsafe { get(handle) }).filter(|fd| *fd >= 0),
+            _ => None,
+        };
         while running.load(Ordering::SeqCst) {
             let now = now_ms();
             if pcap.filter.is_some() && !filter_failed && !shared.unfiltered.load(Ordering::Relaxed) {
@@ -684,7 +738,8 @@ fn start_capture_thread(
                 }
                 // Nothing yet (a timeout, or nothing waiting).
                 0 => {
-                    if nonblocking {
+                    let waited = wait_fd.is_some_and(|fd| wait_readable(fd, POLL_WAIT_MS));
+                    if nonblocking && !waited {
                         std::thread::sleep(std::time::Duration::from_millis(IDLE_WAIT_MS));
                     }
                     continue;
@@ -830,6 +885,16 @@ fn parse_tcp_payload(frame: &[u8], link_type: c_int, device_name: &str) -> Optio
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_adapter_without_link_is_left_alone() {
+        // eno1 with no cable, as libpcap 1.10 on Linux reports it.
+        assert!(is_disconnected(PCAP_IF_UP | PCAP_IF_CONNECTION_STATUS_DISCONNECTED));
+        assert!(is_disconnected(PCAP_IF_UP), "up, not running");
+        assert!(!is_disconnected(PCAP_IF_UP | PCAP_IF_RUNNING | 0x10), "connected");
+        assert!(!is_disconnected(0), "libpcap before 1.9 says nothing");
+        assert!(!is_disconnected(PCAP_IF_UP | PCAP_IF_RUNNING), "status unknown");
+    }
 
     /// IPv4 + TCP from 10.0.0.2:51000 to 193.202.112.99:13328, payload "hi".
     fn ipv4_tcp() -> Vec<u8> {

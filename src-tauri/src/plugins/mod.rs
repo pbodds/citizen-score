@@ -13,6 +13,7 @@
 
 pub mod decoder;
 pub mod widgets;
+pub mod players;
 /// Without the network there is nothing to follow.
 pub mod boss_live {
     #[tauri::command]
@@ -294,6 +295,18 @@ fn zone_event(map: Option<i32>) -> Value {
     })
 }
 
+/// Citizen Score: the radar (`capture::radar`), as a2.on("radar") hands it
+/// on: you (`at` unix ms, `source` "buff" or "zone"), and each monster in
+/// view with its NPC id, in world units.
+fn radar_event(mobs: &HashMap<i32, crate::capture::radar::Mob>, me: Option<crate::capture::radar::Me>) -> Value {
+    let round = |p: [f32; 3]| p.map(|v| v.round() as i64);
+    serde_json::json!({
+        "me": me.map(|m| serde_json::json!({ "pos": round(m.pos), "at": m.at_ms, "source": m.source })),
+        "mobs": mobs.iter().map(|(id, m)| serde_json::json!({ "id": id, "npc": m.npc, "pos": round(m.pos), "seen": m.seen_ms })).collect::<Vec<_>>(),
+        "now": crate::clock::now_ms(),
+    })
+}
+
 /// Citizen Score: what the meter knows of the world now, for a plugin with
 /// `events:zone` that opens after it happened: the map, and the field boss
 /// kills seen this run (the last 64).
@@ -472,6 +485,9 @@ impl PluginHost {
                 let mut map_seq = 0u64;
                 let mut kill_seq = 0u64;
                 let mut zone: Option<i32> = None;
+                let mut radar_seq = 0u64;
+                let mut radar_told = Instant::now();
+                let mut odyle: Option<Value> = None;
                 loop {
                     // Woken by each queued event; the timeout lets settling
                     // events go once their wait is over.
@@ -516,6 +532,27 @@ impl PluginHost {
                         if map != zone {
                             zone = map;
                             host.tell_permitted(&app, "events:zone", "zone", zone_event(map));
+                        }
+                    }
+                    // Citizen Score: the monsters around the player and where
+                    // the player is, to plugins with events:radar, at most
+                    // once a second.
+                    if radar_told.elapsed() >= Duration::from_secs(1)
+                        && let Some((seq, mobs, me)) = crate::capture::radar::since(radar_seq)
+                    {
+                        radar_seq = seq;
+                        radar_told = Instant::now();
+                        host.tell_permitted(&app, "events:radar", "radar", radar_event(&mobs, me));
+                    }
+                    // Citizen Score: the game's counters the meter reads (Odyle
+                    // energy so far), to plugins with events:counters, on change.
+                    if let Some(state) = app.try_state::<AppState>()
+                        && let Some((basic, charged)) = state.data_storage.odyle_energy()
+                    {
+                        let now = serde_json::json!({ "basic": basic, "charged": charged, "owner": state.data_storage.odyle_owner() });
+                        if odyle.as_ref() != Some(&now) {
+                            host.tell_permitted(&app, "events:counters", "odyle", now.clone());
+                            odyle = Some(now);
                         }
                     }
                     // Whether AION2 is open, looked at every few seconds.
@@ -1003,7 +1040,7 @@ pub fn note_resized(app: &tauri::AppHandle, window: &tauri::Window, size: tauri:
 /// plugin restored at start that was watching in the background.
 /// Citizen Score: the plugins shown inside the meter's main window (dock.js)
 /// rather than in windows of their own.
-pub const DOCKED: [&str; 2] = ["plus-souls", "plus-timers"];
+pub const DOCKED: [&str; 5] = ["plus-souls", "plus-timers", "plus-dailies", "plus-builds", "plus-players"];
 
 fn open_window(app: &tauri::AppHandle, id: &str, visible: bool) -> Result<(), String> {
     // Citizen Score: a docked plugin runs in the main window; opening it
@@ -1239,7 +1276,7 @@ pub fn broadcast(app: &tauri::AppHandle, event: &str, data: Value) {
     }
 }
 
-fn require(app: &tauri::AppHandle, id: &str, permission: &str) -> Result<(), String> {
+pub(crate) fn require(app: &tauri::AppHandle, id: &str, permission: &str) -> Result<(), String> {
     let has = host(app)?.with(id, |l| l.manifest.permissions.iter().any(|p| p == permission)).unwrap_or(false);
     if has { Ok(()) } else { Err(format!("the plugin lacks the {permission:?} permission")) }
 }

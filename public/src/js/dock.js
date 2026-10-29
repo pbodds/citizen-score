@@ -1,7 +1,8 @@
 // Citizen Score: the docked panels. The meter's main window hosts the Pet Map
-// (plus-souls) and World Timers (plus-timers) plugins below the DPS list, each
-// opened from its header icon, one at a time. Both run from the start, hidden
-// when closed, so timers keep counting and alerts keep coming.
+// (plus-souls), World Timers (plus-timers), Dailies (plus-dailies) and Builds
+// (plus-builds) plugins below the DPS list, each opened from its header icon,
+// one at a time. All run from the start, hidden when closed, so timers keep
+// counting and alerts keep coming.
 //
 // Each plugin runs as in its own window (pluginHost.js): a sandboxed frame
 // with no access to this page, asking for things by message, and getting only
@@ -22,6 +23,9 @@
   const PANELS = [
     { id: "plus-souls", btn: ".petMapBtn" },
     { id: "plus-timers", btn: ".timersBtn" },
+    { id: "plus-dailies", btn: ".dailiesBtn" },
+    { id: "plus-builds", btn: ".buildsBtn" },
+    { id: "plus-players", btn: ".playersBtn" },
   ];
   const OPEN_KEY = "citizen.dock.open";
 
@@ -102,6 +106,7 @@
       "bossTimers.follow": ([server, bosses]) => (need("feed:boss-timers"),
         call("plugin_boss_follow", { server: Number(server), bosses: (Array.isArray(bosses) ? bosses : []).map(String) })),
       localWorld: () => (need("events:zone"), call("plugin_local_world")),
+      players: ([op, args]) => (need("net:players"), call("plugin_players", { op: String(op), args: args ?? {} })),
       // Docked, the plugin's "window" is its panel: showing it opens the
       // panel (an alert, when the player asked for that); hiding and fitting
       // leave the meter as the player has it.

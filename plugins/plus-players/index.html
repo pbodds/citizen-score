@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Players</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <form class="search" autocomplete="off">
+      <input class="q" type="search" placeholder="Character name" maxlength="32" aria-label="Character name" />
+      <button type="submit">Search</button>
+      <button type="button" class="meBtn" hidden title="Look up the character you're playing">Me</button>
+    </form>
+    <div class="filters">
+      <select class="region" aria-label="Region">
+        <option value="nae">NA East</option>
+        <option value="naw">NA West</option>
+        <option value="eu">Europe</option>
+        <option value="la">Latin America</option>
+        <option value="as">Asia</option>
+      </select>
+      <select class="race" aria-label="Faction">
+        <option value="">Both factions</option>
+        <option value="1">Elyos</option>
+        <option value="2">Asmodian</option>
+      </select>
+    </div>
+    <main class="out"></main>
+    <p class="foot">From NCSOFT's character site (aion2.plaync.com), the same data its own character pages show. Nothing is sent until you search.</p>
+    <script src="/_sdk/a2.js"></script>
+    <script src="plugin.js"></script>
+  </body>
+</html>

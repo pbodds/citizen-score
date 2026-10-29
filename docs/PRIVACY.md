@@ -3,8 +3,12 @@
 Nothing. Citizen Score has no account, no uploads, no update check and no
 telemetry, and the network code that upstream used for those isn't in the
 source. The only connections it makes are the ones you start: a link you click
-opens in your browser, and skill and item icons load from the game's own
-image server (`assets.playnccdn.com`).
+opens in your browser, skill and item icons load from the game's own
+image server (`assets.playnccdn.com`), and a name you type into **Players**
+is looked up on NCSOFT's character site (`api-search.plaync.com`,
+`aion2.plaync.com`, portraits from `profileimg.plaync.com`). Players sends
+only what you searched for and the character you open; it says nothing
+about you (`src-tauri/src/plugins/players.rs` builds every request).
 
 ## What it reads
 

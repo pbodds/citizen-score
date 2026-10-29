@@ -83,9 +83,10 @@ fn areas() -> &'static Mutex<HashMap<String, Area>> {
 /// `platform::window::hide_in_place`), so a widget is locked again once its
 /// page has loaded (`plugin_widget_hello`) and each time it is shown again.
 fn apply_lock(window: &tauri::WebviewWindow, locked: bool) {
-    // Citizen Score: World Timers' alert banner always takes clicks (its close
-    // button), locked or not; the rest of its window still lets them through.
-    let locked = locked && window.label() != label("plus-timers", "banner");
+    // Citizen Score: an alert banner (a widget named "banner": World Timers',
+    // Dailies') never takes the mouse, locked or not: it shows over other
+    // windows and goes by itself.
+    let locked = locked || parse_label(window.label()).is_some_and(|(_, name)| name == "banner");
     let area = areas().lock().unwrap_or_else(|p| p.into_inner()).get(window.label()).copied();
     let applied = match (locked, area) {
         (true, _) => crate::platform::window::click_through_except(window, true, None),
@@ -118,16 +119,38 @@ pub async fn plugin_widget_open(
     if !valid_name(&name) {
         return Err("a widget name is 1 to 32 lowercase letters, digits and '-'".into());
     }
-    let size = |v: f64| if v.is_finite() { v.clamp(24.0, 800.0) } else { 64.0 };
+    let size = |v: f64| if v.is_finite() { v.clamp(24.0, 1600.0) } else { 64.0 };
     let (width, height) = (size(width), size(height));
+    // A new size on Hyprland: the window is made again. Resizing it in place
+    // grows it about its middle there while the page keeps its corner, so
+    // the page ends up drawn off to the side and cut off (2026-10-26). Made
+    // again, it goes back to its top-left corner at the new size.
+    if let Some(widget) = app.get_webview_window(&label(&id, &name)) {
+        let scale = widget.scale_factor().unwrap_or(1.0);
+        let now = widget.inner_size().ok().map(|s| s.to_logical::<f64>(scale));
+        let resized = now.is_some_and(|s| (s.width - width).abs() >= 1.0 || (s.height - height).abs() >= 1.0);
+        if resized && crate::citizen_window::hyprland() && name != "banner" {
+            save_hypr_place(&app, &widget);
+            areas().lock().unwrap_or_else(|p| p.into_inner()).remove(widget.label());
+            let _ = widget.destroy();
+            for _ in 0..40 {
+                if app.get_webview_window(&label(&id, &name)).is_none() {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(25)).await;
+            }
+        }
+    }
     if let Some(widget) = app.get_webview_window(&label(&id, &name)) {
         let _ = widget.set_size(tauri::LogicalSize::new(width, height));
         if !crate::platform::window::reveal_in_place(&widget) {
             crate::platform::window::show_on_top_without_focus(&widget);
         }
         apply_lock(&widget, is_locked(&app, &id));
-        if id == "plus-timers" && name == "banner" {
+        if name == "banner" {
             crate::citizen_window::place_banner(&widget);
+        } else {
+            crate::citizen_window::undecorate_widget(&widget, None);
         }
         return Ok(());
     }
@@ -170,9 +193,15 @@ pub async fn plugin_widget_open(
     if let Some((x, y)) = place {
         let _ = widget.set_position(tauri::PhysicalPosition::new(x, y));
     }
-    // Citizen Score: the alert banner goes to a corner of another monitor.
-    if id == "plus-timers" && name == "banner" {
+    // Citizen Score: an alert banner goes to a corner of another monitor.
+    if name == "banner" {
         crate::citizen_window::place_banner(&widget);
+    } else {
+        // On Hyprland the place set above is ignored (Wayland), so it is
+        // moved there once mapped. 0,0 is what Wayland saved before places
+        // came from Hyprland: never moved.
+        let hypr_place = saved_place(&app, &id, &name).filter(|&p| p != (0, 0) && crate::citizen_window::hyprland());
+        crate::citizen_window::undecorate_widget(&widget, hypr_place);
     }
     Ok(())
 }
@@ -211,6 +240,7 @@ pub fn plugin_widget_close(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     require(&app, &id, "widgets")?;
     if let Some(widget) = app.get_webview_window(&label(&id, &name)) {
         areas().lock().unwrap_or_else(|p| p.into_inner()).remove(widget.label());
+        save_hypr_place(&app, &widget);
         let _ = widget.close();
     }
     Ok(())
@@ -282,8 +312,46 @@ pub fn plugin_widget_drag(app: tauri::AppHandle, window: tauri::WebviewWindow) -
     let (id, _) = widget_of(&window)?;
     if !is_locked(&app, &id) {
         crate::platform::window::start_drag(&window);
+        follow_hypr_drag(app, window);
     }
     Ok(())
+}
+
+/// On Hyprland: remember where a widget is now (see `hypr_position`).
+fn save_hypr_place(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    let Some((id, name)) = parse_label(window.label()) else { return };
+    let Ok(title) = window.title() else { return };
+    let Some((x, y)) = crate::citizen_window::hypr_position(&title) else { return };
+    if let Some(state) = app.try_state::<AppState>() {
+        state.settings.set(&place_key(&id, &name), &format!("{x},{y}"));
+    }
+}
+
+/// On Hyprland, where a drag no Moved event reports ends: watch the window
+/// until it has moved and then held still for half a second, or 20 s pass.
+fn follow_hypr_drag(app: tauri::AppHandle, window: tauri::WebviewWindow) {
+    if !crate::citizen_window::hyprland() {
+        return;
+    }
+    let Ok(title) = window.title() else { return };
+    std::thread::spawn(move || {
+        let start = crate::citizen_window::hypr_position(&title);
+        let mut last = start;
+        let mut still = 0;
+        for _ in 0..80 {
+            std::thread::sleep(Duration::from_millis(250));
+            let now = crate::citizen_window::hypr_position(&title);
+            if now.is_none() {
+                return;
+            }
+            still = if now == last { still + 1 } else { 0 };
+            last = now;
+            if now != start && still >= 2 {
+                save_hypr_place(&app, &window);
+                return;
+            }
+        }
+    });
 }
 
 /// Whether a widget is on screen and unlocked (so a double-click on it can
@@ -300,12 +368,18 @@ pub fn any_unlocked_widget_shown(app: &tauri::AppHandle) -> bool {
 pub fn close_all(app: &tauri::AppHandle, id: &str) {
     for widget in open_widgets(app, id) {
         areas().lock().unwrap_or_else(|p| p.into_inner()).remove(widget.label());
+        save_hypr_place(app, &widget);
         let _ = widget.close();
     }
 }
 
 /// A widget moved: remember where, once it has stopped moving.
 pub fn note_moved(app: &tauri::AppHandle, label: &str, at: tauri::PhysicalPosition<i32>) {
+    // Wayland reports 0,0 for every window: Hyprland's places are saved from
+    // hyprctl instead (`save_hypr_place`).
+    if crate::citizen_window::hyprland() {
+        return;
+    }
     static LATEST: std::sync::OnceLock<Mutex<HashMap<String, (i32, i32)>>> = std::sync::OnceLock::new();
     let Some((id, name)) = parse_label(label) else { return };
     let key = place_key(&id, &name);

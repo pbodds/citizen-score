@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Builds</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="top">
+      <div class="tabs" role="tablist" aria-label="Show">
+        <button type="button" data-tab="build" role="tab" aria-selected="true">Builds</button>
+        <button type="button" data-tab="guide" role="tab" aria-selected="false">Guide</button>
+      </div>
+      <div class="modes" role="group" aria-label="Build">
+        <button type="button" data-mode="pve" aria-pressed="true">PvE</button>
+        <button type="button" data-mode="pvp" aria-pressed="false">PvP</button>
+      </div>
+      <button type="button" class="popBtn" aria-pressed="false" title="Open the full build in its own window: every pick rate charted, PvE beside PvP">⧉ Pop out</button>
+    </div>
+    <div class="chips classes" role="group" aria-label="Class"></div>
+    <main class="build"></main>
+    <main class="guide" hidden></main>
+    <script src="/_sdk/a2.js"></script>
+    <script src="builds.js"></script>
+    <script src="play.js"></script>
+    <script src="boards.js"></script>
+    <script src="ariel.js"></script>
+    <script src="planner.js"></script>
+    <script src="progression.js"></script>
+    <script src="guide.js"></script>
+    <script src="guideview.js"></script>
+    <script src="advisor.js"></script>
+    <script src="playview.js"></script>
+    <script src="view.js"></script>
+    <script src="plugin.js"></script>
+  </body>
+</html>

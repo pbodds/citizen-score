@@ -16,7 +16,9 @@ cached in ~/.cache/citizen-score/metabot, so a rebuild fetches only what's new.
 Map pixels: every world map is an 8192 x 8192 image, cut into 256 px tiles,
 2^z across at zoom z. A page's view is a window onto those tiles; its dots are
 percentages of the view, so a dot's map pixel is (view origin + pct x view
-span), both read off the tiles' own placement.
+span), both read off the tiles' own placement. Soul pages' "pins" are in a
+smaller frame on some maps (the Abyss: 1/2 and 1/4), measured per map from the
+pages' own dots, and pins no drop in sources.js accounts for are left out.
 
 Maps metabot has no tiles for (dungeons such as Fire_Temple), and Kibelisks it
 can't place, come from manual.json next to this script, filled by hand from
@@ -197,17 +199,45 @@ def main():
     map_pages = {}  # map id -> "/en/aion-2/map/verteron"
     folders = {}  # map id -> tile folder
     pets = [pid for pid, v in ps.items() if v.get("drops")]
+    pages = []  # (pet, flight payload, pins)
     for n, pid in enumerate(pets, 1):
-        src = ps[pid]
-        page = fetch(f"/en/aion-2/items/{slug(en(src['title']))}")
+        page = fetch(f"/en/aion-2/items/{slug(en(ps[pid]['title']))}")
         print(f"\r souls {n}/{len(pets)}", end="", file=sys.stderr)
         if not page:
             continue
         p = flight(page)
         at = p.find('"pins":[')
-        if at < 0:
+        if at >= 0:
+            pages.append((pid, p, raw_json(p, at + len('"pins":'))))
+    print(file=sys.stderr)
+
+    # Pins aren't always in map pixels: the Abyss's come at 1/2 (Lower
+    # Reshanta) or 1/4 (Middle), as metabot keeps them in a smaller frame. The
+    # page's own dots are drawn from the same pins, in the same order, as
+    # percentages of the view, so each map's factor is measured on the pages
+    # showing only that map, rounded to a power of two.
+    pin_scale = {}
+    for pid, p, pins in pages:
+        maps_on = {pin.get("map") for pin in pins}
+        folders_on = {m.group(5) for m in TILE_RE.finditer(p)}
+        view = view_of(p)
+        if len(maps_on) != 1 or len(folders_on) != 1 or not view:
             continue
-        pins = raw_json(p, at + len('"pins":'))
+        shown = [view[1](float(x), float(y)) for kind, x, y in DOT_RE.findall(p) if kind == "monster"]
+        raw = [d for pin in pins for d in pin.get("dots") or []]
+        ratios = sorted(s[0] / r[0] for s, r in zip(shown, raw) if r[0] > 0)
+        if len(shown) == len(raw) and ratios:
+            pin_scale.setdefault(maps_on.pop(), []).append(2 ** round(math.log2(ratios[len(ratios) // 2])))
+    for mid, seen in pin_scale.items():
+        pin_scale[mid] = max(set(seen), key=seen.count)
+        if len(set(seen)) > 1:
+            print(f" {mid}: pin scales disagree {sorted(set(seen))}, using {pin_scale[mid]}", file=sys.stderr)
+    print(" pin scale: " + ", ".join(f"{m} x{s}" for m, s in sorted(pin_scale.items())), file=sys.stderr)
+
+    unmatched = {}  # map id -> pins no drop in sources.js accounts for
+    for pid, p, pins in pages:
+        src = ps[pid]
+        at = p.find('"pins":[')
         at = p.find('"open":{', at)
         if at > 0:
             map_pages.update(raw_json(p, at + len('"open":')))
@@ -224,12 +254,19 @@ def main():
             npc = names.get((mid, who.lower()))
             if npc is None:  # not matched by name: the drop on that map with that many spawns
                 npc = next((d["npc"] for d in src["drops"] if map_id(d["map"]) == mid and d.get("spawns") == len(pin.get("dots") or [])), None)
-            dots = [[round(x), round(y)] for x, y in pin.get("dots") or []]
+            if npc is None:
+                # A drop the game's tables don't list here, as on maps not
+                # open yet (Middle Reshanta): it would be heat for nothing.
+                unmatched[mid] = unmatched.get(mid, 0) + 1
+                continue
+            k = pin_scale.get(mid, 1)
+            dots = [[round(x * k), round(y * k)] for x, y in pin.get("dots") or []]
             if dots:
                 out.append([mid, npc, dots])
         if out:
             spawns[pid] = out
-    print(file=sys.stderr)
+    if unmatched:
+        print(" pins with no drop in sources.js, left out: " + ", ".join(f"{m} {n}" for m, n in sorted(unmatched.items())), file=sys.stderr)
 
     # Soul pages pin only some of a soul's monsters: the rest come from each
     # monster's own page, which plots every spawn it has.

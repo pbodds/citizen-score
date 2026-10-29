@@ -130,6 +130,9 @@ body.isBanner {
   cursor: pointer;
 }
 .bannerClose:hover { background: rgba(255, 90, 90, 0.85); color: #fff; }
+/* Clicks go through the banner (widgets.rs), so no close button: it goes
+   by itself, or from the panel's Dismiss. */
+.bannerClose { display: none; }
 .bannerLine { font-size: 13px; line-height: 1.35; }
 .bannerLine + .bannerLine { margin-top: 2px; opacity: 0.85; }
 .banner.pulse { animation: bannerIn 0.35s ease-out; }

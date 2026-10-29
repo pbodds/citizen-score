@@ -77,6 +77,11 @@
       if (!allowed("events:zone")) throw new Error('the plugin lacks the "events:zone" permission');
       return invoke("plugin_local_world");
     },
+    // Citizen Score: player lookup on NCSOFT's site (plugins/players.rs).
+    players: ([op, args]) => {
+      if (!allowed("net:players")) throw new Error('the plugin lacks the "net:players" permission');
+      return invoke("plugin_players", { op: String(op), args: args ?? {} });
+    },
     "storage.set": ([key, value]) => invoke("plugin_storage_set", { key: String(key), value: String(value) }),
     "window.show": () => {
       if (!allowed("window")) throw new Error('the plugin lacks the "window" permission');

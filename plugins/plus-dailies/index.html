@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dailies</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="top">
+      <div class="resets"></div>
+      <button type="button" class="editBtn" aria-pressed="false" title="Add, rename or remove tasks">Edit</button>
+      <button type="button" class="optsBtn" aria-pressed="false" title="Reminders, region and overlay">⚙</button>
+    </div>
+    <div class="chips chars" role="group" aria-label="Characters"></div>
+    <div class="odyle" hidden></div>
+    <section class="options" hidden>
+      <label class="option">Region
+        <select class="region">
+          <option value="global">Global (NA, EU, SA, Asia): 07:00 UTC</option>
+          <option value="kr">Korea: 05:00 KST</option>
+          <option value="tw">Taiwan: 05:00 Taipei</option>
+        </select>
+      </label>
+      <label class="option">Remind me
+        <select class="remind">
+          <option value="0">never</option>
+          <option value="30">30 min</option>
+          <option value="60">1 hour</option>
+          <option value="120">2 hours</option>
+          <option value="240">4 hours</option>
+        </select>
+        before a reset finds tasks undone
+      </label>
+      <label class="option"><input type="checkbox" class="desktop" /> Also as a desktop notification</label>
+      <label class="option"><input type="checkbox" class="overlay" /> Checklist over the game</label>
+      <label class="option"><input type="checkbox" class="lockOverlay" /> Lock it (clicks go through to the game)</label>
+      <button type="button" class="testBtn">Test the reminder</button>
+    </section>
+    <h2 class="sectionHead">Daily <span class="count daily"></span></h2>
+    <ol class="tasks" data-period="daily"></ol>
+    <h2 class="sectionHead">Weekly <span class="count weekly"></span></h2>
+    <ol class="tasks" data-period="weekly"></ol>
+    <div class="adds">
+      <button type="button" class="addBtn" data-period="daily">+ Daily</button>
+      <button type="button" class="addBtn" data-period="weekly">+ Weekly</button>
+      <button type="button" class="defaultsBtn" title="Put back the tasks this plugin started with">Reset list</button>
+    </div>
+    <p class="foot">Click a task to count one done, right-click to take one back. Counts clear at the daily reset, and weeklies on Wednesday's.</p>
+    <script src="/_sdk/a2.js"></script>
+    <script src="plugin.js"></script>
+  </body>
+</html>

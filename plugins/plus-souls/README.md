@@ -29,10 +29,21 @@ Below a pet's sources, a link opens the soul's page on [metabot.gg](https://meta
 
 Every name in a pet's sources (monsters, zones, maps, Kibelisks, chests) shows in the meter's language, in the game's own words: the Global client's eight languages, Traditional Chinese from the Taiwan client's strings (`--tw-l10n`, the `Data/Table/L10N` of its extract), and Simplified Chinese converted from it with OpenCC. A name the game spells the same as in English is kept once, in English.
 
+## Guide
+
+The **Guide** tab is for pets, in two parts:
+
+- **Farming route**: up to 8 Kibelisks to teleport to on one map, in walking order, each with the pets to farm there (monster, level, drop chance, expected kills). Each stop is picked for the pets no earlier stop covers: the one where a kill does the most for them (the sum of their best drop chances). The map you're on comes first, and the chips switch maps. **Show route on map** (or **Route** on the Map tab) draws the stops numbered and joined; click a stop to fly to its Kibelisk.
+- **Radar layers**: besides the monsters that drop what you need, the radar shows other monsters (red), bosses (purple ◆, nearest named) and NPCs/objects (grey, off by default); toggle each with the buttons under its legend while it's unlocked, and click the scope to zoom between 300 m and the ~75 m in view. Players aren't shown.
+- **Radar size**: drag the grip in the unlocked radar's bottom-right corner to scale it from 0.6× to 2× (double-click it for 1×). The card scales as a whole and the window resizes to match, so it never clips; the size is remembered.
+- **Stars**: **★ Star route pets** under the route, the ★ on each stop and **★ Star N** on each genus pin those pets (to the top of the list and the radar) in one click; pressing again unstars them. **Best areas** has the same: **★ Star N** on each area stars every pet it still gives, and opening an area shows a ☆ beside each of its pets. Stars the Guide or Best areas add come off by themselves once the pet reaches level 3; stars set by hand stay.
+- **Genus**: each genus's per-pet bonus, how many of yours are at level 3, what they add up to now, and the souls left, in the order your class wants them. Click one to list just those pets.
+Class builds, Daevanion, gear, Item Level and leveling are in the **Builds** panel (`plugins/plus-builds`); the Guide's class menu only sets the genus order.
+
 ## Permissions
 
 - `decoder:pet-list`, `decoder:soul-gained`, `decoder:level-up`: read your own pets' levels and soul gains.
-- `events:character`: keep a separate list per server.
+- `events:character`: keep a separate list per server, and pick your class for the genus order.
 - `storage`: save the counts (with the last 200 changes per server, to trace a count that drifts from the game's), your pet names, the sort order, pins and region choice on this computer.
 
 ## Try it (developer mode)
