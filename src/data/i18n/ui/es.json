@@ -469,6 +469,7 @@
     "waitingBoss": "Sin jefe aún"
   },
   "meter": {
+    "killEta": "quedan {time}",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/s",
     "others": "Otros"

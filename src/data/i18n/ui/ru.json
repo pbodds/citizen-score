@@ -474,6 +474,7 @@
     "waitingBoss": "Нет босса"
   },
   "meter": {
+    "killEta": "осталось {time}",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/s",
     "others": "Остальные"

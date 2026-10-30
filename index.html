@@ -72,6 +72,7 @@
           <div class="bossHpFill"></div>
           <span class="bossHpText">
             <span class="bossHpPct"></span>
+            <span class="bossHpEta"></span>
             <span class="bossHpAmt"></span>
           </span>
         </div>
@@ -612,13 +613,13 @@
                     </span>
                   </label>
                   <label class="settingsToggle">
-                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.showTtk" title="Beside the battle timer, an estimate of how long the whole boss fight will take." data-i18n-title="settings.tips.showTtk">Show time to kill estimate</span>
+                    <span class="settingsToggleLabel settingsLabel" data-i18n="settings.showTtk" title="Beside the battle timer, an estimate of how long the whole boss fight will take, and in the boss HP bar the time left until it dies." data-i18n-title="settings.tips.showTtk">Show time to kill estimate</span>
                     <span class="settingsToggleControl">
                       <input type="checkbox" class="showTtkCheckbox" />
                       <span class="settingsToggleTrack" aria-hidden="true"></span>
                     </span>
                   </label>
-                  <label class="settingsToggle">
+                  <label class="settingsToggle" style="display:none">
                     <span class="settingsToggleLabel settingsLabel" data-i18n="settings.showHealModes" title="The DPS/DMG button on the meter also cycles through healing per second and total healing." data-i18n-title="settings.tips.showHealModes">Show healing in the DPS/DMG button</span>
                     <span class="settingsToggleControl">
                       <input type="checkbox" class="showHealModesCheckbox" checked />

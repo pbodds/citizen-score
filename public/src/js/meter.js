@@ -106,7 +106,11 @@ const createMeterUI = ({
     dpsContainer.className = "dps";
     const dpsContribution = document.createElement("p");
     dpsContribution.className = "dpsContribution";
+    // Total damage, before the DPS, when the metric gives one (its `sub`).
+    const dpsDamage = document.createElement("p");
+    dpsDamage.className = "dpsDamage";
 
+    dpsContainer.appendChild(dpsDamage);
     dpsContainer.appendChild(dpsNumber);
     dpsContainer.appendChild(dpsContribution);
 
@@ -130,6 +134,7 @@ const createMeterUI = ({
       classIconImg,
       dpsNumber,
       dpsContribution,
+      dpsDamage,
       fillEl,
       currentRow: null,
       lastSeenAt: 0,
@@ -139,6 +144,7 @@ const createMeterUI = ({
       lastIsCjk: false,
       lastMetricText: "",
       lastContributionText: "",
+      lastDamageText: "",
       lastRankText: "",
       lastFillRatio: -1,
       lastClassIconSrc: "",
@@ -393,6 +399,12 @@ const createMeterUI = ({
       if (view.lastMetricText !== metricText) {
         view.dpsNumber.textContent = metricText;
         view.lastMetricText = metricText;
+      }
+
+      const damageText = metric.sub || "";
+      if (view.lastDamageText !== damageText) {
+        view.dpsDamage.textContent = damageText;
+        view.lastDamageText = damageText;
       }
 
       const contributionText = `${damageContribution.toFixed(1)}%`;

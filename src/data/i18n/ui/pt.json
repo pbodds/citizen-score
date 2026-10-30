@@ -469,6 +469,7 @@
     "waitingBoss": "Sem chefe"
   },
   "meter": {
+    "killEta": "faltam {time}",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/s",
     "others": "Outros"

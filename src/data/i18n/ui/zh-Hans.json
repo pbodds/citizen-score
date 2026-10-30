@@ -469,6 +469,7 @@
     "waitingBoss": "等待首领"
   },
   "meter": {
+    "killEta": "剩余 {time}",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/秒",
     "others": "其他"

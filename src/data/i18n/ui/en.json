@@ -410,7 +410,7 @@
       "pinMeToTop": "Your row stays first, whatever your damage.",
       "autoHideMeter": "The meter disappears while another window is in front of the game, and comes back with it.",
       "detailsMonitor": "Opens the Details window on the chosen display and keeps it there.",
-      "showTtk": "Beside the battle timer, an estimate of how long the whole boss fight will take.",
+      "showTtk": "Beside the battle timer, an estimate of how long the whole boss fight will take, and in the boss HP bar the time left until it dies.",
       "showHealModes": "The DPS/DMG button on the meter also cycles through healing per second and total healing.",
       "showTotalDps": "A bar under the rows with the party's combined DPS and damage.",
       "roundDps": "13,412 shows as 13k.",
@@ -474,6 +474,7 @@
     "waitingBoss": "No boss yet"
   },
   "meter": {
+    "killEta": "{time} left",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/s",
     "others": "Others"

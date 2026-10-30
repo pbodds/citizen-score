@@ -469,6 +469,7 @@
     "waitingBoss": "Kein Boss"
   },
   "meter": {
+    "killEta": "noch {time}",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/s",
     "others": "Andere"

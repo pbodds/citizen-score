@@ -608,6 +608,9 @@ body.linuxOverlay .meter {
   pointer-events: none;
 }
 .bossHpText .bossHpAmt { color: rgba(255, 255, 255, 0.72); }
+/* Time left until the boss dies (the time to kill estimate), in the middle. */
+.bossHpText .bossHpEta { color: #ffe3a3; }
+.bossHpText .bossHpEta:empty { display: none; }
 
 /* ---------- player rows ---------- */
 
@@ -1016,6 +1019,14 @@ html:not(.hoverStale) .list .item:hover { background: rgba(255, 255, 255, 0.075)
 /* Share of party damage. Brighter than the other secondary text on the row:
    it is a number people read at a glance mid-fight, and at 11px over the
    moving bar the muted --hud-sub grey was hard to pick out. */
+/* Total damage, before the DPS: a size down and dimmer, so the DPS still
+   reads first. */
+.list .item .dps .dpsDamage {
+  font-variation-settings: "wght" 500, "wdth" 87.5;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+}
+.list .item .dps .dpsDamage:empty { display: none; }
 .list .item .dps .dpsContribution {
   font-variation-settings: "wght" 600, "wdth" 75;
   font-size: 11px;
@@ -1234,6 +1245,7 @@ body.mainPlayerDpsBold :is(.meter, .barPreviewPanel) .item .content .dps > p {
 }
 .footerBtns .targetModeBtn { min-width: 44px; }
 .footerBtns .metricToggleBtn { min-width: 30px; }
+.footerBtns .metricToggleBtn[hidden] { display: none; }
 .footerBtns .footerBtn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.11);
@@ -1304,6 +1316,7 @@ body.mainPlayerDpsBold :is(.meter, .barPreviewPanel) .item .content .dps > p {
 :is(.meter, .barPreviewPanel).slim .list .item .dps { gap: 5px; margin-right: -6px; padding: 0 6px 0 14px; }
 :is(.meter, .barPreviewPanel).slim .list .item .dps > p { font-size: 12.5px; }
 :is(.meter, .barPreviewPanel).slim .list .item .dps .dpsContribution { font-size: 9px; min-width: 28px; }
+:is(.meter, .barPreviewPanel).slim .list .item .dps .dpsDamage { font-size: 10px; }
 .meter.slim .meterFooter { height: 19px; padding: 0 19px 0 8px; }
 .meter.slim .pingDisplay { font-size: 10px; }
 .meter.slim .pingDisplay .pingIcon { width: 11px; height: 11px; }

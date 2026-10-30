@@ -2361,16 +2361,9 @@ class DpsApp {
         this.fetchDps();
       }
     });
-    this.metricToggleBtn?.addEventListener("click", () => {
-      // DPS -> total damage -> both (-> HPS -> total heal, unless turned
-      // off in Settings) -> DPS.
-      const order = this.showHealModes === false
-        ? ["dps", "totalDamage", "both"]
-        : ["dps", "totalDamage", "both", "hps", "totalHeal"];
-      const nextMode = order[(order.indexOf(this.displayMode) + 1) % order.length];
-      this.setDisplayMode(nextMode, { persist: true });
-      this.renderCurrentRows();
-    });
+    // No DPS/DMG cycle any more: every row shows damage, DPS and share
+    // together (getMetricForRow), so the button stays hidden.
+    if (this.metricToggleBtn) this.metricToggleBtn.hidden = true;
     this.logoBtn?.addEventListener("click", () => {
       this.captureMainMeterScreenshot();
     });
@@ -4598,9 +4591,10 @@ class DpsApp {
     }
   }
 
+  // Always "all" now (damage, DPS and share on every row); the other modes
+  // stay in getMetricForRow for anything that still asks for one.
   setDisplayMode(mode, { persist = false } = {}) {
-    const valid = this.showHealModes === false ? ["totalDamage", "both"] : ["totalDamage", "both", "hps", "totalHeal"];
-    this.displayMode = valid.includes(mode) ? mode : "dps";
+    this.displayMode = "all";
     if (persist) {
       this.safeSetStorage(this.storageKeys.displayMode, this.displayMode);
     }
@@ -4612,6 +4606,7 @@ class DpsApp {
     const [labelKey, labelFallback, ariaKey, ariaFallback] = {
       totalDamage: ["header.display.total", "DMG", "header.display.ariaDamage", "Showing total damage"],
       both: ["header.display.both", "BOTH", "header.display.ariaBoth", "Showing DPS and total damage"],
+      all: ["header.display.both", "BOTH", "header.display.ariaBoth", "Showing DPS and total damage"],
       hps: ["header.display.hps", "HPS", "header.display.ariaHps", "Showing healing per second"],
       totalHeal: ["header.display.totalHeal", "HEAL", "header.display.ariaHeal", "Showing total healing"],
       dps: ["header.display.dps", "DPS", "header.display.ariaDps", "Showing DPS"],
@@ -4623,12 +4618,14 @@ class DpsApp {
   }
 
   // Time to kill beside the battle timer: bosses only, and only with their HP
-  // known. The remaining HP is read the way the HP bar reads it.
+  // known. The remaining HP is read the way the HP bar reads it. The time left
+  // of it ("0:42 left") goes in the middle of the HP bar.
   updateTtk(isBoss, targetId, battleTimeMs, maxHp, totalDamage, currentHp) {
     if (!this.battleTime?.setTtk) return;
     const max = Number(maxHp) || 0;
     if (!this.showTtk || !isBoss || !this.ttk || max <= 0 || !Number.isFinite(battleTimeMs)) {
       this.battleTime.setTtk(null);
+      this.setKillEta(null);
       return;
     }
     const live = Number(currentHp);
@@ -4636,7 +4633,22 @@ class DpsApp {
       Number.isFinite(live) && live >= 0
         ? Math.min(max, Math.max(0, live))
         : Math.max(0, max - Math.max(0, Number(totalDamage) || 0));
-    this.battleTime.setTtk(this.ttk.update(targetId, battleTimeMs, remaining, max));
+    const total = this.ttk.update(targetId, battleTimeMs, remaining, max);
+    this.battleTime.setTtk(total);
+    this.setKillEta(Number.isFinite(total) && remaining > 0 ? total - battleTimeMs : null);
+  }
+
+  setKillEta(ms) {
+    const el = this.elBossHpText?.querySelector(".bossHpEta");
+    if (!el) return;
+    let text = "";
+    if (Number.isFinite(ms) && ms >= 0) {
+      const sec = Math.ceil(ms / 1000);
+      const clock = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+      text = this.i18n?.t?.("meter.killEta", "{time} left", { time: clock }) ?? `${clock} left`;
+      if (text.includes("{time}")) text = text.replace("{time}", clock);
+    }
+    if (el.textContent !== text) el.textContent = text;
   }
 
   // Boss remaining-HP bar. There is no live boss current-HP packet, so remaining
@@ -5001,6 +5013,12 @@ class DpsApp {
       // "408k (13k/s)", as a player asked: damage leads, so the bars follow it.
       const totalDamage = Number(row?.totalDamage) || 0;
       return { value: totalDamage, text: `${this.formatAbbreviatedNumber(totalDamage)} (${dpsText})` };
+    }
+    if (this.displayMode === "all") {
+      // Damage, DPS and (meter.js) share side by side; bars follow damage,
+      // the same thing the share is a share of.
+      const totalDamage = Number(row?.totalDamage) || 0;
+      return { value: totalDamage, text: dpsText, sub: this.formatAbbreviatedNumber(totalDamage) };
     }
     return { value: dps, text: dpsText };
   }

@@ -469,6 +469,7 @@
     "waitingBoss": "보스 대기 중"
   },
   "meter": {
+    "killEta": "{time} 남음",
     "identifyingPlayer": "#{id}",
     "dpsSuffix": "/초",
     "others": "기타"
