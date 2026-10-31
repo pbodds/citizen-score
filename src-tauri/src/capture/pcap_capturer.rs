@@ -415,26 +415,6 @@ const IDLE_WAIT_MS: u64 = 20;
 /// times a second, quiet devices included, and read up to 20 ms late.)
 const POLL_WAIT_MS: c_int = 250;
 
-/// Wait until `fd` has something to read, at most `ms`. False if waiting
-/// isn't possible here (the caller sleeps instead).
-#[cfg(unix)]
-fn wait_readable(fd: c_int, ms: c_int) -> bool {
-    let mut p = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
-    // SAFETY: one valid pollfd for the duration of the call.
-    let r = unsafe { libc::poll(&mut p, 1, ms) };
-    // An error on the descriptor would wake every wait at once: sleep instead,
-    // and let the next read report it.
-    if r > 0 && p.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
-        return false;
-    }
-    r >= 0 || std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
-}
-
-#[cfg(not(unix))]
-fn wait_readable(_fd: c_int, _ms: c_int) -> bool {
-    false
-}
-
 impl PcapCapturer {
     pub fn new(sender: mpsc::Sender<CapturedPayload>, port_detector: Arc<CombatPortDetector>) -> Self {
         Self {
@@ -738,7 +718,7 @@ fn start_capture_thread(
                 }
                 // Nothing yet (a timeout, or nothing waiting).
                 0 => {
-                    let waited = wait_fd.is_some_and(|fd| wait_readable(fd, POLL_WAIT_MS));
+                    let waited = wait_fd.is_some_and(|fd| crate::platform::pcap::wait_readable(fd, POLL_WAIT_MS));
                     if nonblocking && !waited {
                         std::thread::sleep(std::time::Duration::from_millis(IDLE_WAIT_MS));
                     }

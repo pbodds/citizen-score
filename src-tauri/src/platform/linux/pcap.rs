@@ -49,3 +49,17 @@ pub fn skip_device(name: &str) -> bool {
             .iter()
             .any(|prefix| name.starts_with(prefix))
 }
+
+/// Wait until the capture descriptor `fd` has something to read, at most
+/// `ms`. False if waiting isn't possible (the caller sleeps instead).
+pub fn wait_readable(fd: std::ffi::c_int, ms: std::ffi::c_int) -> bool {
+    let mut p = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
+    // SAFETY: one valid pollfd for the duration of the call.
+    let r = unsafe { libc::poll(&mut p, 1, ms) };
+    // An error on the descriptor would wake every wait at once: sleep instead,
+    // and let the next read report it.
+    if r > 0 && p.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
+        return false;
+    }
+    r >= 0 || std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
+}

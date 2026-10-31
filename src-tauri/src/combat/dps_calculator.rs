@@ -861,7 +861,15 @@ impl DpsCalculator {
     ///
     /// None outside an instance, when the roster leaves a member's class
     /// unknown, or when more actors run a rotation than the party has members:
-    /// then another party is in the fight and a class says nothing.
+    /// then another party is in the fight and a class says nothing. A
+    /// rotation is at least ROTATION_SKILLS skills and at least half of what
+    /// the busiest actor of its class used: a Spiritmaster's spirits use four
+    /// to six skills each against their owner's dozen or more, and counted
+    /// as rotations two of them turned the rule off, so in that party every
+    /// spirit whose owner the capture never named stayed a row of its own
+    /// (2026-10-31, Neglected Gadioton: 47405 and 33775 beside their
+    /// Spiritmaster). A stranger of the class runs a rotation of their own
+    /// and still counts.
     ///
     /// `dungeon_id`: the fight's, from `target_dungeon`.
     /// `actors`: (row id, class name, distinct skills, damage).
@@ -878,7 +886,16 @@ impl DpsCalculator {
         for member in party.values() {
             *members_of.entry(member.job?.class_name().to_string()).or_default() += 1;
         }
-        if actors.iter().filter(|a| a.2 >= ROTATION_SKILLS).count() > party.len() {
+        let mut busiest: HashMap<&str, usize> = HashMap::new();
+        for (_, job, skills, _) in actors {
+            let most = busiest.entry(job.as_str()).or_default();
+            *most = (*most).max(*skills);
+        }
+        let rotations = actors
+            .iter()
+            .filter(|(_, job, skills, _)| *skills >= ROTATION_SKILLS && skills * 2 >= busiest[job.as_str()])
+            .count();
+        if rotations > party.len() {
             return None;
         }
         let mut best: HashMap<String, (i32, usize, i64)> = HashMap::new();
@@ -2109,6 +2126,29 @@ mod tests {
         let (templar, sorcerer) = (JobClass::Templar.class_name().to_string(), JobClass::Sorcerer.class_name().to_string());
         assert_eq!(rows, vec![("Tank".to_string(), templar), ("X".to_string(), sorcerer.clone())]);
         assert_eq!(calc.cached_job("X"), Some(sorcerer), "the cache is corrected");
+    }
+
+    /// A Spiritmaster's spirits use a handful of skills each. Two with five
+    /// or six looked like two more players running a rotation, the rule took
+    /// that for another party and stayed off, and the spirits whose owner was
+    /// never named kept rows of their own (2026-10-31, a 5-man instance).
+    #[test]
+    fn spirits_with_a_few_skills_are_not_another_party() {
+        let storage = Arc::new(DataStorage::new());
+        storage.set_current_dungeon(600_072);
+        roster(&storage);
+        rotation(&storage, 1490, 50_000, 16, 14);          // the Spiritmaster
+        rotation(&storage, 5886, 50_000, 17, 8);           // the Cleric
+        rotation(&storage, 7001, 50_000, 11, 14);          // two Gladiators
+        rotation(&storage, 7002, 50_000, 11, 8);
+        rotation(&storage, 33_775, 50_000, 16, 6);         // spirits, owner never seen
+        rotation(&storage, 47_405, 50_000, 16, 5);
+        rotation(&storage, 29_542, 50_000, 16, 4);
+
+        let calc = meter(&storage);
+        let rows: HashSet<i32> = calc.get_target_details(50_000, None)
+            .skills.iter().map(|s| s.actor_id).collect();
+        assert_eq!(rows, HashSet::from([1490, 5886, 7001, 7002]), "every spirit on its Spiritmaster's row");
     }
 
     #[test]

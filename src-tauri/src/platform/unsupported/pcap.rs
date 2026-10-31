@@ -25,3 +25,8 @@ pub fn library_available() -> bool {
 pub fn skip_device(_name: &str) -> bool {
     false
 }
+
+/// Npcap needs no waiting on a descriptor: the capture thread sleeps instead.
+pub fn wait_readable(_fd: std::ffi::c_int, _ms: std::ffi::c_int) -> bool {
+    false
+}
