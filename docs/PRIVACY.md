@@ -1,8 +1,14 @@
 # What leaves your machine
 
-Nothing. Citizen Score has no account, no uploads, no update check and no
+Nothing about you. Citizen Score has no account, no uploads and no
 telemetry, and the network code that upstream used for those isn't in the
-source. The only connections it makes are the ones you start: a link you click
+source. It checks for updates: when it starts and every 4 hours it asks
+GitHub's API for the latest release of `pbodds/citizen-score`, and when you
+update it downloads that release's file for your install and its
+`SHA256SUMS.txt` from github.com (`src-tauri/src/updater.rs`). GitHub sees
+your IP address, as it would for any download; nothing else is sent. Turn it
+off in *Settings → Updates*. The other connections it makes are the ones you
+start: a link you click
 opens in your browser, skill and item icons load from the game's own
 image server (`assets.playnccdn.com`), and a name you type into **Players**
 is looked up on NCSOFT's character site (`api-search.plaync.com`,

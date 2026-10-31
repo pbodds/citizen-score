@@ -462,6 +462,7 @@
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-meter" aria-controls="settingsSection-meter" aria-selected="false" tabindex="-1" data-section="meter"><i data-lucide="gauge" aria-hidden="true"></i><span data-i18n="settings.meterSettings">Meter Settings</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-appearance" aria-controls="settingsSection-appearance" aria-selected="false" tabindex="-1" data-section="appearance"><i data-lucide="palette" aria-hidden="true"></i><span data-i18n="settings.appearance">Appearance</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-window" aria-controls="settingsSection-window" aria-selected="false" tabindex="-1" data-section="window"><i data-lucide="app-window" aria-hidden="true"></i><span>Window</span></button>
+                <button class="settingsNavItem" type="button" role="tab" id="settingsTab-updates" aria-controls="settingsSection-updates" aria-selected="false" tabindex="-1" data-section="updates"><i data-lucide="download" aria-hidden="true"></i><span>Updates</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-keybinds" aria-controls="settingsSection-keybinds" aria-selected="false" tabindex="-1" data-section="keybinds"><i data-lucide="keyboard" aria-hidden="true"></i><span data-i18n="settings.keybinds">Keybinds</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-plugins" aria-controls="settingsSection-plugins" aria-selected="false" tabindex="-1" data-section="plugins"><i data-lucide="puzzle" aria-hidden="true"></i><span data-i18n="settings.plugins.title">Plugins</span></button>
                 <button class="settingsNavItem" type="button" role="tab" id="settingsTab-advanced" aria-controls="settingsSection-advanced" aria-selected="false" tabindex="-1" data-section="advanced"><i data-lucide="sliders-horizontal" aria-hidden="true"></i><span data-i18n="settings.advanced">Advanced</span></button>
@@ -867,6 +868,20 @@
                 </div>
                 <h3 class="csGroupTitle">Look</h3>
                 <div class="settingsGroupBody csCard">
+                  <label class="settingsToggle" title="The meter's background at full strength, whatever Background opacity says. Also the meter's footer button with the square.">
+                    <span class="settingsToggleLabel settingsLabel">Solid background<span class="csHint">Nothing of the game shows through the meter. Off: Background opacity below. Also the square button in the meter's footer.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csSolidCheckbox" />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="A light meter with dark text. Also the meter's footer button with the sun.">
+                    <span class="settingsToggleLabel settingsLabel">Light mode<span class="csHint">A light meter with dark text; the docked panels stay dark. Also the sun button in the meter's footer.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csLightCheckbox" />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
                   <div class="settingsRow settingsRowInput">
                     <div class="settingsInfo">
                       <div class="settingsLabel" data-i18n="settings.windowOpacity.label" title="How see-through the meter's background is. Bars and text stay as they are." data-i18n-title="settings.tips.windowOpacity">Background opacity</div>
@@ -973,6 +988,33 @@
                   </label>
                 </div>
                 <p class="csFootnote csNoCompositor">Monitor, workspaces and desktop effects need Hyprland; this desktop only supports Keep on top and the look settings.</p>
+              </section>
+              <section class="settingsSection" id="settingsSection-updates" role="tabpanel" aria-labelledby="settingsTab-updates" data-section="updates" hidden>
+                <h2 class="settingsSectionTitle">Updates</h2>
+                <p class="csSectionLead">New versions come from Citizen Score's releases on GitHub (github.com/pbodds/citizen-score). You have <strong class="csUpdateCurrent">…</strong>.</p>
+                <div class="settingsGroupBody csCard">
+                  <label class="settingsToggle" title="Asks GitHub for the latest release when the meter starts and every 4 hours. The only other request the meter makes is a Players search.">
+                    <span class="settingsToggleLabel settingsLabel">Check for updates<span class="csHint">Asks GitHub for the latest release when the meter starts and every 4 hours, and shows a box over the meter when there's a new one.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csUpdateCheckCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="settingsToggle" title="The box counts down and installs the update, then the meter restarts on it.">
+                    <span class="settingsToggleLabel settingsLabel">Install automatically<span class="csHint">The box counts down 15 seconds and installs it (Not now stops it), then the meter restarts on the new version. On Linux the system asks for your password first. Off: the box waits for Update now.</span></span>
+                    <span class="settingsToggleControl">
+                      <input type="checkbox" class="csUpdateAutoCheckbox" checked />
+                      <span class="settingsToggleTrack" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <div class="settingsRow">
+                    <div class="settingsInfo">
+                      <div class="settingsLabel">Check now</div>
+                      <div class="csHint csUpdateResult">Every download is checked against the release's SHA256SUMS.txt before it's installed.</div>
+                    </div>
+                    <button type="button" class="csUpdateBtn csUpdateNowBtn">Check now</button>
+                  </div>
+                </div>
               </section>
               <section class="settingsSection" id="settingsSection-keybinds" role="tabpanel" aria-labelledby="settingsTab-keybinds" data-section="keybinds" hidden>
                 <h2 class="settingsSectionTitle" data-i18n="settings.keybinds">Keybinds</h2>
@@ -1259,6 +1301,8 @@
               aria-label="Showing DPS">
               DPS
             </button>
+            <button class="footerBtn csLookBtn csSolidBtn" type="button" aria-pressed="false" aria-label="Solid background" title="Solid background (click again for see-through)"><i data-lucide="square"></i></button>
+            <button class="footerBtn csLookBtn csLightBtn" type="button" aria-pressed="false" aria-label="Light mode" title="Light mode (click again for dark)"><i data-lucide="sun"></i></button>
             <div class="footerBtn collapseBtn" role="button" tabindex="0" aria-label="Sort direction">
               <i
                 class="collapseIcon"
@@ -1314,5 +1358,7 @@
     <script src="/src/js/pluginSettings.js"></script>
     <script src="/src/js/dock.js"></script>
     <script src="/src/js/citizen.js"></script>
+    <script src="/src/js/updater.js"></script>
+    <script src="/src/js/look.js"></script>
   </body>
 </html>

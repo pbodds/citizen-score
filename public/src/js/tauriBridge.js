@@ -1099,10 +1099,12 @@
     let contentW = 396;
     let contentH = 300;
     if (meter) {
-      contentW = Math.ceil(meter.offsetWidth) + 16;
+      // Exactly the meter: room around it showed as an empty band on the
+      // right and at the bottom (on Windows, its shadow cut off square there).
+      contentW = Math.ceil((meter.offsetLeft || 0) + meter.offsetWidth);
       const meterH = Math.max(meter.offsetHeight, meter.scrollHeight);
       // The ping sits inside the footer row, so it is part of offsetHeight.
-      contentH = Math.ceil(meterH) + 10;
+      contentH = Math.ceil((meter.offsetTop || 0) + meterH);
     }
 
     // The tooltip's extra room stops at the screen edge; the meter itself

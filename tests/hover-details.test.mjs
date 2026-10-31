@@ -219,8 +219,8 @@ test("overlay reserves the tooltip's actual width and height and shrinks on clos
   assert.equal(sizes.length, 1, "shrink waits for the release delay");
   release.flush();
   await tick();
-  assert.equal(sizes[1].width, 396);
-  assert.equal(sizes[1].height, 210);
+  assert.equal(sizes[1].width, 380);
+  assert.equal(sizes[1].height, 200);
   fullPanel = true;
   await vm.runInContext("updateWindowSize()", context);
   assert.equal(sizes[2].width, 1200);
@@ -247,7 +247,7 @@ test("on Linux the overlay does not grow for the tooltip", async () => {
   });
   vm.runInContext(sizingSource, context);
   await vm.runInContext("updateWindowSize()", context);
-  assert.deepEqual([sizes[0].width, sizes[0].height], [396, 210], "the meter's own size");
+  assert.deepEqual([sizes[0].width, sizes[0].height], [380, 200], "the meter's own size");
 });
 
 
@@ -551,8 +551,8 @@ test('native travel area stays fixed during motion, is screen-clamped and shrink
   await vm.runInContext('updateWindowSize()', context);
   release.flush();
   await tick();
-  assert.equal(sizes[2].width, 396);
-  assert.equal(sizes[2].height, 310);
+  assert.equal(sizes[2].width, 380);
+  assert.equal(sizes[2].height, 300);
 });
 
 test('stationary hover schedules no frames and repeated coordinates do not wake rendering', () => {
@@ -771,7 +771,7 @@ test("moving between rows keeps the native window size and leaving the meter shr
   assert.equal([...release.timers.values()][0].ms, 250);
   release.flush();
   await tick();
-  assert.deepEqual({ width: sizes[2].width, height: sizes[2].height }, { width: 396, height: 310 });
+  assert.deepEqual({ width: sizes[2].width, height: sizes[2].height }, { width: 380, height: 300 });
   await update();
   assert.equal(sizes.length, 3, "no reserved area remains after the tooltip is gone");
 });

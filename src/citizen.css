@@ -33,7 +33,9 @@
   height: 100%;
   border: 0;
   background: transparent;
-  color-scheme: dark;
+  /* No color-scheme here: when the frame's differs from its page's (the
+     plugins leave theirs normal), Chromium (WebView2, on Windows) paints the
+     frame opaque and the panel loses its transparency. */
 }
 .meter.hasDock .meterFooter { border-radius: 0; }
 .dockToast {
@@ -347,3 +349,95 @@ html.csNoCompositorDesk .settingsPanel .csNeedsCompositor {
 
 /* Footer. */
 .settingsPanel .settingsFooter { border-top-color: var(--cs-card-line); }
+
+/* ---- Updates (public/src/js/updater.js) ----------------------------------
+   The box over the meter when a newer release is out, and the buttons it
+   shares with Settings → Updates. */
+.csUpdate {
+  position: relative;
+  z-index: 50;
+  margin: 6px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  border-radius: var(--rounded-lg, 10px);
+  background: rgba(14, 18, 27, 0.97);
+  border: 1px solid rgba(var(--cs-accent-rgb), 0.55);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font: 12px/1.4 "Segoe UI", system-ui, sans-serif;
+}
+.csUpdateTitle { font-size: 13px; font-weight: 700; color: var(--cs-accent); }
+.csUpdateFrom { font-size: 11px; color: rgba(255, 255, 255, 0.55); }
+.csUpdateNotes {
+  max-height: 5.6em;
+  overflow: hidden;
+  white-space: pre-line;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.csUpdateNotes:empty { display: none; }
+.csUpdateStatus { font-size: 11px; color: #ffe3a3; }
+.csUpdateStatus:empty { display: none; }
+.csUpdateStatus.isBad,
+.csUpdateResult.isBad { color: #ff9a8a; }
+.csUpdateBtns { display: flex; gap: 6px; margin-top: 2px; }
+.csUpdateBtn {
+  padding: 3px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+}
+.csUpdateBtn:hover { background: rgba(255, 255, 255, 0.12); }
+.csUpdateBtn.isPrimary { color: #0a0e16; background: var(--cs-accent); border-color: var(--cs-accent); }
+.csUpdateBtn.isPrimary:hover { filter: brightness(1.1); }
+.csUpdateBtn:disabled { opacity: 0.5; cursor: default; }
+.csUpdateResult .csUpdateBtn { margin-left: 4px; padding: 1px 10px; font-size: 11px; }
+
+/* ============================================================
+   LOOK: solid background and light mode (look.js; the square
+   and sun buttons in the meter's footer, Settings → Look)
+   ============================================================ */
+/* Solid: the background at full strength over the opacity sliders, which
+   core.js sets inline (an !important rule wins over them). */
+html.csSolid {
+  --window-opacity: 1 !important;
+  --title-opacity: 1 !important;
+}
+html.csSolid .dockPanel { background: rgb(10, 14, 22); }
+
+/* Light: the meter's own background light, and everything on it (drawn for
+   dark) turned over: light for dark, the colours kept. Pictures are turned
+   back. The docked panels are the plugins' own pages, drawn for dark, and
+   stay as they are. */
+html.csLight .meter {
+  --cs-light-bg: 238, 241, 247;
+  background:
+    linear-gradient(rgba(var(--cs-light-bg), var(--title-opacity, var(--window-opacity))),
+                    rgba(var(--cs-light-bg), var(--title-opacity, var(--window-opacity))))
+      top / 100% var(--title-h, 31px) no-repeat,
+    linear-gradient(rgba(var(--cs-light-bg), var(--window-opacity)), rgba(var(--cs-light-bg), var(--window-opacity)))
+      bottom / 100% calc(100% - var(--title-h, 31px)) no-repeat;
+  border-color: rgba(0, 0, 0, min(0.16, calc(var(--window-opacity) * 0.24)));
+}
+html.csLight .meter > :not(.dockPanel),
+html.csLight .meter > :not(.dockPanel) img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.footerBtns .csLookBtn {
+  width: 18px;
+  min-width: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.footerBtns .csLookBtn svg { width: 12px; height: 12px; }
+.footerBtns .csLookBtn[aria-pressed="true"] { color: rgba(255, 255, 255, 0.9); }
+.meter.slim .footerBtns .csLookBtn { padding: 0; }

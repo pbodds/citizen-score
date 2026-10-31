@@ -234,7 +234,7 @@ test('new dimensions are queued in order and readiness waits for the latest nati
   first.resolve();
   await settle();
   assert.equal(resizes, 2);
-  assert.deepEqual(app.calls.filter(call => call.command === 'resize_window').map(call => call.args.width), [396, 436]);
+  assert.deepEqual(app.calls.filter(call => call.command === 'resize_window').map(call => call.args.width), [380, 420]);
   assert.ok(!app.calls.some(call => call.command === 'main_window_ready'));
   second.resolve();
   assert.equal(await next, true);
@@ -274,7 +274,7 @@ test('a queued automatic size does not interrupt the actual Windows resize press
   const second = app.window.javaBridge.updateOverlaySize();
   const target = { nodeType: 1, closest: selector => selector === '.resizeHandle' ? target : null };
   app.domHandlers.get('mousedown').forEach(handler => handler.callback({ button: 0, target }));
-  assert.deepEqual(app.calls.filter(call => call.command === 'resize_window').map(call => call.args.width), [396, 1920]);
+  assert.deepEqual(app.calls.filter(call => call.command === 'resize_window').map(call => call.args.width), [380, 1920]);
   first.resolve();
   assert.equal(await second, false);
   assert.equal(resizes, 2);

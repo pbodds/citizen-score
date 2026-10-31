@@ -435,10 +435,17 @@ html:lang(zh-Hant), html:lang(zh-Hant) body {
     linear-gradient(rgba(var(--hud-bg), var(--window-opacity)), rgba(var(--hud-bg), var(--window-opacity)))
       bottom / 100% calc(100% - var(--title-h, 31px)) no-repeat;
   border: 1px solid rgba(255, 255, 255, min(0.14, calc(var(--window-opacity) * 0.2)));
-  box-shadow: 0 8px 28px rgba(0, 0, 0, calc(var(--window-opacity) * 0.45));
+  /* No shadow: the window fits the meter exactly, so one would be cut off
+     square at its edges. */
 }
 .meter.flash {
-  animation: detailsFlash 1s ease-out;
+  animation: meterFlash 1s ease-out;
+}
+/* detailsFlash's glow, inside: around the meter it would be cut off. */
+@keyframes meterFlash {
+  0% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+  35% { box-shadow: inset 0 0 14px 1px rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.6); }
+  100% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
 }
 
 body.linuxOverlay .meter {

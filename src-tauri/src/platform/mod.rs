@@ -38,7 +38,7 @@ pub mod procfs;
 pub mod screenshot;
 
 pub use os::{
-    admin, clock, dialog, pcap, process, shell, window, window_detector, window_rules, window_startup,
+    admin, clock, dialog, pcap, process, shell, updater, window, window_detector, window_rules, window_startup,
 };
 
 pub use os::atomic_file;

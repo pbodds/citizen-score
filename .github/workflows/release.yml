@@ -29,6 +29,9 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   FEATURES: --no-default-features --features desktop
+  # The release the meter is built as (build.rs → updater.rs), so it knows
+  # when a newer one is out. Ignored unless it is a v<version>-cs.<n> tag.
+  CITIZEN_RELEASE: ${{ github.ref_name }}
 
 jobs:
   windows:
@@ -278,12 +281,24 @@ jobs:
           rm -f citizen-score citizen-score-hotkeys
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
+      # "What's new" first, from the tag's message (the meter's update box
+      # shows it), then the downloads table.
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          {
+            echo "## What's new"
+            echo
+            git tag -l --format='%(contents:body)' "$GITHUB_REF_NAME" | sed '/^-----BEGIN/,$d'
+            git tag -l --format='%(contents:subject)' "$GITHUB_REF_NAME" | sed 's/^Citizen Score [^:]*: *//' | grep -v '^$' | sed 's/^/- /' | head -n1
+            echo
+            cat .github/release-notes.md
+          } > notes.md
+          cat notes.md
           gh release create "$GITHUB_REF_NAME" dist/* \
             --repo "$GITHUB_REPOSITORY" \
             --title "Citizen Score $GITHUB_REF_NAME" \
-            --notes-file .github/release-notes.md \
+            --notes-file notes.md \
             --generate-notes

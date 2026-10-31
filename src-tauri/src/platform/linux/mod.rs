@@ -17,6 +17,7 @@ mod focus;
 pub mod pcap;
 pub mod process;
 pub mod screen;
+pub mod updater;
 pub mod window;
 pub mod window_detector;
 pub mod window_rules;

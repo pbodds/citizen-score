@@ -40,6 +40,8 @@ mod npcap_setup;
 mod app;
 #[cfg(feature = "desktop")]
 mod citizen_window;
+#[cfg(feature = "desktop")]
+mod updater;
 
 #[cfg(feature = "desktop")]
 mod atomic_file;

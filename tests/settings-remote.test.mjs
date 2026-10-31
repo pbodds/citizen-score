@@ -274,8 +274,8 @@ test("both layout dropdown choices (Standard, Slim) round-trip to main classes a
     }
     const size = fixture.calls.filter((call) => call.command === "resize_window").at(-1);
     assert.equal(size.view, "main");
-    assert.equal(size.args.width, beta ? 396 : 436);
-    assert.equal(size.args.height, (slim ? 22 : 31) * 6 + 60);
+    assert.equal(size.args.width, beta ? 380 : 420);
+    assert.equal(size.args.height, (slim ? 22 : 31) * 6 + 50);
   }
   assert.equal(fixture.writes().length, sequence.length * 2, "only the two originating settings writes per choice");
   assert.ok(fixture.writes().every((call) => call.view === "settings"));
