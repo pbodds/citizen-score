@@ -1,7 +1,7 @@
 {
   "id": "plus-souls",
   "name": "Pet Map",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "apiVersion": 2,
   "author": "Citizen Score",
   "description": "Souls still needed to raise each pet, where each pet's souls drop, and an Areas view ranking where to farm next, with the map you're on first, and a radar over the game: the monsters around you that drop souls you still need, how far and which way, plus the other monsters, bosses and NPCs in view.",

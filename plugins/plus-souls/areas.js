@@ -173,7 +173,8 @@ areaEls.list?.addEventListener("click", (e) => {
 
 a2.on("zone", (z) => {
   zoneMap = z?.map ?? null;
-  renderAreas();
+  // The list too: the map you are on is never hidden (plugin.js hiddenNow).
+  render();
 });
 
 // A soul picked up on a map not known yet, for a pet whose souls drop on one
@@ -184,7 +185,7 @@ a2.on("decoded:soul-gained", ({ pet }) => {
   if (maps.size !== 1) return;
   learnedMaps[zoneMap] = [...maps][0];
   a2.storage.set("maps", learnedMaps).catch(() => {});
-  renderAreas();
+  render();
 });
 
 (async () => {
@@ -192,8 +193,7 @@ a2.on("decoded:soul-gained", ({ pet }) => {
   try {
     zoneMap = (await a2.localWorld())?.map ?? null;
   } catch {}
-  showView(prefs.view);
-  renderAreas();
+  render();
 })();
 
 // Citizen Score: the filters (genus, level, regions, level 3, text size) fold

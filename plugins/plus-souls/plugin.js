@@ -151,6 +151,19 @@ const REGIONS = Object.keys(REGION_MAP)
 // The pet you last picked up a soul for counts as being farmed this long, and
 // sorts first (after the pinned ones).
 const FARMING_MS = 30 * 60 * 1000;
+// Each map's regions, by its name key.
+const MAP_REGIONS = {};
+for (const s of Object.values(PET_SOURCES)) for (const d of s.drops) if (d.region) (MAP_REGIONS[d.map] ||= new Set()).add(d.region);
+// The regions hidden from the pet list and a pet's sources: the ones turned
+// off, except those of the map you are on (areas.js: zoneMap), so farming in
+// a region turned off still lists its pets.
+const hiddenNow = () => {
+  let here;
+  try {
+    here = MAP_REGIONS[mapKeyOf(zoneMap)];
+  } catch {} // areas.js not loaded yet
+  return here ? hiddenRegions().filter((r) => !here.has(r)) : hiddenRegions();
+};
 const GENUS_ORDER = ["cogni", "fera", "natura", "varian"];
 
 const savePrefs = () => a2.storage.set("prefs", prefs).catch(() => {});
@@ -232,10 +245,12 @@ function render() {
   // With a region turned off, the pets whose souls drop only there leave the
   // list. Chests don't count (nearly every pet has one, from the battle pass);
   // a pet no monster is known to drop stays, as nothing says where it is.
-  const hidden = new Set(hiddenRegions());
+  const farming = state.lastGain && Date.now() - state.lastGain.at < FARMING_MS ? String(state.lastGain.pet) : null;
+  const hidden = new Set(hiddenNow());
   const ofRegion = (p) => {
     const src = PET_SOURCES[p.id];
-    if (!hidden.size || !src || !src.drops.length) return true;
+    // The pet you are picking up souls for stays, wherever it drops.
+    if (!hidden.size || !src || !src.drops.length || p.id === farming) return true;
     return src.drops.some((d) => !regionOf(d) || !hidden.has(regionOf(d)));
   };
   renderChips(els.genus, "genus", listed.filter(ofLevel).filter(ofRegion), (p) => p.genus,
@@ -246,16 +261,17 @@ function render() {
     NEEDED.map((_, l) => [String(l), `Lv ${l}`]).concat([[String(MAX_LEVEL), `Lv ${MAX_LEVEL}`]]));
   // Pinned pets first, in the order pinned; then the one being farmed; then the chosen sort.
   const pinned = (prefs.pinned || []).map(String);
-  const farming = state.lastGain && Date.now() - state.lastGain.at < FARMING_MS ? String(state.lastGain.pet) : null;
   const pinRank = (p) => (pinned.includes(p.id) ? pinned.indexOf(p.id) : pinned.length + (p.id === farming ? 0 : 1));
+  // The buttons show what is turned off, even where you are.
+  const picked = new Set(hiddenRegions());
   els.regions.replaceChildren(
     ...REGIONS.map((region) => {
       const b = document.createElement("button");
       b.type = "button";
       b.dataset.region = region;
       b.textContent = text(REGION_MAP[region]).replace("Chaotic ", "");
-      b.title = text(REGION_MAP[region]);
-      b.setAttribute("aria-pressed", String(!hidden.has(region)));
+      b.title = text(REGION_MAP[region]) + (picked.has(region) && !hidden.has(region) ? " · off, but shown while you are there" : "");
+      b.setAttribute("aria-pressed", String(!picked.has(region)));
       return b;
     }),
   );
@@ -340,7 +356,7 @@ function whereOf(id) {
     div.textContent = parts.filter(Boolean).join(" · ");
     return div;
   };
-  const hidden = new Set(hiddenRegions());
+  const hidden = new Set(hiddenNow());
   const elsewhere = new Set();
   for (const d of src.drops) {
     if (hidden.has(regionOf(d))) {
