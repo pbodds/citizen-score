@@ -81,3 +81,25 @@ body:not(.locked) .popHead { cursor: grab; }
 .pcard .nums { margin: 0 0 4px; }
 .popFoot { flex: none; margin-top: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.35); text-align: center; }
 .empty { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
+
+/* Faction, class, and the card's extras. */
+.tag.side.enemy { background: rgba(255, 110, 90, 0.2); color: #ff8a7a; }
+.tag.side.ally { background: rgba(126, 226, 168, 0.16); color: #7ee2a8; }
+.clsBadge { flex: none; width: 28px; padding: 1px 0; border-radius: 4px; text-align: center; font-size: 8px; font-weight: 800; color: #0b0f18; background: var(--c, rgba(255, 255, 255, 0.25)); }
+.c-gladiator { --c: #e8935a; } .c-templar { --c: #d9c072; } .c-assassin { --c: #b58cf0; } .c-ranger { --c: #8fd17a; }
+.c-sorcerer { --c: #6fb6ff; } .c-spiritmaster { --c: #5fd3c8; } .c-cleric { --c: #f2f2f2; } .c-chanter { --c: #f0a6c8; }
+.prow.stale { opacity: 0.55; }
+.more, .moreBox > div { margin-top: 3px; font-size: 10px; color: rgba(255, 255, 255, 0.75); }
+.more:empty { display: none; }
+.more > div { margin-top: 2px; }
+.sum { color: #ffc66b; }
+.lab { color: rgba(255, 255, 255, 0.45); }
+.arc .nm { white-space: normal; }
+.dim { color: rgba(255, 255, 255, 0.45); }
+
+/* The fight card stays small over the game: gear as slot + enchant in two
+   columns, coloured by grade (full name on hover). */
+.card .gear { grid-template-columns: 1fr 1fr; column-gap: 10px; }
+.card .g { grid-template-columns: 1fr auto; }
+.card .g .nm { display: none; }
+.card .g .slot { color: var(--g, #fff); }

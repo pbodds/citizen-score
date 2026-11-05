@@ -1,10 +1,10 @@
 {
   "id": "plus-players",
   "name": "Players",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "apiVersion": 2,
   "author": "Citizen Score",
-  "description": "Look up any AION 2 character on the Global servers: combat power, item level, stats, gear and Arcana, skills and stigmas, and every Daevanion board node by node. Lists the players around you with a hover card of their gear and combat power, and a card over the game for whoever you fight. Asks NCSOFT's own character site, only when you search, hover or fight.",
+  "description": "Look up any AION 2 character on the Global servers: combat power, item level, stats, gear and Arcana, skills and stigmas, and every Daevanion board node by node. Lists the players around you (fighting, party, nearby; allies and enemies): click one for their gear with Manastones and Theostones, Arcana skill lines, stigma and skill levels, and a card over the game for whoever you fight. Asks NCSOFT's own character site, only when you search, hover or fight.",
   "permissions": [
     "storage",
     "events:character",

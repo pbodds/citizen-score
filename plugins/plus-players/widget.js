@@ -18,6 +18,7 @@ a2.on("widget", (d) => {
   $(".gear").replaceChildren(...(d.gear || []).map((it) => {
     const r = document.createElement("div");
     r.className = `g g-${it.grade || ""}`;
+    r.title = it.name;
     for (const [cls, text] of [["slot", it.slot], ["nm", it.name], ["lv", it.lvl]]) {
       const s = document.createElement("span");
       s.className = cls;
@@ -26,10 +27,50 @@ a2.on("widget", (d) => {
     }
     return r;
   }));
+  drawMore($(".more"), d, true);
+  const side = $(".side");
+  side.hidden = !d.side;
+  side.textContent = d.side || "";
+  side.className = `tag side ${d.side || ""}`;
   reportArea();
 });
 
 // --- "around": the list, hovered rows' cards asked of the panel ---------------
+// Gear summary, Arcana, stigmas and skills, pet and wings under a card.
+function drawMore(box, c, compact) {
+  box.replaceChildren();
+  const add = (cls, text) => {
+    const e = document.createElement("div");
+    e.className = cls;
+    if (text != null) e.textContent = text;
+    box.append(e);
+    return e;
+  };
+  if (c.summary?.length) add("more sum", c.summary.join(" · "));
+  if (c.stigmas?.length) add("more", "").append(lab("Stigmas"), c.stigmas.map(([n, l]) => `${n} ${l}`).join(" · "));
+  if (c.skills?.length && !compact) add("more", "").append(lab("Skills"), c.skills.slice(0, 6).map(([n, l]) => `${n} ${l}`).join(" · "));
+  if (compact && c.arcana?.length) {
+    const r = add("more", "");
+    r.append(lab("Arcana"), c.arcana.map((a) => `${a.name.replace(/ of .*/, "")} ${a.lvl}`).join(" · "));
+    r.title = c.arcana.map((a) => `${a.name} ${a.lvl}${a.lines?.length ? `: ${a.lines.join(", ")}` : ""}`).join("\n");
+  }
+  for (const a of compact ? [] : c.arcana || []) {
+    const r = add(`more arc g-${a.grade}`, "");
+    const n = document.createElement("span");
+    n.className = "nm";
+    n.textContent = `${a.name} ${a.lvl}`;
+    r.append(n);
+    if (a.lines?.length) r.append(`: ${a.lines.join(", ")}`);
+  }
+  if (c.extras) add("more dim", c.extras);
+}
+function lab(text) {
+  const s = document.createElement("span");
+  s.className = "lab";
+  s.textContent = `${text} `;
+  return s;
+}
+
 const pop = document.querySelector(".aroundPop");
 const rowsBox = pop.querySelector(".rows");
 const ZOOMS = [0.95, 1, 1.12, 1.25];
@@ -69,6 +110,7 @@ function drawCardInto(box, c) {
     }
     gear.append(r);
   }
+  drawMore(add("div", "moreBox"), c);
 }
 
 function drawAround(d) {
@@ -88,15 +130,20 @@ function drawAround(d) {
   }
   rowsBox.replaceChildren(...d.rows.map((r) => {
     const row = document.createElement("div");
-    row.className = `prow${r.fighting ? " fighting" : ""}${r.id === hovered ? " on" : ""}`;
+    row.className = `prow${r.fighting ? " fighting" : ""}${r.stale ? " stale" : ""}${r.id === hovered ? " on" : ""}`;
+    const badge = document.createElement("span");
+    badge.className = `clsBadge c-${r.clsName || "none"}`;
+    badge.textContent = r.cls || "?";
+    row.append(badge);
     const main = document.createElement("div");
     main.className = "pmain";
     const name = document.createElement("strong");
     name.textContent = r.name;
-    if (r.party) {
+    for (const [on, text, cls] of [[r.party, "party", "tag"], [r.side, r.side, `tag side ${r.side}`]]) {
+      if (!on) continue;
       const t = document.createElement("span");
-      t.className = "tag";
-      t.textContent = "party";
+      t.className = cls;
+      t.textContent = text;
       name.append(" ", t);
     }
     const sub = document.createElement("span");
