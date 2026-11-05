@@ -262,15 +262,35 @@ function arcanaPart(id, mode, deep) {
 }
 
 function gearPart(b, mode) {
-  const dl = el("dl", "facts");
+  const box = el("div", "gearFacts");
   const modes = mode === "compare" ? ["pve", "pvp"] : [mode];
-  const add = (k, v) => dl.append(el("dt", null, k), el("dd", null, v));
-  add("Stats", b.stats);
-  add("Manastones", b.manastones);
-  for (const m of modes) add(`Theostone${modes.length > 1 ? ` ${MODE_NAME[m]}` : ""}`, b[m].theostone);
-  for (const m of modes) add(`Wings${modes.length > 1 ? ` ${MODE_NAME[m]}` : ""}`, b[m].wings);
-  add("Gear", b.gear);
-  return dl;
+  const tile = (label, cls) => {
+    const t = el("div", `gf${cls ? ` ${cls}` : ""}`);
+    t.append(el("div", "gfHead", label));
+    box.append(t);
+    return t;
+  };
+  // Stat priority as numbered steps.
+  const st = tile("Stat priority", "gfWide");
+  const steps = el("ol", "gfSteps");
+  for (const x of String(b.stats || "").split(/\s*>\s*/).filter(Boolean)) steps.append(el("li", null, x));
+  st.append(steps);
+  // Manastones: one line per kind of gear ("Weapon: …. Armour: …").
+  const ms = tile("Manastones", "gfWide");
+  for (const part of String(b.manastones || "").split(/\.\s+(?=[A-Z][^:]*:)/)) {
+    const m = part.replace(/\.$/, "").match(/^([^:]+):\s*(.*)$/);
+    const row = el("div", "gfRow");
+    if (m) row.append(el("span", "gfKey", m[1]), el("span", null, m[2]));
+    else row.append(el("span", null, part));
+    ms.append(row);
+  }
+  for (const m of modes) {
+    const label = modes.length > 1 ? ` ${MODE_NAME[m]}` : "";
+    tile(`Theostone${label}`, m).append(el("div", "gfVal", b[m].theostone));
+    tile(`Wings${label}`, m).append(el("div", "gfVal", b[m].wings));
+  }
+  tile("Gear", "gfWide").append(el("div", "gfVal", b.gear));
+  return box;
 }
 
 // PvE: the in-game macro (play.js); PvP: the combos.
@@ -332,6 +352,8 @@ function renderBuild(root, id, mode, { deep = false, open = null, onToggle = nul
     }
   }, true, deep);
 
+  if (deep) add("Stats, gear, Theostone", (body) => body.append(gearPart(b, mode)), false, true);
+
   if (modes.length > 1) {
     add("Macro and rotation", (body) => {
       const cols = el("div", "cols");
@@ -362,7 +384,7 @@ function renderBuild(root, id, mode, { deep = false, open = null, onToggle = nul
     add("Skills", (body) => body.append(skillsPart(b, mode, deep, id)), true);
   }
   add("Passives", (body) => body.append(passivesPart(id, mode === "compare" ? "pve" : mode, deep)), false);
-  add("Stats, gear, Theostone", (body) => body.append(gearPart(b, mode)), false);
+  if (!deep) add("Stats, gear, Theostone", (body) => body.append(gearPart(b, mode)), false);
   add("Arcana", (body) => body.append(arcanaPart(id, mode, deep)), true);
   add("Sources", (body) => {
     body.append(el("p", "note", `Compiled ${BUILD_UPDATED}. Pick rates are what top players run, not a simulation: they move with patches.`));

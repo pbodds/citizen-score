@@ -473,3 +473,18 @@ body.onGuide .modes, body.onGuide .bar .classes { display: none; }
 .spPts { flex: none; font-size: 10px; padding: 0 5px; border-radius: 999px; background: rgba(143, 194, 255, 0.14); color: #8fc2ff; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .spHead .spPts { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); }
 .warnNote { color: #ffb347; }
+
+/* Stats, gear, Theostone: tiles (one column in the panel, several in the pop-out). */
+.gearFacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 5px; font-size: 11px; }
+.gf { padding: 5px 8px; border-radius: 7px; background: rgba(255, 255, 255, 0.04); min-width: 0; }
+.gf.gfWide { grid-column: 1 / -1; }
+.gf.pvp { background: rgba(255, 138, 122, 0.06); }
+.gf.pve { background: rgba(143, 194, 255, 0.06); }
+.gfHead { margin-bottom: 2px; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.45); }
+.gfVal { color: rgba(255, 255, 255, 0.8); }
+.gfRow { display: grid; grid-template-columns: 74px 1fr; gap: 6px; color: rgba(255, 255, 255, 0.8); }
+.gfKey { color: rgba(255, 255, 255, 0.55); }
+.gfSteps { display: flex; flex-wrap: wrap; gap: 3px 4px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
+.gfSteps li { counter-increment: s; padding: 1px 7px 1px 3px; border-radius: 999px; background: rgba(255, 198, 107, 0.1); color: #ffe2b0; white-space: nowrap; }
+.gfSteps li::before { content: counter(s); display: inline-block; width: 14px; height: 14px; margin-right: 4px; border-radius: 50%; text-align: center; font-size: 9px; line-height: 14px; font-weight: 700; color: #0b0f18; background: #ffc66b; }
+.gfSteps li + li { position: relative; }

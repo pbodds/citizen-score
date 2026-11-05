@@ -50,7 +50,7 @@ body.locked .bar { cursor: default; }
 
 .build.grid {
   flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 12px 14px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; align-content: start;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; align-content: start; align-items: start;
 }
 .build.grid > .classHead { grid-column: 1 / -1; margin: 0; }
 .card { padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.035); min-width: 0; }
@@ -73,3 +73,7 @@ body.locked .bar { cursor: default; }
 .guide .gCh { break-inside: avoid; }
 .guide::-webkit-scrollbar { width: 8px; }
 .guide::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+
+.deep .gearFacts { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.deep .gearFacts .gfWide { grid-column: span 2; }
+@media (max-width: 520px) { .deep .gearFacts .gfWide { grid-column: auto; } }
