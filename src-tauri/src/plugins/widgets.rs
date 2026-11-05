@@ -84,10 +84,13 @@ fn areas() -> &'static Mutex<HashMap<String, Area>> {
 /// page has loaded (`plugin_widget_hello`) and each time it is shown again.
 fn apply_lock(window: &tauri::WebviewWindow, locked: bool) {
     // Citizen Score: an alert banner (a widget named "banner": World Timers',
-    // Dailies') never takes the mouse, locked or not: it shows over other
-    // windows and goes by itself.
-    let locked = locked || parse_label(window.label()).is_some_and(|(_, name)| name == "banner");
+    // Dailies') takes the mouse on its card alone, locked or not, so it can
+    // be closed (its ✕, or a click anywhere on it); the see-through rest of
+    // its window lets clicks through. Until its page has said where the card
+    // is, none of it takes clicks.
+    let banner = parse_label(window.label()).is_some_and(|(_, name)| name == "banner");
     let area = areas().lock().unwrap_or_else(|p| p.into_inner()).get(window.label()).copied();
+    let locked = if banner { area.is_none() } else { locked };
     let applied = match (locked, area) {
         (true, _) => crate::platform::window::click_through_except(window, true, None),
         (false, Some(area)) => crate::platform::window::click_through_except(window, true, Some(area)),

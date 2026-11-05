@@ -1164,7 +1164,11 @@
       .then(() => {
         // A queued auto-size must not interrupt a resize the player began.
         if (resizeActive) return false;
-        return invoke("resize_window", { width: w, height: h, scale }).then(() => true);
+        // Citizen Score: a meter placed freely keeps its top-left as it
+        // grows (Hyprland would grow it about its centre); a snapped one
+        // is moved to its corner by citizen.js.
+        const snapTo = String(window.javaBridge?.getSetting?.("citizen.window.snap") || "free");
+        return invoke("resize_window", { width: w, height: h, scale, keep: snapTo === "free" }).then(() => true);
       })
       .then((applied) => {
         if (!applied && pendingWindowSize === operation) lastSizeKey = "";

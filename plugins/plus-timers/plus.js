@@ -113,7 +113,7 @@ a2.on("character", () => applyKills());
 // the bottom-right corner of the game's monitor without focus
 // (~/.config/hypr/hyprland.lua), instead of opening this panel in the meter.
 // The panel still lists them; the banner goes when they are dismissed, here
-// or by clicking it, or after BANNER_MS.
+// or by clicking it (its ✕ or anywhere on it), or after BANNER_MS.
 const BANNER_SIZE = { width: 380, height: 200 };
 const canBanner = () => !!(a2.widgets && typeof a2.widgets.open === "function");
 let bannerWidgetTimer = 0;
@@ -123,7 +123,7 @@ function closeBannerWidget() {
 }
 function showBannerWidget() {
   a2.widgets.open("banner", BANNER_SIZE)
-    .then(() => a2.widgets.send("banner", { banner: true, lines: [...lines] }))
+    .then(() => a2.widgets.send("banner", { banner: true, lines: [...lines], ttl: BANNER_MS }))
     .catch(() => {});
   clearTimeout(bannerWidgetTimer);
   bannerWidgetTimer = setTimeout(closeBannerWidget, BANNER_MS);
@@ -131,7 +131,7 @@ function showBannerWidget() {
 els.dismiss.addEventListener("click", closeBannerWidget);
 a2.on("widget-message", (msg) => {
   if (msg?.name !== "banner") return;
-  if (msg.data?.ready && lines.length) a2.widgets.send("banner", { banner: true, lines: [...lines] }).catch(() => {});
+  if (msg.data?.ready && lines.length) a2.widgets.send("banner", { banner: true, lines: [...lines], ttl: BANNER_MS }).catch(() => {});
   if (!msg.data?.dismiss) return;
   clearBanner();
   closeBannerWidget();

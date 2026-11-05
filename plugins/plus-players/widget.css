@@ -1,0 +1,83 @@
+/* Scrollbars: WebKitGTK's own is white, and flashes up whenever the panel
+   resizes (the meter growing for a panel). A thin dark one instead. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  min-height: 28px; border: 2px solid transparent; border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: rgba(255, 255, 255, 0.35); }
+
+/* Form controls. WebKitGTK (the meter on Linux) draws them as native GTK
+   widgets: white boxes with the page's light text on them. Drawn by CSS
+   instead, dark; a dropdown keeps its arrow as a background image, so the
+   rules below that set a select's background or padding can't drop it. */
+button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+select {
+  color: rgba(255, 255, 255, 0.88);
+  background-color: #1b2130;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding-right: 18px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23aab4c8' stroke-width='1.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  background-size: 9px 6px !important;
+}
+select option, select optgroup { color: #e8eef8; background-color: #1b2130; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { color-scheme: dark; accent-color: #8fc2ff; }
+
+html, body { margin: 0; background: transparent; overflow: hidden; }
+body { font: 12px/1.35 "Segoe UI", system-ui, sans-serif; color: #e8eef8; user-select: none; }
+[hidden] { display: none !important; }
+.card { margin: 4px; padding: 8px 10px; border-radius: 10px; background: rgba(10, 14, 22, 0.86); border: 1px solid rgba(255, 110, 90, 0.45); }
+body:not(.locked) .card { cursor: grab; }
+.head { display: flex; align-items: center; gap: 6px; }
+.name { font-size: 14px; color: #fff; }
+.tag { font-size: 9px; padding: 0 5px; border-radius: 999px; background: rgba(143, 194, 255, 0.18); color: #8fc2ff; text-transform: uppercase; }
+.x { margin-left: auto; padding: 0 4px; font-size: 11px; color: rgba(255, 255, 255, 0.45); background: none; border: 0; cursor: pointer; }
+.x:hover { color: #fff; }
+.sub { font-size: 11px; color: rgba(255, 255, 255, 0.55); }
+.nums { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 5px 0; }
+.nums div { display: flex; flex-direction: column; padding: 3px 7px; border-radius: 7px; background: rgba(255, 255, 255, 0.05); }
+.nums b { font-size: 15px; color: #ffc66b; }
+.nums span { font-size: 9px; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.06em; }
+.state { font-size: 10px; color: rgba(255, 255, 255, 0.5); }
+.state:empty { display: none; }
+.gear { display: grid; grid-template-columns: 1fr; gap: 1px; margin-top: 3px; }
+.g { display: grid; grid-template-columns: 52px 1fr auto; gap: 5px; font-size: 10px; }
+.slot { color: rgba(255, 255, 255, 0.4); }
+.nm { color: var(--g, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv { font-weight: 600; }
+.g-common { --g: #d8d8d8; } .g-rare { --g: #6fb6ff; } .g-legend { --g: #ffb347; }
+.g-unique { --g: #c98bff; } .g-epic { --g: #ff7aa8; } .g-special { --g: #7ee2a8; }
+
+/* "around": the list. */
+body.isAround { height: calc(100vh / var(--z, 1)); }
+.aroundPop {
+  display: flex; flex-direction: column; box-sizing: border-box; height: calc(100vh / var(--z, 1) - 8px); margin: 4px; padding: 7px 9px;
+  border-radius: 10px; background: rgba(10, 14, 22, 0.88); border: 1px solid rgba(143, 194, 255, 0.35);
+}
+.popHead { flex: none; margin-bottom: 5px; }
+body:not(.locked) .popHead { cursor: grab; }
+.popHead strong { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #8fc4ff; }
+.popCount { font-size: 10px; color: rgba(255, 255, 255, 0.45); }
+.sz { margin-left: 2px; width: 20px; height: 18px; padding: 0; font-size: 12px; line-height: 1; color: rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 5px; cursor: pointer; }
+.sz:first-of-type { margin-left: auto; }
+.popX { margin-left: 4px; }
+.rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+.prow { display: flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 7px; background: rgba(255, 255, 255, 0.04); border: 1px solid transparent; cursor: pointer; }
+.prow:hover, .prow.on { background: rgba(143, 194, 255, 0.1); border-color: rgba(143, 194, 255, 0.3); }
+.prow.fighting { border-color: rgba(255, 110, 90, 0.55); background: rgba(255, 110, 90, 0.1); }
+.pmain { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pmain strong { color: #fff; font-size: 13px; }
+.psub { font-size: 10px; color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcp { font-size: 11px; font-weight: 600; color: #ffc66b; }
+.pcard { padding: 6px 8px; border-radius: 8px; background: #151b28; border: 1px solid rgba(143, 194, 255, 0.3); }
+.pcard .nums { margin: 0 0 4px; }
+.popFoot { flex: none; margin-top: 5px; font-size: 9px; color: rgba(255, 255, 255, 0.35); text-align: center; }
+.empty { font-size: 11px; color: rgba(255, 255, 255, 0.5); }

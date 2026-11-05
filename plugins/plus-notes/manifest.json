@@ -1,0 +1,18 @@
+{
+  "id": "plus-notes",
+  "name": "Notes",
+  "version": "1.0.1",
+  "apiVersion": 2,
+  "author": "Citizen Score",
+  "description": "A notepad for what you need to do: a to-do list you tick off and free notes, saved as you type.",
+  "permissions": [
+    "storage"
+  ],
+  "decoders": [],
+  "ui": {
+    "panel": {
+      "width": 360,
+      "height": 540
+    }
+  }
+}

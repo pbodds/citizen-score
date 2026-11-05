@@ -1,6 +1,7 @@
 // Citizen Score: the docked panels. The meter's main window hosts the Pet Map
-// (plus-souls), World Timers (plus-timers), Dailies (plus-dailies) and Builds
-// (plus-builds) plugins below the DPS list, each opened from its header icon,
+// (plus-souls), World Timers (plus-timers), Dailies (plus-dailies), Builds
+// (plus-builds), Players (plus-players) and Notes (plus-notes)
+// plugins below the DPS list, each opened from its header icon,
 // one at a time. All run from the start, hidden when closed, so timers keep
 // counting and alerts keep coming.
 //
@@ -26,6 +27,7 @@
     { id: "plus-dailies", btn: ".dailiesBtn" },
     { id: "plus-builds", btn: ".buildsBtn" },
     { id: "plus-players", btn: ".playersBtn" },
+    { id: "plus-notes", btn: ".notesBtn" },
   ];
   const OPEN_KEY = "citizen.dock.open";
 

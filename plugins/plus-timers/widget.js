@@ -22,8 +22,29 @@ const initials = (name) => {
 const banner = document.querySelector(".banner");
 const bannerLines = document.querySelector(".bannerLines");
 
+const rift = document.querySelector(".riftCard");
+const $r = (c) => rift.querySelector(c);
+
 a2.on("widget", (d) => {
   if (!d) return;
+  // The rift card (rift.js), sent every second.
+  if (d.rift) {
+    document.body.classList.add("isRift");
+    pin.hidden = true;
+    rift.hidden = false;
+    $r(".riftName").textContent = d.name || "";
+    $r(".riftTime").textContent = d.countdown || "";
+    $r(".riftAt").textContent = [d.at, d.where].filter(Boolean).join(" · ");
+    $r(".riftLater").textContent = d.later || "";
+    const badgeEl = $r(".riftBadge");
+    badgeEl.textContent = d.badge || "";
+    badgeEl.hidden = !d.badge;
+    $r(".riftFill").style.width = `${Math.round((d.progress || 0) * 1000) / 10}%`;
+    rift.className = `riftCard ${d.state || "wait"}`;
+    document.title = `${d.name || "Rift"} · card`;
+    reportArea();
+    return;
+  }
   // The alert banner (plus.js): its lines, newest last, and no icon.
   if (d.banner) {
     document.body.classList.add("isBanner");
@@ -35,6 +56,17 @@ a2.on("widget", (d) => {
       div.textContent = line;
       return div;
     }));
+    // The bar along its foot runs down over the time it has left.
+    if (d.ttl) {
+    const secs = Math.max(1, Math.round(d.ttl / 1000));
+    banner.style.setProperty("--ttl", `${secs}s`);
+    banner.style.setProperty("--steps", String(secs));
+  }
+    const decay = banner.querySelector(".bannerDecay");
+    if (decay) {
+      decay.hidden = !d.ttl;
+      decay.replaceWith(decay.cloneNode(true));
+    }
     banner.classList.remove("pulse");
     void banner.offsetWidth;
     banner.classList.add("pulse");
@@ -72,7 +104,7 @@ a2.on("widget", (d) => {
 // The icon's drawn parts: only they take the mouse, so icons set close
 // together don't catch each other's drags (meter 2.0.70 on, Linux; elsewhere
 // a press beside them just does nothing).
-const SHOWN = ".badge, .time, .sub, .name, .banner";
+const SHOWN = ".badge, .time, .sub, .name, .banner, .riftCard";
 let lastArea = "";
 function reportArea() {
   if (typeof a2.widget.area !== "function") return;
@@ -116,9 +148,14 @@ let lastClick = 0;
 banner.addEventListener("click", () => {
   a2.widget.post({ dismiss: true }).catch(() => {});
 });
+// The rift card's ✕ turns it off (Settings switches it back on).
+$r(".riftClose").addEventListener("click", (e) => {
+  e.stopPropagation();
+  a2.widget.post({ close: true }).catch(() => {});
+});
 document.addEventListener("mousedown", (e) => {
   if (e.button !== 0 || locked || !(e.target instanceof Element) || !e.target.closest(SHOWN)) return;
-  if (e.target.closest(".banner")) return;
+  if (e.target.closest(".banner, .riftClose")) return;
   e.preventDefault();
   press = { x: e.screenX, y: e.screenY };
 });

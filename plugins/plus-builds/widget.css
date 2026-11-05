@@ -1,3 +1,26 @@
+/* Form controls. WebKitGTK (the meter on Linux) draws them as native GTK
+   widgets: white boxes with the page's light text on them. Drawn by CSS
+   instead, dark; a dropdown keeps its arrow as a background image, so the
+   rules below that set a select's background or padding can't drop it. */
+button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+select {
+  color: rgba(255, 255, 255, 0.88);
+  background-color: #1b2130;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding-right: 18px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23aab4c8' stroke-width='1.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  background-size: 9px 6px !important;
+}
+select option, select optgroup { color: #e8eef8; background-color: #1b2130; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { color-scheme: dark; accent-color: #8fc2ff; }
+
 /* The pop-out: an opaque card filling its window, header to drag by, the
    build below in a grid of cards that scrolls. */
 html, body { height: 100%; overflow: hidden; }

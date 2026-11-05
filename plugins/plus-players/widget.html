@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Players</title>
+    <link rel="stylesheet" href="widget.css" />
+  </head>
+  <body>
+    <!-- "fight": the player you are fighting (around.js). -->
+    <div class="card" hidden>
+      <div class="head"><strong class="name"></strong><span class="tag" hidden>party</span><button type="button" class="x" title="Turn the fight card off">✕</button></div>
+      <div class="sub"></div>
+      <div class="nums">
+        <div><b class="cp"></b><span>Combat Power</span></div>
+        <div><b class="il"></b><span>Item Level</span></div>
+      </div>
+      <div class="state"></div>
+      <div class="gear"></div>
+    </div>
+    <!-- "around": the players around you (around.js). -->
+    <div class="aroundPop" hidden>
+      <div class="head popHead">
+        <strong>Around you</strong><span class="popCount"></span>
+        <button type="button" class="sz" data-d="-1" title="Smaller">−</button>
+        <button type="button" class="sz" data-d="1" title="Bigger">+</button>
+        <button type="button" class="x popX" title="Close the pop-out">✕</button>
+      </div>
+      <div class="rows"></div>
+      <div class="popFoot">Hover a name for their gear · click for everything</div>
+    </div>
+    <script src="/_sdk/a2.js"></script>
+    <script src="widget.js"></script>
+  </body>
+</html>

@@ -7,6 +7,9 @@
 //   pet and wings apart), skills with their levels, equipped titles and the
 //   Daevanion boards, each board drawable node by node.
 // - The last characters opened are kept, to open again in one click.
+// - Around you: the players the meter sees near you, with a card of their gear
+//   and combat power on hover, and over the game for whoever you fight
+//   (around.js).
 
 // Search gives a pcId (class × race × gender), four per class in this order.
 const PC_CLASSES = ["Gladiator", "Templar", "Ranger", "Assassin", "Spiritmaster", "Sorcerer", "Cleric", "Chanter"];
@@ -32,7 +35,7 @@ const els = {
   scale: document.querySelector(".scaleSelect"),
 };
 
-let prefs = { region: "nae", race: "", recent: [], open: {}, scale: 1 };
+let prefs = { region: "nae", race: "", recent: [], open: {}, scale: 1, fightCard: false };
 let me = null; // { name, serverId } from the meter
 let token = 0; // the latest request; older answers are dropped
 const save = () => a2.storage.set("prefs", prefs).catch(() => {});
@@ -161,6 +164,8 @@ function renderResults(keyword, res, page) {
 function showHome() {
   token++;
   const parts = [];
+  // Who is around you (around.js).
+  if (typeof aroundSection === "function") parts.push(aroundSection());
   if (prefs.recent.length) {
     parts.push(el("div", "listHead", "Recently opened"));
     const box = el("div", "hits");
@@ -429,7 +434,8 @@ a2.on("character", (c) => {
   if (me) els.me.title = `Look up ${me.name}`;
 });
 
-(async () => {
+// After every script of the page (around.js too) has run.
+const start = async () => {
   try {
     const saved = await a2.storage.get("prefs");
     if (saved) prefs = { ...prefs, ...saved, open: saved.open || {}, recent: saved.recent || [] };
@@ -438,6 +444,9 @@ a2.on("character", (c) => {
   els.race.value = prefs.race;
   renderScale();
   applyScale();
+  if (typeof syncFightOption === "function") syncFightOption();
   showHome();
   a2.ready();
-})();
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+else start();

@@ -29,9 +29,17 @@ a2.on("widget", (d) => {
       div.textContent = line;
       return div;
     }));
+    if (d.ttl) {
+    const secs = Math.max(1, Math.round(d.ttl / 1000));
+    banner.style.setProperty("--ttl", `${secs}s`);
+    banner.style.setProperty("--steps", String(secs));
+  }
+    const decay = banner.querySelector(".bannerDecay");
+    decay.replaceWith(decay.cloneNode(true));
     banner.style.animation = "none";
     void banner.offsetWidth;
     banner.style.animation = "";
+    reportArea();
     return;
   }
   if (d.list) {
@@ -44,10 +52,14 @@ a2.on("widget", (d) => {
   }
 });
 
+// A click on the banner, its × or anywhere on it, closes it.
+banner.addEventListener("click", () => a2.widget.post({ dismiss: true }).catch(() => {}));
+
 let lastArea = "";
 function reportArea() {
-  if (typeof a2.widget.area !== "function" || list.hidden) return;
-  const r = list.getBoundingClientRect();
+  const shown = !banner.hidden ? banner : !list.hidden ? list : null;
+  if (typeof a2.widget.area !== "function" || !shown) return;
+  const r = shown.getBoundingClientRect();
   const area = { x: Math.floor(r.left), y: Math.floor(r.top), width: Math.ceil(r.width), height: Math.ceil(r.height) };
   const key = JSON.stringify(area);
   if (key === lastArea) return;

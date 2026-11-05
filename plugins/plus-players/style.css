@@ -1,3 +1,36 @@
+/* Scrollbars: WebKitGTK's own is white, and flashes up whenever the panel
+   resizes (the meter growing for a panel). A thin dark one instead. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  min-height: 28px; border: 2px solid transparent; border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: rgba(255, 255, 255, 0.35); }
+
+/* Form controls. WebKitGTK (the meter on Linux) draws them as native GTK
+   widgets: white boxes with the page's light text on them. Drawn by CSS
+   instead, dark; a dropdown keeps its arrow as a background image, so the
+   rules below that set a select's background or padding can't drop it. */
+button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+select {
+  color: rgba(255, 255, 255, 0.88);
+  background-color: #1b2130;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding-right: 18px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23aab4c8' stroke-width='1.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  background-size: 9px 6px !important;
+}
+select option, select optgroup { color: #e8eef8; background-color: #1b2130; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { color-scheme: dark; accent-color: #8fc2ff; }
+
 /* Transparent: the window paints the panel. The look is the Builds' and Dailies'. */
 html, body {
   margin: 0;
@@ -126,3 +159,25 @@ button { cursor: pointer; }
 .node:not(.open).g-rare, .node:not(.open).g-legend, .node:not(.open).g-unique { border-color: var(--g); }
 .taken { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
 .taken span { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+
+/* Around you (around.js). */
+.fightOpt { display: flex; align-items: center; gap: 5px; margin: -2px 0 6px; font-size: 11px; color: rgba(255, 255, 255, 0.65); }
+.around { margin-bottom: 6px; }
+.around .hits { position: relative; }
+.aroundRow.fighting { border-color: rgba(255, 110, 90, 0.55); background: rgba(255, 110, 90, 0.08); }
+.hoverCard {
+  position: absolute; left: 0; right: 0; z-index: 5; padding: 8px 10px; border-radius: 9px;
+  background: #151b28; border: 1px solid rgba(143, 194, 255, 0.35); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+.cardHead { display: flex; align-items: baseline; gap: 6px; }
+.cardHead strong { font-size: 14px; color: #fff; }
+.tag { font-size: 9px; padding: 0 5px; border-radius: 999px; background: rgba(143, 194, 255, 0.18); color: #8fc2ff; text-transform: uppercase; letter-spacing: 0.06em; }
+.hoverCard .bigNums { margin: 5px 0; }
+.cardGear { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 8px; }
+.cg { display: grid; grid-template-columns: auto 1fr auto; gap: 4px; align-items: baseline; min-width: 0; font-size: 10px; }
+.cgSlot { color: rgba(255, 255, 255, 0.4); }
+.cgName { color: var(--g, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cgLvl { color: #fff; font-weight: 600; }
+.aroundHead { display: flex; align-items: center; gap: 6px; }
+.popBtn { margin-left: auto; padding: 1px 8px; font-size: 10px; text-transform: none; letter-spacing: 0; color: rgba(255, 255, 255, 0.8); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 6px; cursor: pointer; }

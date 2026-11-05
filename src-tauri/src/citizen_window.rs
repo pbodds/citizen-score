@@ -166,6 +166,84 @@ pub fn citizen_window(app: tauri::AppHandle, op: String, args: Value) -> Result<
     }
 }
 
+/// Where the main window's top-left was before the size changes now under
+/// way, and when that was read: a run of quick changes keeps the first.
+static HELD: std::sync::Mutex<Option<((i64, i64), std::time::Instant)>> = std::sync::Mutex::new(None);
+
+/// The meter's main window is about to take a new size (`resize_window`).
+/// Hyprland grows and shrinks a floating window about its centre, while the
+/// page is laid out from its top-left: opening a docked panel moved the
+/// meter's top up by half the panel's height, often off the top of the
+/// screen, and closing it again left the meter lower each time. So the
+/// top-left is read now, and once Hyprland reports the new size the window
+/// goes back there, moved up only as far as needed for its bottom to stay on
+/// its monitor's free area. Returns what `hold_place_after` needs.
+pub fn hold_place_before(app: &tauri::AppHandle) -> Option<(String, (i64, i64), (i64, i64))> {
+    if !hyprland() {
+        return None;
+    }
+    let client = main_client(app)?;
+    let address = client["address"].as_str()?.to_string();
+    let at = pair(&client["at"]);
+    let size = pair(&client["size"]);
+    let mut held = HELD.lock().unwrap_or_else(|p| p.into_inner());
+    let place = match *held {
+        Some((place, when)) if when.elapsed() < std::time::Duration::from_millis(1500) => place,
+        _ => at,
+    };
+    *held = Some((place, std::time::Instant::now()));
+    Some((address, place, size))
+}
+
+/// The second half of `hold_place_before`, off the UI thread.
+pub fn hold_place_after(held: (String, (i64, i64), (i64, i64))) {
+    std::thread::spawn(move || {
+        let (address, place, before) = held;
+        let target = format!("address:{address}");
+        let find = || {
+            hyprctl_json("clients")?
+                .as_array()?
+                .iter()
+                .find(|c| c["address"].as_str() == Some(address.as_str()))
+                .cloned()
+        };
+        // Until the size has changed (or ~0.8 s: no change, nothing to do).
+        let mut client = None;
+        for _ in 0..20 {
+            std::thread::sleep(std::time::Duration::from_millis(40));
+            if let Some(c) = find() {
+                if pair(&c["size"]) != before {
+                    client = Some(c);
+                    break;
+                }
+            }
+        }
+        let Some(client) = client else { return };
+        let size = pair(&client["size"]);
+        let (mut x, mut y) = place;
+        if let Some(monitors) = hyprctl_json("monitors") {
+            let on = client["monitor"].as_i64();
+            if let Some(m) = monitors.as_array().and_then(|l| l.iter().find(|m| m["id"].as_i64() == on)) {
+                if let (Some((left, top)), Some((right, bottom))) =
+                    (snap_target(m, size, "top-left", 0), snap_target(m, size, "bottom-right", 0))
+                {
+                    // Bottom first, then top: a window taller than the
+                    // screen keeps its top on it.
+                    x = x.min(right).max(left);
+                    y = y.min(bottom).max(top);
+                }
+            }
+        }
+        if pair(&client["at"]) != (x, y) {
+            let _ = dispatch(&format!(r#"hl.dsp.window.move({{ x = {x}, y = {y}, window = "{target}" }})"#));
+        }
+        let mut held = HELD.lock().unwrap_or_else(|p| p.into_inner());
+        if held.is_some_and(|(p, _)| p == place) {
+            *held = None;
+        }
+    });
+}
+
 /// This process's mapped Hyprland window titled `title`, once it is listed
 /// (a window takes its title only after Hyprland has mapped it, so a window
 /// rule can't match it). Polls for up to 2 s: call it off the UI thread.

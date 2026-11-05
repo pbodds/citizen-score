@@ -7,10 +7,11 @@
   </head>
   <body>
     <!-- The reminder (plugin.js): its own window in a corner of another
-         monitor, which never takes focus or the mouse. -->
+         monitor, which never takes focus; a click on it (or its ×) closes it. -->
     <div class="banner" hidden>
-      <div class="bannerHead">Dailies</div>
+      <div class="bannerHead">Dailies<button class="bannerClose" type="button" title="Close" aria-label="Close">×</button></div>
       <div class="bannerLines"></div>
+      <div class="bannerDecay"></div>
     </div>
     <!-- The checklist over the game. -->
     <div class="list" hidden>

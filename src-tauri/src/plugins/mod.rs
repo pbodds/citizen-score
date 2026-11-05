@@ -307,6 +307,28 @@ fn radar_event(mobs: &HashMap<i32, crate::capture::radar::Mob>, me: Option<crate
     })
 }
 
+/// Citizen Score: the players around, as a2.on("players") hands them on:
+/// name, home server (0 = not known), class (the meter's Korean name), when
+/// last seen and last fought (unix ms, 0 = never), and for party members the
+/// game's own level, gear score and combat power.
+fn players_event(storage: &crate::combat::data_storage::DataStorage, since_ms: i64) -> Value {
+    let list = storage.players_around(since_ms);
+    serde_json::json!({
+        "players": list.iter().map(|p| serde_json::json!({
+            "id": p.id,
+            "name": p.name,
+            "serverId": p.server_id,
+            "class": p.job.map(|c| c.class_name().to_string()),
+            "seen": p.seen_ms,
+            "fought": p.fought_ms,
+            "party": p.party.as_ref().map(|m| serde_json::json!({
+                "level": m.level, "gearScore": m.gear_score, "combatPower": m.combat_power,
+            })),
+        })).collect::<Vec<_>>(),
+        "now": crate::clock::now_ms(),
+    })
+}
+
 /// Citizen Score: what the meter knows of the world now, for a plugin with
 /// `events:zone` that opens after it happened: the map, and the field boss
 /// kills seen this run (the last 64).
@@ -334,11 +356,17 @@ pub fn plugin_desktop_notify(app: tauri::AppHandle, window: tauri::WebviewWindow
         if last.get(&id).is_some_and(|at| at.elapsed() < Duration::from_secs(1)) {
             return Ok(());
         }
-        last.insert(id, Instant::now());
+        last.insert(id.clone(), Instant::now());
     }
     let cut = |s: &str| s.chars().take(300).collect::<String>();
     std::process::Command::new("notify-send")
-        .args(["-a", "Citizen Score", "-i", "citizen-score", "--", &cut(&title), &cut(&body)])
+        // Gone after 5 minutes at most, and each plugin's newest replaces
+        // its last rather than stacking up on screen (daemons that know the
+        // synchronous hint; others just stack them).
+        .args(["-a", "Citizen Score", "-i", "citizen-score", "-t", "300000"])
+        .args(["-h", &format!("string:x-canonical-private-synchronous:citizen-score-{id}")])
+        .args(["-h", &format!("string:x-dunst-stack-tag:citizen-score-{id}")])
+        .args(["--", &cut(&title), &cut(&body)])
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -488,6 +516,8 @@ impl PluginHost {
                 let mut radar_seq = 0u64;
                 let mut radar_told = Instant::now();
                 let mut odyle: Option<Value> = None;
+                let mut players_told = Instant::now();
+                let mut players_last: Option<Value> = None;
                 loop {
                     // Woken by each queued event; the timeout lets settling
                     // events go once their wait is over.
@@ -543,6 +573,19 @@ impl PluginHost {
                         radar_seq = seq;
                         radar_told = Instant::now();
                         host.tell_permitted(&app, "events:radar", "radar", radar_event(&mobs, me));
+                    }
+                    // Citizen Score: the players seen near you or fought in the
+                    // last 15 minutes, to plugins with events:players, at most
+                    // every 2 s and only when it changed.
+                    if players_told.elapsed() >= Duration::from_secs(2)
+                        && let Some(state) = app.try_state::<AppState>()
+                    {
+                        players_told = Instant::now();
+                        let now = players_event(&state.data_storage, crate::clock::now_ms() - 15 * 60_000);
+                        if players_last.as_ref().map(|v| &v["players"]) != Some(&now["players"]) {
+                            host.tell_permitted(&app, "events:players", "players", now.clone());
+                            players_last = Some(now);
+                        }
                     }
                     // Citizen Score: the game's counters the meter reads (Odyle
                     // energy so far), to plugins with events:counters, on change.
@@ -1040,7 +1083,7 @@ pub fn note_resized(app: &tauri::AppHandle, window: &tauri::Window, size: tauri:
 /// plugin restored at start that was watching in the background.
 /// Citizen Score: the plugins shown inside the meter's main window (dock.js)
 /// rather than in windows of their own.
-pub const DOCKED: [&str; 5] = ["plus-souls", "plus-timers", "plus-dailies", "plus-builds", "plus-players"];
+pub const DOCKED: [&str; 6] = ["plus-souls", "plus-timers", "plus-dailies", "plus-builds", "plus-players", "plus-notes"];
 
 fn open_window(app: &tauri::AppHandle, id: &str, visible: bool) -> Result<(), String> {
     // Citizen Score: a docked plugin runs in the main window; opening it

@@ -964,7 +964,7 @@ fn open_url(url: String) {
 }
 
 #[tauri::command]
-fn resize_window(app: tauri::AppHandle, width: f64, height: f64, scale: Option<f64>) {
+fn resize_window(app: tauri::AppHandle, width: f64, height: f64, scale: Option<f64>, keep: Option<bool>) {
     // Only the overlay auto-sizes itself. The details window is sized to a
     // whole monitor by open_details_window and must never be resized from JS.
     let Some(window) = app.get_webview_window("main") else { return };
@@ -980,7 +980,14 @@ fn resize_window(app: tauri::AppHandle, width: f64, height: f64, scale: Option<f
         }),
         None => tauri::Size::Logical(tauri::LogicalSize { width, height }),
     };
+    // Citizen Score: on Hyprland the meter keeps its top-left (see
+    // citizen_window::hold_place_before). `keep` is false when it is snapped
+    // to a corner, which moves it there itself.
+    let held = if keep.unwrap_or(true) { crate::citizen_window::hold_place_before(&app) } else { None };
     platform::window::set_size(&window, size);
+    if let Some(held) = held {
+        crate::citizen_window::hold_place_after(held);
+    }
 }
 
 /// Linux can load a hidden WebKit window. Map it only after restoring its

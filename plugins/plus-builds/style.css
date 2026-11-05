@@ -1,3 +1,36 @@
+/* Scrollbars: WebKitGTK's own is white, and flashes up whenever the panel
+   resizes (the meter growing for a panel). A thin dark one instead. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  min-height: 28px; border: 2px solid transparent; border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: rgba(255, 255, 255, 0.35); }
+
+/* Form controls. WebKitGTK (the meter on Linux) draws them as native GTK
+   widgets: white boxes with the page's light text on them. Drawn by CSS
+   instead, dark; a dropdown keeps its arrow as a background image, so the
+   rules below that set a select's background or padding can't drop it. */
+button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+select {
+  color: rgba(255, 255, 255, 0.88);
+  background-color: #1b2130;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding-right: 18px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23aab4c8' stroke-width='1.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  background-size: 9px 6px !important;
+}
+select option, select optgroup { color: #e8eef8; background-color: #1b2130; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { color-scheme: dark; accent-color: #8fc2ff; }
+
 /* Transparent: the window paints the panel, at the opacity the user picks.
    The look is the Pet Map's and Dailies'. */
 html, body {
@@ -392,3 +425,51 @@ body.onGuide .modes, body.onGuide .bar .classes { display: none; }
 .gnBody { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px; min-width: 0; }
 .gnGt { font-size: 10px; color: rgba(255, 255, 255, 0.35); }
 .gnGrade { font-size: 10px; color: #cdb6ff; }
+
+/* Every skill: level and specialties (skillview.js). */
+.skillPlan { margin-top: 6px; }
+.spRow { padding: 4px 6px; margin-bottom: 3px; border-radius: 7px; background: rgba(255, 255, 255, 0.03); }
+.spHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.spSkill { font-weight: 600; color: #fff; cursor: help; }
+.spPri { font-size: 9px; padding: 0 5px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em; }
+.spPri.first { background: rgba(255, 179, 71, 0.2); color: #ffb347; }
+.spPri.second { background: rgba(143, 194, 255, 0.18); color: #8fc2ff; }
+.spPri.last { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.5); }
+.spAvg { margin-left: auto; font-size: 10px; color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
+.spLine { display: flex; align-items: flex-start; gap: 6px; margin-top: 2px; font-size: 11px; }
+.spMode { flex: none; width: 26px; font-size: 9px; font-weight: 700; padding-top: 2px; }
+.spLine.pve .spMode { color: #8fc2ff; }
+.spLine.pvp .spMode { color: #ff8a7a; }
+.spTo { flex: none; width: 30px; font-weight: 700; color: #ffc66b; }
+.spNone { color: rgba(255, 255, 255, 0.4); font-style: italic; }
+.spSlots { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.spSlot { display: flex; gap: 5px; min-width: 0; }
+.spLv { flex: none; width: 26px; text-align: right; font-size: 10px; font-weight: 700; color: rgba(255, 255, 255, 0.45); padding-top: 1px; }
+.spLv::before { content: "Lv"; font-weight: 400; font-size: 8px; margin-right: 1px; }
+.spNames { min-width: 0; color: rgba(255, 255, 255, 0.85); }
+.spName { cursor: help; }
+.spOr { color: rgba(255, 255, 255, 0.4); font-style: italic; }
+.spLine.est .spNames { color: rgba(255, 255, 255, 0.7); font-style: italic; }
+.spEst { flex: none; align-self: flex-start; cursor: help; font-size: 9px; font-weight: 700; padding: 0 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.55); }
+.spToggle { display: inline-flex; gap: 2px; margin: 2px 0 4px; padding: 2px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); }
+.spToggle button { appearance: none; border: 0; border-radius: 4px; padding: 2px 10px; font: inherit; font-size: 11px; cursor: pointer; background: transparent; color: rgba(255, 255, 255, 0.6); }
+.spToggle button[aria-pressed="true"] { background: rgba(255, 198, 107, 0.2); color: #ffc66b; font-weight: 700; }
+.spDiff { margin-left: 5px; font-size: 9px; font-weight: 700; padding: 0 4px; border-radius: 3px; background: rgba(255, 198, 107, 0.15); color: #ffc66b; white-space: nowrap; }
+.spWhy { display: block; font-size: 10px; color: rgba(255, 255, 255, 0.45); }
+.spNote { margin-top: 2px; font-size: 10px; color: rgba(255, 255, 255, 0.5); }
+.pvTable { width: 100%; border-collapse: collapse; font-size: 11px; }
+.pvTable th { text-align: left; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255, 255, 255, 0.45); padding: 2px 4px; }
+.pvTable td { padding: 2px 4px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+.pvName { font-weight: 600; cursor: help; }
+.pvTable tr.want .pvVerdict { color: #5fe08a; }
+.pvTable tr.fine .pvVerdict { color: #ffc66b; }
+.pvTable tr.skip td { color: rgba(255, 255, 255, 0.45); }
+.pvNum { text-align: right; font-variant-numeric: tabular-nums; }
+.pvVerdict { white-space: nowrap; }
+
+/* Stigma levels + skill-point targets */
+.slotLv { grid-column: 2; font-size: 10px; font-weight: 700; color: #ffc66b; font-variant-numeric: tabular-nums; }
+.stLv .stTo { font-weight: 700; color: #ffc66b; }
+.spPts { flex: none; font-size: 10px; padding: 0 5px; border-radius: 999px; background: rgba(143, 194, 255, 0.14); color: #8fc2ff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spHead .spPts { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); }
+.warnNote { color: #ffb347; }

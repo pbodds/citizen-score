@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notes</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="top">
+      <div class="tabs" role="tablist"></div>
+      <select class="scaleSelect" aria-label="Text size" title="Text size"></select>
+    </div>
+    <form class="add" autocomplete="off">
+      <input class="newTask" maxlength="300" placeholder="Something to do… (Enter adds it)" aria-label="New to-do" />
+    </form>
+    <h2 class="sectionHead">To do <span class="count"></span>
+      <button type="button" class="clearDone" hidden title="Remove the ticked ones">Clear done</button>
+    </h2>
+    <ol class="tasks"></ol>
+    <h2 class="sectionHead">Notes <span class="saved"></span></h2>
+    <textarea class="notes" spellcheck="true" placeholder="Anything: builds to try, prices, who to party with…"></textarea>
+    <p class="foot">Click a to-do to tick it, double-click to change it. Saved as you type, on this computer only.</p>
+    <script src="/_sdk/a2.js"></script>
+    <script src="plugin.js"></script>
+  </body>
+</html>

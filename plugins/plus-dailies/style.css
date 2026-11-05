@@ -1,3 +1,36 @@
+/* Scrollbars: WebKitGTK's own is white, and flashes up whenever the panel
+   resizes (the meter growing for a panel). A thin dark one instead. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  min-height: 28px; border: 2px solid transparent; border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: rgba(255, 255, 255, 0.35); }
+
+/* Form controls. WebKitGTK (the meter on Linux) draws them as native GTK
+   widgets: white boxes with the page's light text on them. Drawn by CSS
+   instead, dark; a dropdown keeps its arrow as a background image, so the
+   rules below that set a select's background or padding can't drop it. */
+button, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+}
+select {
+  color: rgba(255, 255, 255, 0.88);
+  background-color: #1b2130;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding-right: 18px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23aab4c8' stroke-width='1.5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  background-size: 9px 6px !important;
+}
+select option, select optgroup { color: #e8eef8; background-color: #1b2130; }
+input[type="checkbox"], input[type="radio"], input[type="range"] { color-scheme: dark; accent-color: #8fc2ff; }
+
 /* Transparent: the window paints the panel, at the opacity the user picks.
    The look is the Pet Map's and World Timers'. */
 html, body {

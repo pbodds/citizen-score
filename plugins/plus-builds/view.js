@@ -49,7 +49,7 @@ function stigmaRate(b, name) {
   return b.stigmaRates.find((r) => r[0] === name) || [name, null, null, null];
 }
 
-function stigmaSlots(b, mode) {
+function stigmaSlots(b, mode, id) {
   const build = b[mode];
   const box = el("div", "slots");
   build.stigmas.forEach((name, i) => {
@@ -57,6 +57,12 @@ function stigmaSlots(b, mode) {
     const tile = el("div", "slot");
     tile.append(el("span", "slotN", String(i + 1)), el("span", "slotName", name));
     tile.append(el("span", "slotRate", `${pct(mode === "pve" ? r[1] : r[2])} KR · ${pct(r[3])} global`));
+    const lv = typeof stigmaLevels === "function" && stigmaLevels(id, mode, build.stigmas)?.find((x) => x.n === name);
+    if (lv) {
+      const t = el("span", "slotLv", `→ Lv ${lv.to}`);
+      t.title = `Train it to Lv ${lv.to} (${lv.cost} stigma points); its slot opens at character Lv ${lv.opens}${lv.est ? ". Estimated from the top players' average level" : ""}`;
+      tile.append(t);
+    }
     box.append(tile);
   });
   return box;
@@ -72,13 +78,14 @@ function swapList(b, mode) {
   return ul;
 }
 
-function stigmaTable(b, mode) {
+function stigmaTable(b, mode, id) {
   const picks = new Set(mode === "compare" ? [...b.pve.stigmas, ...b.pvp.stigmas] : b[mode].stigmas);
   const col = mode === "pvp" ? 2 : 1;
   const rows = [...b.stigmaRates].sort((x, y) => (y[col] ?? 0) - (x[col] ?? 0));
   const t = el("table", "rates");
   const head = el("tr");
-  for (const h of ["Stigma", "PvE", "PvP", "Global", "PvP lift"]) head.append(el("th", null, h));
+  const st = typeof SKILL_PLAN !== "undefined" ? SKILL_PLAN[id]?.stigmas : null;
+  for (const h of ["Stigma", "PvE", "PvP", "Global", "PvP lift", ...(st ? ["Avg Lv"] : [])]) head.append(el("th", null, h));
   t.append(head);
   for (const [name, pve, pvp, global] of rows) {
     const tr = el("tr", picks.has(name) ? "pick" : "");
@@ -100,6 +107,12 @@ function stigmaTable(b, mode) {
     const lift = pve !== null && pvp !== null ? pvp - pve : null;
     const liftTd = el("td", `rLift ${lift >= 15 ? "up" : lift <= -5 ? "down" : ""}`, lift === null ? "–" : `${lift > 0 ? "+" : ""}${Math.round(lift)}`);
     tr.append(liftTd);
+    if (st) {
+      const r = st.rates.find((x) => x[0] === name);
+      const td = el("td", "rLift", r?.[2] ?? "–");
+      td.title = "Average level on top players (MetaBot)";
+      tr.append(td);
+    }
     t.append(tr);
   }
   return t;
@@ -148,15 +161,21 @@ function daevanion(id, mode, deep, plan) {
 }
 
 // --- Skills and passives -----------------------------------------------------
-function skillsPart(b, mode, deep) {
+// `plan`: draw every skill's levels and specialties here (skillview.js); the
+// side-by-side view draws them once under both columns instead.
+function skillsPart(b, mode, deep, id = null, plan = true) {
   const frag = el("div");
   const order = el("ol", "order");
   for (const s of b[mode].levelOrder) order.append(el("li", null, s));
   frag.append(el("div", "subHead", `Level order (${MODE_NAME[mode]})`), order);
-  const specs = el("dl", "specs");
-  for (const [skill, text] of b[mode].specs) specs.append(el("dt", null, skill), el("dd", null, text));
-  frag.append(el("div", "subHead", "Specialties (skill level · pick)"), specs);
   frag.append(el("p", "note", b[mode].skip));
+  const full = id && typeof SKILL_PLAN !== "undefined" && SKILL_PLAN[id];
+  if (full && plan) frag.append(skillPlanPart(id, [mode]));
+  else if (!full) {
+    const specs = el("dl", "specs");
+    for (const [skill, text] of b[mode].specs) specs.append(el("dt", null, skill), el("dd", null, text));
+    frag.append(el("div", "subHead", "Specialties (skill level · pick)"), specs);
+  }
   if (deep) {
     frag.append(el("div", "subHead", "Share at Lv 20+ (PvE · PvP)"));
     const col = mode === "pvp" ? 2 : 1;
@@ -176,6 +195,7 @@ function passivesPart(id, mode, deep) {
   const frag = el("div");
   frag.append(el("p", "note", "Share of top players' gear raising each passive: hunt these on gear, on Bell and Mirror Arcana, and the green Daevanion nodes for them."));
   frag.append(playPassives(id, mode));
+  if (typeof SKILL_PLAN !== "undefined" && SKILL_PLAN[id]) frag.append(passiveLevelsPart(id, mode));
   if (deep) {
     frag.append(el("div", "subHead", "Share of top gear (PvE · PvP)"));
     for (const [name, pve, pvp] of rows) {
@@ -288,16 +308,27 @@ function renderBuild(root, id, mode, { deep = false, open = null, onToggle = nul
       const cols = el("div", "cols");
       for (const m of modes) {
         const c = el("div", `col ${m}`);
-        c.append(el("div", "subHead", MODE_NAME[m]), stigmaSlots(b, m), swapList(b, m));
+        c.append(el("div", "subHead", MODE_NAME[m]), stigmaSlots(b, m, id), swapList(b, m));
         cols.append(c);
       }
       body.append(cols);
     } else {
-      body.append(stigmaSlots(b, mode), el("div", "subHead", "Swap in"), swapList(b, mode));
+      body.append(stigmaSlots(b, mode, id), el("div", "subHead", "Swap in"), swapList(b, mode));
+    }
+    if (typeof SKILL_PLAN !== "undefined" && SKILL_PLAN[id]?.stigmas) {
+      if (modes.length > 1) {
+        const cols = el("div", "cols");
+        for (const m of modes) {
+          const c = el("div", `col ${m}`);
+          c.append(stigmaLevelsPart(id, m, b[m].stigmas));
+          cols.append(c);
+        }
+        body.append(cols);
+      } else body.append(stigmaLevelsPart(id, mode, b[mode].stigmas));
     }
     if (deep) {
       body.append(el("div", "subHead", "Every stigma: share of top KR players (PvE · PvP) and global"));
-      body.append(stigmaTable(b, mode));
+      body.append(stigmaTable(b, mode, id));
     }
   }, true, deep);
 
@@ -321,13 +352,14 @@ function renderBuild(root, id, mode, { deep = false, open = null, onToggle = nul
       const cols = el("div", "cols");
       for (const m of modes) {
         const c = el("div", `col ${m}`);
-        c.append(skillsPart(b, m, false));
+        c.append(skillsPart(b, m, false, id, false));
         cols.append(c);
       }
       body.append(cols);
-    }, false, true);
+      if (typeof SKILL_PLAN !== "undefined" && SKILL_PLAN[id]) body.append(skillPlanPart(id, modes));
+    }, true, true);
   } else {
-    add("Skills", (body) => body.append(skillsPart(b, mode, deep)), false);
+    add("Skills", (body) => body.append(skillsPart(b, mode, deep, id)), true);
   }
   add("Passives", (body) => body.append(passivesPart(id, mode === "compare" ? "pve" : mode, deep)), false);
   add("Stats, gear, Theostone", (body) => body.append(gearPart(b, mode)), false);

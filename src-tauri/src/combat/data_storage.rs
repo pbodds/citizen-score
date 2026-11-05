@@ -674,6 +674,10 @@ struct Inner {
     self_gear_score: Option<(String, i32)>,
     /// The combat power the last self record gave, with the name it was for.
     self_combat_power: Option<(String, i64)>,
+    /// Citizen Score: the other players this session has seen spawn near
+    /// you, and fought (you hit them or they hit you), by entity id, as
+    /// (seen ms, fought ms). For the Players plugin's "Around you" list.
+    players_met: HashMap<i32, (i64, i64)>,
 }
 
 #[derive(Default)]
@@ -768,6 +772,7 @@ impl DataStorage {
                 self_profile: None,
                 self_gear_score: None,
                 self_combat_power: None,
+                players_met: HashMap::new(),
             }),
             damage_generation: AtomicI64::new(0),
             last_damage_ms: AtomicI64::new(NEVER_MS),
@@ -1320,6 +1325,16 @@ impl DataStorage {
             return;
         }
 
+        // Citizen Score: a player you hit, or who hit you (PvP), for the
+        // Players plugin's card of whoever you are fighting.
+        if let Some(local) = inner.local_player_id.map(|id| id as i32) {
+            let actor = summon_resolver::resolve(actor_id, &inner.summon_storage);
+            let other = if actor == local { target_id } else if target_id == local { actor } else { 0 };
+            if other > 0 && other != local && (inner.players_met.contains_key(&other) || inner.known_player_ids.contains(&other)) {
+                note_player_met(&mut inner, other, true);
+            }
+        }
+
         // A tick from a spirit that has left the world: the game does not
         // count it. A direct hit means the id is back.
         if pdp.is_dot() {
@@ -1685,7 +1700,40 @@ impl DataStorage {
 
     /// A `44/45 36` player spawn for `id`: a player, not anyone's summon.
     pub fn note_player_spawn(&self, id: i32) {
-        forget_entity(&mut self.inner.write(), id);
+        let mut inner = self.inner.write();
+        forget_entity(&mut inner, id);
+        note_player_met(&mut inner, id, false);
+    }
+
+    /// Citizen Score: the players seen or fought since `since_ms`, newest
+    /// first: (entity id, name, home server or 0, class, seen ms, fought ms,
+    /// party member's (level, gear score, combat power) from the roster).
+    pub fn players_around(&self, since_ms: i64) -> Vec<PlayerAround> {
+        let inner = self.inner.read();
+        let local = inner.local_player_id.map(|id| id as i32);
+        let mut out: Vec<PlayerAround> = inner
+            .players_met
+            .iter()
+            .filter(|(id, (seen, fought))| Some(**id) != local && (*seen).max(*fought) >= since_ms)
+            .filter_map(|(&id, &(seen_ms, fought_ms))| {
+                let name = inner.nickname_storage.get(&id)?.trim().to_string();
+                if name.is_empty() {
+                    return None;
+                }
+                let party = inner.party_members.get(&name).cloned();
+                let server_id = party
+                    .as_ref()
+                    .map(|m| m.server_id)
+                    .filter(|s| *s > 0)
+                    .or_else(|| inner.player_servers.get(&name).copied())
+                    .unwrap_or(0);
+                let job = inner.actor_jobs.get(&id).copied().or(party.as_ref().and_then(|m| m.job));
+                Some(PlayerAround { id, name, server_id, job, seen_ms, fought_ms, party })
+            })
+            .collect();
+        out.sort_by_key(|p| std::cmp::Reverse(p.seen_ms.max(p.fought_ms)));
+        out.truncate(60);
+        out
     }
 
     pub fn get_summon_spawn_ids(&self) -> HashSet<i32> {
@@ -2476,6 +2524,37 @@ fn link_summon(inner: &mut Inner, summon: i32, owner: i32) -> bool {
 /// A new entity under `id`: drop the old one's owner link and summon marks.
 /// What a linked summon did moves onto its owner, where it was shown anyway,
 /// so the new entity's owner does not inherit it.
+/// Citizen Score: one player from `DataStorage::players_around`.
+#[derive(Debug, Clone)]
+pub struct PlayerAround {
+    pub id: i32,
+    pub name: String,
+    pub server_id: u16,
+    pub job: Option<JobClass>,
+    pub seen_ms: i64,
+    pub fought_ms: i64,
+    pub party: Option<PartyMember>,
+}
+
+/// Citizen Score: `id` (a player) seen now, or fought now. Bounded: the
+/// oldest go once a session has met many.
+fn note_player_met(inner: &mut Inner, id: i32, fought: bool) {
+    let now = now_ms();
+    if inner.players_met.len() >= 2_000 && !inner.players_met.contains_key(&id) {
+        let cut = now - 30 * 60_000;
+        inner.players_met.retain(|_, (seen, fought)| (*seen).max(*fought) >= cut);
+        if inner.players_met.len() >= 2_000 {
+            return;
+        }
+    }
+    let e = inner.players_met.entry(id).or_insert((now, 0));
+    if fought {
+        e.1 = now;
+    } else {
+        e.0 = now;
+    }
+}
+
 fn forget_entity(inner: &mut Inner, id: i32) {
     inner.despawned_summon_ids.remove(&id);
     inner.confirmed_summon_ids.remove(&id);

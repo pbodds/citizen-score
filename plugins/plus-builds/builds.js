@@ -595,7 +595,7 @@ const BUILDS = {
 const BUILD_BY_KO = Object.fromEntries(Object.entries(BUILDS).map(([id, b]) => [b.ko, id]));
 
 const BUILD_SOURCES = [
-  ["aion2-meta: class guides (KR + global pick rates)", "https://aion2-meta.com/guides/gladiator/"],
+  ["aion2-meta: class guides (KR + global pick rates; every skill's level and specialties, 2026-11-04)", "https://aion2-meta.com/guides/gladiator/"],
   ["MetaBot: class builds", "https://metabot.gg/en/aion-2/guides/class-builds-guide"],
   ["aion2builds: Daevanion", "https://aion2builds.org/guides/daevanion/"],
   ["AION2 Vault: Ariel board", "https://aion2vault.com/builds/ariel-daevanion/"],

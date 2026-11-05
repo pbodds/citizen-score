@@ -371,7 +371,7 @@ function showOverlay() {
 let bannerTimer = 0;
 function banner(lines) {
   a2.widgets.open("banner", BANNER_SIZE)
-    .then(() => a2.widgets.send("banner", { banner: true, lines }))
+    .then(() => a2.widgets.send("banner", { banner: true, lines, ttl: BANNER_MS }))
     .catch(() => a2.notify(lines.join(" ")).catch(() => {}));
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(() => a2.widgets.close("banner").catch(() => {}), BANNER_MS);
@@ -433,6 +433,10 @@ a2.on("odyle", ({ basic, charged, owner }) => {
 });
 
 a2.on("widget-message", ({ name, data }) => {
+  if (name === "banner" && data?.dismiss) {
+    clearTimeout(bannerTimer);
+    a2.widgets.close("banner").catch(() => {});
+  }
   if (name === "list" && data?.ready) {
     overlaySent = "";
     sendOverlay();
